@@ -23,30 +23,30 @@ type eventListener struct {
 	onFinished  []EventConsumer
 }
 
-func (processor *eventListener) OnPermitted(consumer EventConsumer) EventListener {
-	processor.onPermitted = append(processor.onPermitted, consumer)
-	return processor
+func (listener *eventListener) OnPermitted(consumer EventConsumer) EventListener {
+	listener.onPermitted = append(listener.onPermitted, consumer)
+	return listener
 }
 
-func (processor *eventListener) OnRejected(consumer EventConsumer) EventListener {
-	processor.onRejected = append(processor.onRejected, consumer)
-	return processor
+func (listener *eventListener) OnRejected(consumer EventConsumer) EventListener {
+	listener.onRejected = append(listener.onRejected, consumer)
+	return listener
 }
 
-func (processor *eventListener) OnFinished(consumer EventConsumer) EventListener {
-	processor.onFinished = append(processor.onFinished, consumer)
-	return processor
+func (listener *eventListener) OnFinished(consumer EventConsumer) EventListener {
+	listener.onFinished = append(listener.onFinished, consumer)
+	return listener
 }
 
-func (processor *eventListener) consumeEvent(event Event) {
+func (listener *eventListener) consumeEvent(event Event) {
 	var consumers []EventConsumer
 	switch event.EventType() {
 	case PERMITTED:
-		consumers = processor.onPermitted
+		consumers = listener.onPermitted
 	case REJECTED:
-		consumers = processor.onRejected
+		consumers = listener.onRejected
 	case FINISHED:
-		consumers = processor.onFinished
+		consumers = listener.onFinished
 	}
 	for _, consumer := range consumers {
 		go consumer(event)
