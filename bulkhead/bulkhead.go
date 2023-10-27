@@ -7,6 +7,7 @@ import (
 )
 
 type Bulkhead interface {
+	Name() string
 	EventListener() EventListener
 
 	acquire() error
@@ -33,6 +34,10 @@ type semaphoreBulkhead struct {
 	rootContext   context.Context
 	semaphore     *semaphore.Weighted
 	eventListener EventListener
+}
+
+func (bulkhead *semaphoreBulkhead) Name() string {
+	return bulkhead.name
 }
 
 func (bulkhead *semaphoreBulkhead) EventListener() EventListener {

@@ -20,6 +20,7 @@ func TestBulkheadPublishEvents(t *testing.T) {
 	bh := bulkhead.NewBulkhead("test",
 		bulkhead.WithMaxConcurrentCalls(1),
 		bulkhead.WithMaxWaitDuration(time.Second*1))
+	assert.Equal(t, "test", bh.Name())
 	eventListener := bh.EventListener()
 	permitted := 0
 	rejected := 0
