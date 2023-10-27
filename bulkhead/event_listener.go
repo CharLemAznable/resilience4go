@@ -2,43 +2,43 @@ package bulkhead
 
 type EventConsumer func(Event)
 
-type EventProcessor interface {
-	OnPermitted(EventConsumer) EventProcessor
-	OnRejected(EventConsumer) EventProcessor
-	OnFinished(EventConsumer) EventProcessor
+type EventListener interface {
+	OnPermitted(EventConsumer) EventListener
+	OnRejected(EventConsumer) EventListener
+	OnFinished(EventConsumer) EventListener
 	consumeEvent(Event)
 }
 
-func newEventProcessor() EventProcessor {
-	return &eventProcessor{
+func newEventListener() EventListener {
+	return &eventListener{
 		onPermitted: make([]EventConsumer, 0),
 		onRejected:  make([]EventConsumer, 0),
 		onFinished:  make([]EventConsumer, 0),
 	}
 }
 
-type eventProcessor struct {
+type eventListener struct {
 	onPermitted []EventConsumer
 	onRejected  []EventConsumer
 	onFinished  []EventConsumer
 }
 
-func (processor *eventProcessor) OnPermitted(consumer EventConsumer) EventProcessor {
+func (processor *eventListener) OnPermitted(consumer EventConsumer) EventListener {
 	processor.onPermitted = append(processor.onPermitted, consumer)
 	return processor
 }
 
-func (processor *eventProcessor) OnRejected(consumer EventConsumer) EventProcessor {
+func (processor *eventListener) OnRejected(consumer EventConsumer) EventListener {
 	processor.onRejected = append(processor.onRejected, consumer)
 	return processor
 }
 
-func (processor *eventProcessor) OnFinished(consumer EventConsumer) EventProcessor {
+func (processor *eventListener) OnFinished(consumer EventConsumer) EventListener {
 	processor.onFinished = append(processor.onFinished, consumer)
 	return processor
 }
 
-func (processor *eventProcessor) consumeEvent(event Event) {
+func (processor *eventListener) consumeEvent(event Event) {
 	var consumers []EventConsumer
 	switch event.EventType() {
 	case PERMITTED:

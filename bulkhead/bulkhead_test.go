@@ -20,11 +20,11 @@ func TestBulkheadPublishEvents(t *testing.T) {
 	bh := bulkhead.NewBulkhead("test",
 		bulkhead.WithMaxConcurrentCalls(1),
 		bulkhead.WithMaxWaitDuration(time.Second*1))
-	eventProcessor := bh.EventProcessor()
+	eventListener := bh.EventListener()
 	permitted := 0
 	rejected := 0
 	finished := 0
-	eventProcessor.OnPermitted(func(event bulkhead.Event) {
+	eventListener.OnPermitted(func(event bulkhead.Event) {
 		assert.Equal(t, bulkhead.PERMITTED, event.EventType())
 		assert.Equal(t,
 			fmt.Sprintf("%v: Bulkhead '%s' permitted a call.",
@@ -32,7 +32,7 @@ func TestBulkheadPublishEvents(t *testing.T) {
 			fmt.Sprintf("%v", event))
 		permitted++
 	})
-	eventProcessor.OnRejected(func(event bulkhead.Event) {
+	eventListener.OnRejected(func(event bulkhead.Event) {
 		assert.Equal(t, bulkhead.REJECTED, event.EventType())
 		assert.Equal(t,
 			fmt.Sprintf("%v: Bulkhead '%s' rejected a call.",
@@ -40,7 +40,7 @@ func TestBulkheadPublishEvents(t *testing.T) {
 			fmt.Sprintf("%v", event))
 		rejected++
 	})
-	eventProcessor.OnFinished(func(event bulkhead.Event) {
+	eventListener.OnFinished(func(event bulkhead.Event) {
 		assert.Equal(t, bulkhead.FINISHED, event.EventType())
 		assert.Equal(t,
 			fmt.Sprintf("%v: Bulkhead '%s' has finished a call.",

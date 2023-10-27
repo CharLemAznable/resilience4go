@@ -7,7 +7,7 @@ import (
 )
 
 type Bulkhead interface {
-	EventProcessor() EventProcessor
+	EventListener() EventListener
 
 	acquire() error
 	release()
@@ -19,24 +19,24 @@ func NewBulkhead(name string, configs ...ConfigBuilder) Bulkhead {
 		cfg(config)
 	}
 	return &semaphoreBulkhead{
-		name:           name,
-		config:         config,
-		rootContext:    context.Background(),
-		semaphore:      semaphore.NewWeighted(config.maxConcurrentCalls),
-		eventProcessor: newEventProcessor(),
+		name:          name,
+		config:        config,
+		rootContext:   context.Background(),
+		semaphore:     semaphore.NewWeighted(config.maxConcurrentCalls),
+		eventListener: newEventListener(),
 	}
 }
 
 type semaphoreBulkhead struct {
-	name           string
-	config         *Config
-	rootContext    context.Context
-	semaphore      *semaphore.Weighted
-	eventProcessor EventProcessor
+	name          string
+	config        *Config
+	rootContext   context.Context
+	semaphore     *semaphore.Weighted
+	eventListener EventListener
 }
 
-func (bulkhead *semaphoreBulkhead) EventProcessor() EventProcessor {
-	return bulkhead.eventProcessor
+func (bulkhead *semaphoreBulkhead) EventListener() EventListener {
+	return bulkhead.eventListener
 }
 
 func (bulkhead *semaphoreBulkhead) acquire() error {
@@ -48,7 +48,7 @@ func (bulkhead *semaphoreBulkhead) acquire() error {
 		return bulkhead.semaphore.Acquire(timeout, 1) == nil
 	}()
 
-	bulkhead.eventProcessor.consumeEvent(func() Event {
+	bulkhead.eventListener.consumeEvent(func() Event {
 		if permitted {
 			return newPermittedEvent(bulkhead.name)
 		} else {
@@ -64,7 +64,7 @@ func (bulkhead *semaphoreBulkhead) acquire() error {
 
 func (bulkhead *semaphoreBulkhead) release() {
 	bulkhead.semaphore.Release(1)
-	bulkhead.eventProcessor.consumeEvent(newFinishedEvent(bulkhead.name))
+	bulkhead.eventListener.consumeEvent(newFinishedEvent(bulkhead.name))
 }
 
 type bulkheadError struct {
