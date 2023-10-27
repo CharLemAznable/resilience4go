@@ -5,6 +5,10 @@ import (
 )
 
 func Zero[T any]() T {
-	zero, _ := common.CastOrZero[T](nil)
-	return zero
+	return CastOrZero[T](nil)
+}
+
+func CastOrZero[T any](val any) T {
+	v, _ := common.CastOrZero[T](val)
+	return v
 }
