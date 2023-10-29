@@ -61,7 +61,9 @@ func TestDecorateConsumer(t *testing.T) {
 	decoratedFn := timelimiter.DecorateConsumer(tl, fn)
 
 	err := decoratedFn("error")
-	assert.Equal(t, "TimeLimiter 'test' recorded a timeout exception.", err.Error())
+	timeout, ok := err.(*timelimiter.TimeoutError)
+	assert.True(t, ok)
+	assert.Equal(t, "TimeLimiter 'test' recorded a timeout exception.", timeout.Error())
 }
 
 func TestDecorateFunction(t *testing.T) {
@@ -81,5 +83,7 @@ func TestDecorateFunction(t *testing.T) {
 	ret, err := decoratedFn("error")
 
 	assert.Equal(t, "", ret)
-	assert.Equal(t, "TimeLimiter 'test' recorded a timeout exception.", err.Error())
+	timeout, ok := err.(*timelimiter.TimeoutError)
+	assert.True(t, ok)
+	assert.Equal(t, "TimeLimiter 'test' recorded a timeout exception.", timeout.Error())
 }

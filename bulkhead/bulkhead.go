@@ -64,7 +64,7 @@ func (bulkhead *semaphoreBulkhead) acquire() error {
 	if permitted {
 		return nil
 	}
-	return &bulkheadError{name: bulkhead.name}
+	return &FullError{name: bulkhead.name}
 }
 
 func (bulkhead *semaphoreBulkhead) release() {
@@ -72,10 +72,10 @@ func (bulkhead *semaphoreBulkhead) release() {
 	bulkhead.eventListener.consumeEvent(newFinishedEvent(bulkhead.name))
 }
 
-type bulkheadError struct {
+type FullError struct {
 	name string
 }
 
-func (e *bulkheadError) Error() string {
+func (e *FullError) Error() string {
 	return fmt.Sprintf("Bulkhead '%s' is full and does not permit further calls", e.name)
 }

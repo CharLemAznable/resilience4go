@@ -55,15 +55,15 @@ func (limiter *timeLimiter) execute(fn func() (any, error)) (any, error) {
 		finished <- &channelValue{ret, err}
 	}()
 	select {
-	case <-timeout.Done():
-		limiter.onTimeout()
-		return nil, &timeLimiterError{name: limiter.name}
 	case result := <-finished:
 		limiter.onSuccess()
 		return result.ret, result.err
+	case <-timeout.Done():
+		limiter.onTimeout()
+		return nil, &TimeoutError{name: limiter.name}
 	case err := <-panicked.Caught():
 		limiter.onFailure(err)
-		return nil, common.PanicError(err)
+		return nil, common.WrapPanic(err)
 	}
 }
 
@@ -79,11 +79,11 @@ func (limiter *timeLimiter) onFailure(error any) {
 	limiter.eventListener.consumeEvent(newFailureEvent(limiter.name, error))
 }
 
-type timeLimiterError struct {
+type TimeoutError struct {
 	name string
 }
 
-func (e *timeLimiterError) Error() string {
+func (e *TimeoutError) Error() string {
 	return fmt.Sprintf("TimeLimiter '%s' recorded a timeout exception.", e.name)
 }
 

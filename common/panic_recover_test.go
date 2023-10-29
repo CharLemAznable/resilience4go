@@ -36,5 +36,7 @@ func TestPanicRecover(t *testing.T) {
 	case v := <-panicked.Caught():
 		actualError = common.WrapPanic(v)
 	}
-	assert.Equal(t, "panicked with panicked", actualError.Error())
+	panicError, ok := (actualError).(*common.PanicError)
+	assert.True(t, ok)
+	assert.Equal(t, "panicked with panicked", panicError.Error())
 }

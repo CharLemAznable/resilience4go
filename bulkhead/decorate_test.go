@@ -35,7 +35,9 @@ func TestDecorateRunnable(t *testing.T) {
 	}()
 
 	assert.Equal(t, "error", (<-err1).Error())
-	assert.Equal(t, "Bulkhead 'test' is full and does not permit further calls", (<-err2).Error())
+	fullErr, ok := (<-err2).(*bulkhead.FullError)
+	assert.True(t, ok)
+	assert.Equal(t, "Bulkhead 'test' is full and does not permit further calls", fullErr.Error())
 }
 
 func TestDecorateSupplier(t *testing.T) {
@@ -73,7 +75,9 @@ func TestDecorateSupplier(t *testing.T) {
 	assert.Equal(t, "error", <-res1)
 	assert.Equal(t, "error", (<-err1).Error())
 	assert.Equal(t, "", <-res2)
-	assert.Equal(t, "Bulkhead 'test' is full and does not permit further calls", (<-err2).Error())
+	fullErr, ok := (<-err2).(*bulkhead.FullError)
+	assert.True(t, ok)
+	assert.Equal(t, "Bulkhead 'test' is full and does not permit further calls", fullErr.Error())
 }
 
 func TestDecorateConsumer(t *testing.T) {
@@ -103,7 +107,9 @@ func TestDecorateConsumer(t *testing.T) {
 	}()
 
 	assert.Equal(t, "error", (<-err1).Error())
-	assert.Equal(t, "Bulkhead 'test' is full and does not permit further calls", (<-err2).Error())
+	fullErr, ok := (<-err2).(*bulkhead.FullError)
+	assert.True(t, ok)
+	assert.Equal(t, "Bulkhead 'test' is full and does not permit further calls", fullErr.Error())
 }
 
 func TestDecorateFunction(t *testing.T) {
@@ -141,5 +147,7 @@ func TestDecorateFunction(t *testing.T) {
 	assert.Equal(t, "error", <-res1)
 	assert.Equal(t, "error", (<-err1).Error())
 	assert.Equal(t, "", <-res2)
-	assert.Equal(t, "Bulkhead 'test' is full and does not permit further calls", (<-err2).Error())
+	fullErr, ok := (<-err2).(*bulkhead.FullError)
+	assert.True(t, ok)
+	assert.Equal(t, "Bulkhead 'test' is full and does not permit further calls", fullErr.Error())
 }
