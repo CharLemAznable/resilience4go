@@ -21,7 +21,7 @@ func TestPanicRecover(t *testing.T) {
 	case err := <-finished:
 		actualError = err
 	case v := <-panicked.Caught():
-		actualError = common.PanicError(v)
+		actualError = common.WrapPanic(v)
 	}
 	assert.Equal(t, "error", actualError.Error())
 
@@ -34,7 +34,7 @@ func TestPanicRecover(t *testing.T) {
 	case err := <-finished:
 		actualError = err
 	case v := <-panicked.Caught():
-		actualError = common.PanicError(v)
+		actualError = common.WrapPanic(v)
 	}
 	assert.Equal(t, "panicked with panicked", actualError.Error())
 }

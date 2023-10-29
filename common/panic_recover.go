@@ -14,14 +14,14 @@ func (pr Panicked) Caught() <-chan any {
 	return pr
 }
 
-func PanicError(v any) error {
-	return &panicError{error: v}
+func WrapPanic(v any) error {
+	return &PanicError{error: v}
 }
 
-type panicError struct {
+type PanicError struct {
 	error any
 }
 
-func (e *panicError) Error() string {
+func (e *PanicError) Error() string {
 	return fmt.Sprintf("panicked with %v", e.error)
 }
