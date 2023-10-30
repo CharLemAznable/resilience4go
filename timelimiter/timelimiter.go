@@ -11,9 +11,6 @@ type TimeLimiter interface {
 	EventListener() EventListener
 
 	execute(func() (any, error)) (any, error)
-	onSuccess()
-	onTimeout()
-	onFailure(any)
 }
 
 func NewTimeLimiter(name string, configs ...ConfigBuilder) TimeLimiter {
@@ -79,15 +76,15 @@ func (limiter *timeLimiter) onFailure(error any) {
 	limiter.eventListener.consumeEvent(newFailureEvent(limiter.name, error))
 }
 
+type channelValue struct {
+	ret interface{}
+	err error
+}
+
 type TimeoutError struct {
 	name string
 }
 
 func (e *TimeoutError) Error() string {
 	return fmt.Sprintf("TimeLimiter '%s' recorded a timeout exception.", e.name)
-}
-
-type channelValue struct {
-	ret interface{}
-	err error
 }

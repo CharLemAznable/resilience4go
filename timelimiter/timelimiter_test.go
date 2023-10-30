@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/CharLemAznable/resilience4go/timelimiter"
 	"github.com/stretchr/testify/assert"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -15,9 +16,9 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 		timelimiter.WithTimeoutDuration(time.Second*1))
 	assert.Equal(t, "test", tl.Name())
 	eventListener := tl.EventListener()
-	success := 0
-	timeout := 0
-	failure := 0
+	success := atomic.Int64{}
+	timeout := atomic.Int64{}
+	failure := atomic.Int64{}
 	panicMsg := "panic error"
 	eventListener.OnSuccess(func(event timelimiter.Event) {
 		assert.Equal(t, timelimiter.SUCCESS, event.EventType())
@@ -25,7 +26,7 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 			fmt.Sprintf("%v: TimeLimiter '%s' recorded a successful call.",
 				event.CreationTime(), event.TimeLimiterName()),
 			fmt.Sprintf("%v", event))
-		success++
+		success.Add(1)
 	})
 	eventListener.OnTimeout(func(event timelimiter.Event) {
 		assert.Equal(t, timelimiter.TIMEOUT, event.EventType())
@@ -33,7 +34,7 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 			fmt.Sprintf("%v: TimeLimiter '%s' recorded a timeout exception.",
 				event.CreationTime(), event.TimeLimiterName()),
 			fmt.Sprintf("%v", event))
-		timeout++
+		timeout.Add(1)
 	})
 	eventListener.OnFailure(func(event timelimiter.Event) {
 		assert.Equal(t, timelimiter.FAILURE, event.EventType())
@@ -41,7 +42,7 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 			fmt.Sprintf("%v: TimeLimiter '%s' recorded a failure call with panic: %v.",
 				event.CreationTime(), event.TimeLimiterName(), panicMsg),
 			fmt.Sprintf("%v", event))
-		failure++
+		failure.Add(1)
 	})
 
 	// 创建一个可运行的函数
@@ -77,7 +78,7 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 	assert.Equal(t, "error", err.Error())
 
 	time.Sleep(time.Second * 1)
-	assert.Equal(t, 1, success)
-	assert.Equal(t, 1, timeout)
-	assert.Equal(t, 1, failure)
+	assert.Equal(t, int64(1), success.Load())
+	assert.Equal(t, int64(1), timeout.Load())
+	assert.Equal(t, int64(1), failure.Load())
 }

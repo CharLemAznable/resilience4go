@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/CharLemAznable/resilience4go/bulkhead"
 	"github.com/stretchr/testify/assert"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -22,16 +23,16 @@ func TestBulkheadPublishEvents(t *testing.T) {
 		bulkhead.WithMaxWaitDuration(time.Second*1))
 	assert.Equal(t, "test", bh.Name())
 	eventListener := bh.EventListener()
-	permitted := 0
-	rejected := 0
-	finished := 0
+	permitted := atomic.Int64{}
+	rejected := atomic.Int64{}
+	finished := atomic.Int64{}
 	eventListener.OnPermitted(func(event bulkhead.Event) {
 		assert.Equal(t, bulkhead.PERMITTED, event.EventType())
 		assert.Equal(t,
 			fmt.Sprintf("%v: Bulkhead '%s' permitted a call.",
 				event.CreationTime(), event.BulkheadName()),
 			fmt.Sprintf("%v", event))
-		permitted++
+		permitted.Add(1)
 	})
 	eventListener.OnRejected(func(event bulkhead.Event) {
 		assert.Equal(t, bulkhead.REJECTED, event.EventType())
@@ -39,7 +40,7 @@ func TestBulkheadPublishEvents(t *testing.T) {
 			fmt.Sprintf("%v: Bulkhead '%s' rejected a call.",
 				event.CreationTime(), event.BulkheadName()),
 			fmt.Sprintf("%v", event))
-		rejected++
+		rejected.Add(1)
 	})
 	eventListener.OnFinished(func(event bulkhead.Event) {
 		assert.Equal(t, bulkhead.FINISHED, event.EventType())
@@ -47,7 +48,7 @@ func TestBulkheadPublishEvents(t *testing.T) {
 			fmt.Sprintf("%v: Bulkhead '%s' has finished a call.",
 				event.CreationTime(), event.BulkheadName()),
 			fmt.Sprintf("%v", event))
-		finished++
+		finished.Add(1)
 	})
 
 	// 调用DecorateRunnable函数
@@ -62,7 +63,7 @@ func TestBulkheadPublishEvents(t *testing.T) {
 	}()
 
 	time.Sleep(time.Second * 5)
-	assert.Equal(t, 1, permitted)
-	assert.Equal(t, 1, rejected)
-	assert.Equal(t, 1, finished)
+	assert.Equal(t, int64(1), permitted.Load())
+	assert.Equal(t, int64(1), rejected.Load())
+	assert.Equal(t, int64(1), finished.Load())
 }
