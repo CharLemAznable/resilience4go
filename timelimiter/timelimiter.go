@@ -60,7 +60,7 @@ func (limiter *timeLimiter) execute(fn func() (any, error)) (any, error) {
 		return nil, &TimeoutError{name: limiter.name}
 	case err := <-panicked.Caught():
 		limiter.onFailure(err)
-		return nil, common.WrapPanic(err)
+		panic(err)
 	}
 }
 

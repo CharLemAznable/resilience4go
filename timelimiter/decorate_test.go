@@ -22,8 +22,9 @@ func TestDecorateRunnable(t *testing.T) {
 	// 调用DecorateRunnable函数
 	decoratedFn := timelimiter.DecorateRunnable(tl, fn)
 
-	err := decoratedFn()
-	assert.Equal(t, "panicked with panic error", err.Error())
+	assert.PanicsWithValue(t, "panic error", func() {
+		_ = decoratedFn()
+	})
 }
 
 func TestDecorateSupplier(t *testing.T) {
