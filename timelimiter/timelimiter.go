@@ -3,7 +3,7 @@ package timelimiter
 import (
 	"context"
 	"fmt"
-	"github.com/CharLemAznable/resilience4go/common"
+	"github.com/CharLemAznable/gofn/common"
 )
 
 type TimeLimiter interface {

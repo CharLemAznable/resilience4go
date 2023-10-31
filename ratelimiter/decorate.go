@@ -1,11 +1,11 @@
 package ratelimiter
 
 import (
+	"github.com/CharLemAznable/gofn/common"
 	"github.com/CharLemAznable/gofn/consumer"
 	"github.com/CharLemAznable/gofn/function"
 	"github.com/CharLemAznable/gofn/runnable"
 	"github.com/CharLemAznable/gofn/supplier"
-	"github.com/CharLemAznable/resilience4go/common"
 )
 
 func DecorateRunnable(limiter RateLimiter, fn runnable.Runnable) runnable.Runnable {

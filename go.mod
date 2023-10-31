@@ -3,7 +3,7 @@ module github.com/CharLemAznable/resilience4go
 go 1.18
 
 require (
-	github.com/CharLemAznable/gofn v0.1.0
+	github.com/CharLemAznable/gofn v0.1.1
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/sync v0.4.0
 )

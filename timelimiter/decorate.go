@@ -1,11 +1,11 @@
 package timelimiter
 
 import (
+	"github.com/CharLemAznable/gofn/common"
 	"github.com/CharLemAznable/gofn/consumer"
 	"github.com/CharLemAznable/gofn/function"
 	"github.com/CharLemAznable/gofn/runnable"
 	"github.com/CharLemAznable/gofn/supplier"
-	"github.com/CharLemAznable/resilience4go/common"
 )
 
 func DecorateRunnable(limiter TimeLimiter, fn runnable.Runnable) runnable.Runnable {
@@ -22,7 +22,7 @@ func DecorateSupplier[T any](limiter TimeLimiter, fn supplier.Supplier[T]) suppl
 		ret, err := limiter.execute(func() (any, error) {
 			return fn()
 		})
-		return common.CastOrZero[T](ret), err
+		return common.CastQuietly[T](ret), err
 	}
 }
 
@@ -40,6 +40,6 @@ func DecorateFunction[T any, R any](limiter TimeLimiter, fn function.Function[T,
 		ret, err := limiter.execute(func() (any, error) {
 			return fn(t)
 		})
-		return common.CastOrZero[R](ret), err
+		return common.CastQuietly[R](ret), err
 	}
 }
