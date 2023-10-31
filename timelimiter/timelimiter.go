@@ -77,7 +77,7 @@ func (limiter *timeLimiter) onFailure(error any) {
 }
 
 type channelValue struct {
-	ret interface{}
+	ret any
 	err error
 }
 
