@@ -23,7 +23,7 @@ func WithTimeoutDuration(timeoutDuration time.Duration) ConfigBuilder {
 	}
 }
 
-const DefaultTimeoutDuration time.Duration = time.Second
+const DefaultTimeoutDuration = time.Second
 
 func defaultConfig() *Config {
 	return &Config{

@@ -37,8 +37,8 @@ func WithLimitForPeriod(limitForPeriod int64) ConfigBuilder {
 	}
 }
 
-const DefaultTimeoutDuration time.Duration = time.Second * 5
-const DefaultLimitRefreshPeriod time.Duration = time.Nanosecond * 500
+const DefaultTimeoutDuration = time.Second * 5
+const DefaultLimitRefreshPeriod = time.Nanosecond * 500
 const DefaultLimitForPeriod int64 = 50
 
 func defaultConfig() *Config {
