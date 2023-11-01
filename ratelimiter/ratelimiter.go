@@ -2,6 +2,7 @@ package ratelimiter
 
 import (
 	"fmt"
+	"github.com/CharLemAznable/resilience4go/utils"
 	"sync/atomic"
 	"time"
 )
@@ -90,7 +91,7 @@ func (limiter *atomicRateLimiter) calculateNextState(timeoutInNanos int64, activ
 		elapsedCycles := currentCycle - nextCycle
 		accumulatedPermissions := elapsedCycles * permissionsPerCycle
 		nextCycle = currentCycle
-		nextPermissions = min(nextPermissions+accumulatedPermissions, permissionsPerCycle)
+		nextPermissions = utils.Min(nextPermissions+accumulatedPermissions, permissionsPerCycle)
 	}
 	nextNanosToWait := nanosToWaitForPermission(cyclePeriodInNanos,
 		permissionsPerCycle, nextPermissions, currentNanos, currentCycle)
@@ -132,7 +133,7 @@ func nanosToWaitForPermission(
 	nextCycleTimeInNanos := (currentCycle + 1) * cyclePeriodInNanos
 	nanosToNextCycle := nextCycleTimeInNanos - currentNanos
 	permissionsAtTheStartOfNextCycle := availablePermissions + permissionsPerCycle
-	fullCyclesToWait := divCeil(-(permissionsAtTheStartOfNextCycle - 1), permissionsPerCycle)
+	fullCyclesToWait := utils.DivCeil(-(permissionsAtTheStartOfNextCycle - 1), permissionsPerCycle)
 	return (fullCyclesToWait * cyclePeriodInNanos) + nanosToNextCycle
 }
 
@@ -146,17 +147,6 @@ func reservePermissions(
 		activeCycle:       cycle,
 		activePermissions: permissionsWithReservation,
 		nanosToWait:       nanosToWait}
-}
-
-func min(x, y int64) int64 {
-	if x > y {
-		return y
-	}
-	return x
-}
-
-func divCeil(x, y int64) int64 {
-	return (x + y - 1) / y
 }
 
 type state struct {
