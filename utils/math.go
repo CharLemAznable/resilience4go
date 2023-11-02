@@ -6,7 +6,3 @@ func Min(x, y int64) int64 {
 	}
 	return x
 }
-
-func DivCeil(x, y int64) int64 {
-	return (x + y - 1) / y
-}

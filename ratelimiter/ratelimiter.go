@@ -133,8 +133,12 @@ func nanosToWaitForPermission(
 	nextCycleTimeInNanos := (currentCycle + 1) * cyclePeriodInNanos
 	nanosToNextCycle := nextCycleTimeInNanos - currentNanos
 	permissionsAtTheStartOfNextCycle := availablePermissions + permissionsPerCycle
-	fullCyclesToWait := utils.DivCeil(-(permissionsAtTheStartOfNextCycle - 1), permissionsPerCycle)
+	fullCyclesToWait := divCeil(-(permissionsAtTheStartOfNextCycle - 1), permissionsPerCycle)
 	return (fullCyclesToWait * cyclePeriodInNanos) + nanosToNextCycle
+}
+
+func divCeil(x, y int64) int64 {
+	return (x + y - 1) / y
 }
 
 func reservePermissions(
