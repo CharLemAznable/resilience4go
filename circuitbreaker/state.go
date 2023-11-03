@@ -62,13 +62,16 @@ func open(attempts int64, metrics Metrics, breaker CircuitBreaker) *state {
 	}
 	var isOpen atomic.Int32
 	isOpen.Store(1)
+	toHalfOpen := func() {
+		if isOpen.CompareAndSwap(1, 0) {
+			_ = breaker.TransitionToHalfOpenState()
+		}
+	}
 	waitDuration := config.waitIntervalFunctionInOpenStateFn()(attempts)
 	retryAfterWaitDuration := time.Now().Add(waitDuration)
 	s.acquirePermission = func() error {
 		if time.Now().After(retryAfterWaitDuration) {
-			if isOpen.CompareAndSwap(1, 0) {
-				_ = breaker.TransitionToHalfOpenState()
-			}
+			toHalfOpen()
 			return breaker.acquirePermission()
 		}
 		s.metrics.onCallNotPermitted()
@@ -89,9 +92,8 @@ func open(attempts int64, metrics Metrics, breaker CircuitBreaker) *state {
 		go func() {
 			select {
 			case <-timer.C:
-				if done.CompareAndSwap(0, 1) &&
-					isOpen.CompareAndSwap(1, 0) {
-					_ = breaker.TransitionToHalfOpenState()
+				if done.CompareAndSwap(0, 1) {
+					toHalfOpen()
 				}
 			case <-cancel:
 			}
@@ -116,14 +118,15 @@ func halfOpen(attempts int64, breaker CircuitBreaker) *state {
 	}
 	var permittedNumberOfCalls atomic.Int64
 	permittedNumberOfCalls.Store(permittedNumber)
+	permittedNumberDecrement := func(current int64) int64 {
+		if current == 0 {
+			return current
+		} else {
+			return current - 1
+		}
+	}
 	s.acquirePermission = func() error {
-		if getAndUpdateInt64(&permittedNumberOfCalls, func(current int64) int64 {
-			if current == 0 {
-				return current
-			} else {
-				return current - 1
-			}
-		}) > 0 {
+		if getAndUpdateInt64(&permittedNumberOfCalls, permittedNumberDecrement) > 0 {
 			return nil
 		}
 		s.metrics.onCallNotPermitted()
@@ -133,12 +136,22 @@ func halfOpen(attempts int64, breaker CircuitBreaker) *state {
 	}
 	var isHalfOpen atomic.Int32
 	isHalfOpen.Store(1)
-	checkIfThresholdsExceeded := func(result metricsResult) {
-		if exceededThresholds(result) && isHalfOpen.CompareAndSwap(1, 0) {
+	toOpen := func() {
+		if isHalfOpen.CompareAndSwap(1, 0) {
 			_ = breaker.TransitionToOpenState()
 		}
-		if result == BelowThresholds && isHalfOpen.CompareAndSwap(1, 0) {
+	}
+	toClosed := func() {
+		if isHalfOpen.CompareAndSwap(1, 0) {
 			_ = breaker.TransitionToClosedState()
+		}
+	}
+	checkIfThresholdsExceeded := func(result metricsResult) {
+		if exceededThresholds(result) {
+			toOpen()
+		}
+		if result == BelowThresholds {
+			toClosed()
 		}
 	}
 	s.onError = func(duration time.Duration) {
@@ -154,9 +167,8 @@ func halfOpen(attempts int64, breaker CircuitBreaker) *state {
 		go func() {
 			select {
 			case <-timer.C:
-				if done.CompareAndSwap(0, 1) &&
-					isHalfOpen.CompareAndSwap(1, 0) {
-					_ = breaker.TransitionToOpenState()
+				if done.CompareAndSwap(0, 1) {
+					toOpen()
 				}
 			case <-cancel:
 			}
