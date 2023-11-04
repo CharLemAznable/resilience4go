@@ -2,9 +2,11 @@ package circuitbreaker_test
 
 import (
 	"errors"
+	"fmt"
 	"github.com/CharLemAznable/resilience4go/circuitbreaker"
 	"github.com/stretchr/testify/assert"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -19,6 +21,40 @@ func TestCircuitBreaker(t *testing.T) {
 			return time.Second * 5
 		}),
 		circuitbreaker.WithPermittedNumberOfCallsInHalfOpenState(2))
+	listener := breaker.EventListener()
+	listener.OnSuccess(func(event circuitbreaker.Event) {
+		assert.Equal(t, circuitbreaker.Success, event.EventType())
+		assert.True(t, strings.HasPrefix(fmt.Sprintf("%v", event),
+			fmt.Sprintf("%v: CircuitBreaker '%s'",
+				event.CreationTime(), event.CircuitBreakerName())))
+	})
+	listener.OnError(func(event circuitbreaker.Event) {
+		assert.Equal(t, circuitbreaker.Error, event.EventType())
+		assert.True(t, strings.HasPrefix(fmt.Sprintf("%v", event),
+			fmt.Sprintf("%v: CircuitBreaker '%s'",
+				event.CreationTime(), event.CircuitBreakerName())))
+	})
+	listener.OnNotPermitted(func(event circuitbreaker.Event) {
+		assert.Equal(t, circuitbreaker.NotPermitted, event.EventType())
+		assert.True(t, strings.HasPrefix(fmt.Sprintf("%v", event),
+			fmt.Sprintf("%v: CircuitBreaker '%s'",
+				event.CreationTime(), event.CircuitBreakerName())))
+	})
+	listener.OnStateTransition(func(event circuitbreaker.Event) {
+		assert.Equal(t, circuitbreaker.StateTransition, event.EventType())
+		assert.True(t, strings.HasPrefix(fmt.Sprintf("%v", event),
+			fmt.Sprintf("%v: CircuitBreaker '%s'",
+				event.CreationTime(), event.CircuitBreakerName())))
+	})
+	listener.OnFailureRateExceeded(func(event circuitbreaker.Event) {
+		assert.Equal(t, circuitbreaker.FailureRateExceeded, event.EventType())
+		assert.True(t, strings.HasPrefix(fmt.Sprintf("%v", event),
+			fmt.Sprintf("%v: CircuitBreaker '%s'",
+				event.CreationTime(), event.CircuitBreakerName())))
+	})
+	listener.OnSlowCallRateExceeded(func(event circuitbreaker.Event) {
+		assert.Fail(t, "should not listen slow call rate exceeded event")
+	})
 
 	// 创建一个可运行的函数
 	var count atomic.Int64
@@ -98,6 +134,37 @@ func TestCircuitBreakerSlow(t *testing.T) {
 		circuitbreaker.WithWaitIntervalFunctionInOpenState(nil),
 		circuitbreaker.WithPermittedNumberOfCallsInHalfOpenState(2),
 		circuitbreaker.WithMaxWaitDurationInHalfOpenState(time.Second*5))
+	listener := breaker.EventListener()
+	listener.OnSuccess(func(event circuitbreaker.Event) {
+		assert.Equal(t, circuitbreaker.Success, event.EventType())
+		assert.True(t, strings.HasPrefix(fmt.Sprintf("%v", event),
+			fmt.Sprintf("%v: CircuitBreaker '%s'",
+				event.CreationTime(), event.CircuitBreakerName())))
+	})
+	listener.OnError(func(event circuitbreaker.Event) {
+		assert.Fail(t, "should not listen error event")
+	})
+	listener.OnNotPermitted(func(event circuitbreaker.Event) {
+		assert.Equal(t, circuitbreaker.NotPermitted, event.EventType())
+		assert.True(t, strings.HasPrefix(fmt.Sprintf("%v", event),
+			fmt.Sprintf("%v: CircuitBreaker '%s'",
+				event.CreationTime(), event.CircuitBreakerName())))
+	})
+	listener.OnStateTransition(func(event circuitbreaker.Event) {
+		assert.Equal(t, circuitbreaker.StateTransition, event.EventType())
+		assert.True(t, strings.HasPrefix(fmt.Sprintf("%v", event),
+			fmt.Sprintf("%v: CircuitBreaker '%s'",
+				event.CreationTime(), event.CircuitBreakerName())))
+	})
+	listener.OnFailureRateExceeded(func(event circuitbreaker.Event) {
+		assert.Fail(t, "should not listen failure rate exceeded event")
+	})
+	listener.OnSlowCallRateExceeded(func(event circuitbreaker.Event) {
+		assert.Equal(t, circuitbreaker.SlowCallRateExceeded, event.EventType())
+		assert.True(t, strings.HasPrefix(fmt.Sprintf("%v", event),
+			fmt.Sprintf("%v: CircuitBreaker '%s'",
+				event.CreationTime(), event.CircuitBreakerName())))
+	})
 
 	// 创建一个可运行的函数
 	fn := func(str string) (string, error) {

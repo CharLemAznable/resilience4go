@@ -58,19 +58,19 @@ func forForcedOpen(config *Config) Metrics {
 type metricsResult string
 
 const (
-	BelowThresholds             metricsResult = "BELOW_THRESHOLDS"
-	FailureRateAboveThresholds  metricsResult = "FAILURE_RATE_ABOVE_THRESHOLDS"
-	SlowCallRateAboveThresholds metricsResult = "SLOW_CALL_RATE_ABOVE_THRESHOLDS"
-	AboveThresholds             metricsResult = "ABOVE_THRESHOLDS"
-	BelowMinimumCallsThreshold  metricsResult = "BELOW_MINIMUM_CALLS_THRESHOLD"
+	belowThresholds             metricsResult = "BELOW_THRESHOLDS"
+	failureRateAboveThresholds  metricsResult = "FAILURE_RATE_ABOVE_THRESHOLDS"
+	slowCallRateAboveThresholds metricsResult = "SLOW_CALL_RATE_ABOVE_THRESHOLDS"
+	aboveThresholds             metricsResult = "ABOVE_THRESHOLDS"
+	belowMinimumCallsThreshold  metricsResult = "BELOW_MINIMUM_CALLS_THRESHOLD"
 )
 
 func failureRateExceededThreshold(result metricsResult) bool {
-	return result == AboveThresholds || result == FailureRateAboveThresholds
+	return result == aboveThresholds || result == failureRateAboveThresholds
 }
 
 func slowCallRateExceededThreshold(result metricsResult) bool {
-	return result == AboveThresholds || result == SlowCallRateAboveThresholds
+	return result == aboveThresholds || result == slowCallRateAboveThresholds
 }
 
 func exceededThresholds(result metricsResult) bool {
@@ -127,13 +127,13 @@ func (m *metrics) onCallNotPermitted() {
 }
 
 func (m *metrics) onSuccess(duration time.Duration) metricsResult {
-	calcOutcome := m.calcOutcome(duration, SlowSuccessOutcome, SuccessOutcome)
+	calcOutcome := m.calcOutcome(duration, slowSuccessOutcome, successOutcome)
 	snap := m.recorder.record(duration, calcOutcome)
 	return m.checkIfThresholdsExceeded(snap)
 }
 
 func (m *metrics) onError(duration time.Duration) metricsResult {
-	calcOutcome := m.calcOutcome(duration, SlowErrorOutcome, ErrorOutcome)
+	calcOutcome := m.calcOutcome(duration, slowErrorOutcome, errorOutcome)
 	snap := m.recorder.record(duration, calcOutcome)
 	return m.checkIfThresholdsExceeded(snap)
 }
@@ -150,19 +150,19 @@ func (m *metrics) checkIfThresholdsExceeded(snap *snapshot) metricsResult {
 	slowCallsInPercentage := m.slowCallRate(snap)
 
 	if failureRateInPercentage == -1 || slowCallsInPercentage == -1 {
-		return BelowMinimumCallsThreshold
+		return belowMinimumCallsThreshold
 	}
 	if failureRateInPercentage >= m.failureRateThreshold &&
 		slowCallsInPercentage >= m.slowCallRateThreshold {
-		return AboveThresholds
+		return aboveThresholds
 	}
 	if failureRateInPercentage >= m.failureRateThreshold {
-		return FailureRateAboveThresholds
+		return failureRateAboveThresholds
 	}
 	if slowCallsInPercentage >= m.slowCallRateThreshold {
-		return SlowCallRateAboveThresholds
+		return slowCallRateAboveThresholds
 	}
-	return BelowThresholds
+	return belowThresholds
 }
 
 func (m *metrics) failureRate(snap *snapshot) float64 {
@@ -184,10 +184,10 @@ func (m *metrics) slowCallRate(snap *snapshot) float64 {
 type outcome string
 
 const (
-	SuccessOutcome     outcome = "SUCCESS"
-	ErrorOutcome       outcome = "ERROR"
-	SlowSuccessOutcome outcome = "SLOW_SUCCESS"
-	SlowErrorOutcome   outcome = "SLOW_ERROR"
+	successOutcome     outcome = "SUCCESS"
+	errorOutcome       outcome = "ERROR"
+	slowSuccessOutcome outcome = "SLOW_SUCCESS"
+	slowErrorOutcome   outcome = "SLOW_ERROR"
 )
 
 type recorder interface {
@@ -358,13 +358,13 @@ func (agg *aggregation) record(duration time.Duration, outcome outcome) {
 	agg.numberOfCalls++
 	agg.totalDuration += duration
 	switch outcome {
-	case SlowSuccessOutcome:
+	case slowSuccessOutcome:
 		agg.numberOfSlowCalls++
-	case SlowErrorOutcome:
+	case slowErrorOutcome:
 		agg.numberOfSlowCalls++
 		agg.numberOfFailedCalls++
 		agg.numberOfSlowFailedCalls++
-	case ErrorOutcome:
+	case errorOutcome:
 		agg.numberOfFailedCalls++
 	}
 }

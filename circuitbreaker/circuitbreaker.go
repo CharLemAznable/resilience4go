@@ -9,6 +9,7 @@ import (
 
 type CircuitBreaker interface {
 	Name() string
+	EventListener() EventListener
 	TransitionToDisabled() error
 	TransitionToForcedOpen() error
 	TransitionToClosedState() error
@@ -17,8 +18,9 @@ type CircuitBreaker interface {
 	Metrics() Metrics
 
 	config() *Config
-	execute(fn func() (any, error)) (any, error)
+	execute(func() (any, error)) (any, error)
 	acquirePermission() error
+	publishThresholdsExceededEvent(metricsResult, Metrics)
 }
 
 func NewCircuitBreaker(name string, configs ...ConfigBuilder) CircuitBreaker {
@@ -27,21 +29,27 @@ func NewCircuitBreaker(name string, configs ...ConfigBuilder) CircuitBreaker {
 		cfg(config)
 	}
 	machine := &stateMachine{
-		name: name,
-		conf: config,
+		name:          name,
+		conf:          config,
+		eventListener: newEventListener(),
 	}
 	machine.state.Store(closed(machine))
 	return machine
 }
 
 type stateMachine struct {
-	name  string
-	conf  *Config
-	state atomic.Pointer[state]
+	name          string
+	conf          *Config
+	eventListener EventListener
+	state         atomic.Pointer[state]
 }
 
 func (machine *stateMachine) Name() string {
 	return machine.name
+}
+
+func (machine *stateMachine) EventListener() EventListener {
+	return machine.eventListener
 }
 
 func (machine *stateMachine) TransitionToDisabled() error {
@@ -74,6 +82,23 @@ func (machine *stateMachine) TransitionToHalfOpenState() error {
 	})
 }
 
+func (machine *stateMachine) stateTransition(newStateName stateName, generator func(*state) *state) error {
+	var previous *state
+	previous, err := getAndUpdatePointer(&machine.state, func(currentState *state) (*state, error) {
+		if err := checkStateTransition(machine.name, currentState.name, newStateName); err != nil {
+			return nil, err
+		}
+		if currentState.preTransitionHook != nil {
+			go currentState.preTransitionHook()
+		}
+		return generator(currentState), nil
+	})
+	if err == nil && previous.name != newStateName {
+		machine.publishEvent(newStateTransitionEvent(machine.name, previous.name, newStateName))
+	}
+	return err
+}
+
 func (machine *stateMachine) Metrics() Metrics {
 	return machine.loadState().metrics
 }
@@ -84,6 +109,7 @@ func (machine *stateMachine) config() *Config {
 
 func (machine *stateMachine) execute(fn func() (any, error)) (any, error) {
 	if err := machine.acquirePermission(); err != nil {
+		machine.publishEvent(newNotPermittedEvent(machine.name))
 		return nil, err
 	}
 	start := time.Now()
@@ -114,13 +140,24 @@ func (machine *stateMachine) acquirePermission() error {
 func (machine *stateMachine) onResult(start time.Time, ret any, err error) {
 	duration := time.Now().Sub(start)
 	if machine.conf.recordResultPredicateFn(ret, err) {
+		machine.publishEvent(newErrorEvent(machine.name, duration, ret, err))
 		if fn := machine.loadState().onError; fn != nil {
 			fn(duration)
 		}
 	} else {
+		machine.publishEvent(newSuccessEvent(machine.name, duration))
 		if fn := machine.loadState().onSuccess; fn != nil {
 			fn(duration)
 		}
+	}
+}
+
+func (machine *stateMachine) publishThresholdsExceededEvent(result metricsResult, metrics Metrics) {
+	if failureRateExceededThreshold(result) {
+		machine.publishEvent(newFailureRateExceededEvent(machine.name, metrics.FailureRate()))
+	}
+	if slowCallRateExceededThreshold(result) {
+		machine.publishEvent(newSlowCallRateExceededEvent(machine.name, metrics.SlowCallRate()))
 	}
 }
 
@@ -128,17 +165,11 @@ func (machine *stateMachine) loadState() *state {
 	return machine.state.Load()
 }
 
-func (machine *stateMachine) stateTransition(newStateName stateName, generator func(*state) *state) error {
-	_, err := getAndUpdatePointer(&machine.state, func(currentState *state) (*state, error) {
-		if _, err := newStateTransition(machine.name, currentState.name, newStateName); err != nil {
-			return nil, err
-		}
-		if currentState.preTransitionHook != nil {
-			go currentState.preTransitionHook()
-		}
-		return generator(currentState), nil
-	})
-	return err
+func (machine *stateMachine) publishEvent(event Event) {
+	if event.EventType() == StateTransition ||
+		machine.loadState().allowPublish {
+		machine.eventListener.consumeEvent(event)
+	}
 }
 
 type channelValue struct {

@@ -26,7 +26,7 @@ type state struct {
 	acquirePermission func() error
 	onError           func(time.Duration)
 	onSuccess         func(time.Duration)
-	preTransitionHook func() // nil-able
+	preTransitionHook func()
 }
 
 func closed(breaker CircuitBreaker) *state {
@@ -40,6 +40,7 @@ func closed(breaker CircuitBreaker) *state {
 	isClosed.Store(1)
 	checkIfThresholdsExceeded := func(result metricsResult) {
 		if exceededThresholds(result) && isClosed.CompareAndSwap(1, 0) {
+			breaker.publishThresholdsExceededEvent(result, s.metrics)
 			_ = breaker.TransitionToOpenState()
 		}
 	}
@@ -133,7 +134,7 @@ func halfOpen(attempts int64, breaker CircuitBreaker) *state {
 		if exceededThresholds(result) {
 			toOpen()
 		}
-		if result == BelowThresholds {
+		if result == belowThresholds {
 			toClosed()
 		}
 	}
@@ -214,19 +215,11 @@ func forcedOpen(attempts int64, breaker CircuitBreaker) *state {
 	return s
 }
 
-type stateTransition struct {
-	fromState stateName
-	toState   stateName
-}
-
-func newStateTransition(name string, fromState, toState stateName) (*stateTransition, error) {
+func checkStateTransition(name string, fromState, toState stateName) error {
 	if fromState == Closed && toState == HalfOpen {
-		return nil, errors.New(fmt.Sprintf(
+		return errors.New(fmt.Sprintf(
 			"CircuitBreaker '%s' tried an illegal state transition from %s to %s",
 			name, fromState, toState))
 	}
-	return &stateTransition{
-		fromState: fromState,
-		toState:   toState,
-	}, nil
+	return nil
 }
