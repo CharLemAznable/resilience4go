@@ -36,10 +36,10 @@ func closed(breaker CircuitBreaker) *state {
 		attempts:     0,
 		metrics:      forClosed(breaker.config()),
 	}
-	var isClosed atomic.Int32
-	isClosed.Store(1)
+	var isClosed atomic.Bool
+	isClosed.Store(true)
 	checkIfThresholdsExceeded := func(result metricsResult) {
-		if exceededThresholds(result) && isClosed.CompareAndSwap(1, 0) {
+		if exceededThresholds(result) && isClosed.CompareAndSwap(true, false) {
 			breaker.publishThresholdsExceededEvent(result, s.metrics)
 			_ = breaker.TransitionToOpenState()
 		}
@@ -61,10 +61,10 @@ func open(attempts int64, metrics Metrics, breaker CircuitBreaker) *state {
 		attempts:     attempts,
 		metrics:      metrics,
 	}
-	var isOpen atomic.Int32
-	isOpen.Store(1)
+	var isOpen atomic.Bool
+	isOpen.Store(true)
 	toHalfOpen := func() {
-		if isOpen.CompareAndSwap(1, 0) {
+		if isOpen.CompareAndSwap(true, false) {
 			_ = breaker.TransitionToHalfOpenState()
 		}
 	}
@@ -87,20 +87,20 @@ func open(attempts int64, metrics Metrics, breaker CircuitBreaker) *state {
 		s.metrics.onSuccess(duration)
 	}
 	if config.automaticTransitionFromOpenToHalfOpenEnabled {
-		var done atomic.Int32
+		var done atomic.Bool
 		timer := time.NewTimer(waitDuration)
 		cancel := make(chan bool, 1)
 		go func() {
 			select {
 			case <-timer.C:
-				if done.CompareAndSwap(0, 1) {
+				if done.CompareAndSwap(false, true) {
 					toHalfOpen()
 				}
 			case <-cancel:
 			}
 		}()
 		s.preTransitionHook = func() {
-			if done.CompareAndSwap(0, 1) {
+			if done.CompareAndSwap(false, true) {
 				cancel <- true
 			}
 		}
@@ -145,20 +145,20 @@ func halfOpen(attempts int64, breaker CircuitBreaker) *state {
 		checkIfThresholdsExceeded(s.metrics.onSuccess(duration))
 	}
 	if config.maxWaitDurationInHalfOpenState > 0 {
-		var done atomic.Int32
+		var done atomic.Bool
 		timer := time.NewTimer(config.maxWaitDurationInHalfOpenState)
 		cancel := make(chan bool, 1)
 		go func() {
 			select {
 			case <-timer.C:
-				if done.CompareAndSwap(0, 1) {
+				if done.CompareAndSwap(false, true) {
 					toOpen()
 				}
 			case <-cancel:
 			}
 		}()
 		s.preTransitionHook = func() {
-			if done.CompareAndSwap(0, 1) {
+			if done.CompareAndSwap(false, true) {
 				cancel <- true
 			}
 		}
@@ -175,15 +175,15 @@ func permittedNumberDecrement(current int64) int64 {
 }
 
 func atomicHalfOpen(breaker CircuitBreaker) (func(), func()) {
-	var isHalfOpen atomic.Int32
-	isHalfOpen.Store(1)
+	var isHalfOpen atomic.Bool
+	isHalfOpen.Store(true)
 	toOpen := func() {
-		if isHalfOpen.CompareAndSwap(1, 0) {
+		if isHalfOpen.CompareAndSwap(true, false) {
 			_ = breaker.TransitionToOpenState()
 		}
 	}
 	toClosed := func() {
-		if isHalfOpen.CompareAndSwap(1, 0) {
+		if isHalfOpen.CompareAndSwap(true, false) {
 			_ = breaker.TransitionToClosedState()
 		}
 	}

@@ -125,6 +125,8 @@ func TestCircuitBreaker(t *testing.T) {
 	count.Add(1)
 	_, err = decoratedFn()
 	assert.NoError(t, err)
+
+	time.Sleep(time.Second)
 }
 
 func TestCircuitBreakerSlow(t *testing.T) {
@@ -233,6 +235,8 @@ func TestCircuitBreakerSlow(t *testing.T) {
 	e, ok = err.(*circuitbreaker.NotPermittedError)
 	assert.True(t, ok)
 	assert.Equal(t, "CircuitBreaker 'test' is OPEN and does not permit further calls", e.Error())
+
+	time.Sleep(time.Second)
 }
 
 func TestCircuitBreakerHalfOpenError(t *testing.T) {
