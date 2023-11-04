@@ -113,7 +113,7 @@ func (machine *stateMachine) acquirePermission() error {
 
 func (machine *stateMachine) onResult(start time.Time, ret any, err error) {
 	duration := time.Now().Sub(start)
-	if machine.conf.recordResultPredicateFn()(ret, err) {
+	if machine.conf.recordResultPredicateFn(ret, err) {
 		if fn := machine.loadState().onError; fn != nil {
 			fn(duration)
 		}
@@ -134,7 +134,7 @@ func (machine *stateMachine) stateTransition(newStateName stateName, generator f
 			return nil, err
 		}
 		if currentState.preTransitionHook != nil {
-			currentState.preTransitionHook()
+			go currentState.preTransitionHook()
 		}
 		return generator(currentState), nil
 	})

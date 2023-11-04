@@ -44,18 +44,18 @@ func (config *Config) String() string {
 		config.permittedNumberOfCallsInHalfOpenState, config.maxWaitDurationInHalfOpenState)
 }
 
-func (config *Config) recordResultPredicateFn() func(any, error) bool {
+func (config *Config) recordResultPredicateFn(ret any, err error) bool {
 	if config.recordResultPredicate != nil {
-		return config.recordResultPredicate
+		return config.recordResultPredicate(ret, err)
 	}
-	return DefaultRecordResultPredicate
+	return DefaultRecordResultPredicate(ret, err)
 }
 
-func (config *Config) waitIntervalFunctionInOpenStateFn() func(int64) time.Duration {
+func (config *Config) waitIntervalFunctionInOpenStateFn(attempts int64) time.Duration {
 	if config.waitIntervalFunctionInOpenState != nil {
-		return config.waitIntervalFunctionInOpenState
+		return config.waitIntervalFunctionInOpenState(attempts)
 	}
-	return DefaultWaitIntervalFunctionInOpenState
+	return DefaultWaitIntervalFunctionInOpenState(attempts)
 }
 
 type ConfigBuilder func(*Config)

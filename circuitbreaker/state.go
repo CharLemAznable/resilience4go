@@ -67,7 +67,7 @@ func open(attempts int64, metrics Metrics, breaker CircuitBreaker) *state {
 			_ = breaker.TransitionToHalfOpenState()
 		}
 	}
-	waitDuration := config.waitIntervalFunctionInOpenStateFn()(attempts)
+	waitDuration := config.waitIntervalFunctionInOpenStateFn(attempts)
 	retryAfterWaitDuration := time.Now().Add(waitDuration)
 	s.acquirePermission = func() error {
 		if time.Now().After(retryAfterWaitDuration) {
