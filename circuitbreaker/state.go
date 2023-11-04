@@ -10,11 +10,11 @@ import (
 type stateName string
 
 const (
-	ClosedState     stateName = "CLOSED"
-	OpenState       stateName = "OPEN"
-	HalfOpenState   stateName = "HALF_OPEN"
-	DisabledState   stateName = "DISABLED"
-	ForcedOpenState stateName = "FORCED_OPEN"
+	Closed     stateName = "CLOSED"
+	Open       stateName = "OPEN"
+	HalfOpen   stateName = "HALF_OPEN"
+	Disabled   stateName = "DISABLED"
+	ForcedOpen stateName = "FORCED_OPEN"
 )
 
 type state struct {
@@ -31,7 +31,7 @@ type state struct {
 
 func closed(breaker CircuitBreaker) *state {
 	s := &state{
-		name:         ClosedState,
+		name:         Closed,
 		allowPublish: true,
 		attempts:     0,
 		metrics:      forClosed(breaker.config()),
@@ -55,7 +55,7 @@ func closed(breaker CircuitBreaker) *state {
 func open(attempts int64, metrics Metrics, breaker CircuitBreaker) *state {
 	config := breaker.config()
 	s := &state{
-		name:         OpenState,
+		name:         Open,
 		allowPublish: true,
 		attempts:     attempts,
 		metrics:      metrics,
@@ -77,7 +77,7 @@ func open(attempts int64, metrics Metrics, breaker CircuitBreaker) *state {
 		s.metrics.onCallNotPermitted()
 		return &NotPermittedError{
 			name:      breaker.Name(),
-			stateName: OpenState}
+			stateName: Open}
 	}
 	s.onError = func(duration time.Duration) {
 		s.metrics.onError(duration)
@@ -111,7 +111,7 @@ func halfOpen(attempts int64, breaker CircuitBreaker) *state {
 	config := breaker.config()
 	permittedNumber := config.permittedNumberOfCallsInHalfOpenState
 	s := &state{
-		name:         HalfOpenState,
+		name:         HalfOpen,
 		allowPublish: true,
 		attempts:     attempts,
 		metrics:      forHalfOpen(permittedNumber, config),
@@ -126,7 +126,7 @@ func halfOpen(attempts int64, breaker CircuitBreaker) *state {
 		s.metrics.onCallNotPermitted()
 		return &NotPermittedError{
 			name:      breaker.Name(),
-			stateName: HalfOpenState}
+			stateName: HalfOpen}
 	}
 	toOpen, toClosed := atomicHalfOpen(breaker)
 	checkIfThresholdsExceeded := func(result metricsResult) {
@@ -191,7 +191,7 @@ func atomicHalfOpen(breaker CircuitBreaker) (func(), func()) {
 
 func disabled(breaker CircuitBreaker) *state {
 	return &state{
-		name:         DisabledState,
+		name:         Disabled,
 		allowPublish: false,
 		attempts:     0,
 		metrics:      forDisabled(breaker.config()),
@@ -200,7 +200,7 @@ func disabled(breaker CircuitBreaker) *state {
 
 func forcedOpen(attempts int64, breaker CircuitBreaker) *state {
 	s := &state{
-		name:         ForcedOpenState,
+		name:         ForcedOpen,
 		allowPublish: false,
 		attempts:     attempts,
 		metrics:      forForcedOpen(breaker.config()),
@@ -209,7 +209,7 @@ func forcedOpen(attempts int64, breaker CircuitBreaker) *state {
 		s.metrics.onCallNotPermitted()
 		return &NotPermittedError{
 			name:      breaker.Name(),
-			stateName: ForcedOpenState}
+			stateName: ForcedOpen}
 	}
 	return s
 }
@@ -220,7 +220,7 @@ type stateTransition struct {
 }
 
 func newStateTransition(name string, fromState, toState stateName) (*stateTransition, error) {
-	if fromState == ClosedState && toState == HalfOpenState {
+	if fromState == Closed && toState == HalfOpen {
 		return nil, errors.New(fmt.Sprintf(
 			"CircuitBreaker '%s' tried an illegal state transition from %s to %s",
 			name, fromState, toState))
