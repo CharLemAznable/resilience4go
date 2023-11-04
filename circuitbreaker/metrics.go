@@ -127,13 +127,13 @@ func (m *metrics) onCallNotPermitted() {
 }
 
 func (m *metrics) onSuccess(duration time.Duration) metricsResult {
-	calcOutcome := m.calcOutcome(duration, SlowSuccess, Success)
+	calcOutcome := m.calcOutcome(duration, SlowSuccessOutcome, SuccessOutcome)
 	snap := m.recorder.record(duration, calcOutcome)
 	return m.checkIfThresholdsExceeded(snap)
 }
 
 func (m *metrics) onError(duration time.Duration) metricsResult {
-	calcOutcome := m.calcOutcome(duration, SlowError, Error)
+	calcOutcome := m.calcOutcome(duration, SlowErrorOutcome, ErrorOutcome)
 	snap := m.recorder.record(duration, calcOutcome)
 	return m.checkIfThresholdsExceeded(snap)
 }
@@ -184,10 +184,10 @@ func (m *metrics) slowCallRate(snap *snapshot) float64 {
 type outcome string
 
 const (
-	Success     outcome = "SUCCESS"
-	Error       outcome = "ERROR"
-	SlowSuccess outcome = "SLOW_SUCCESS"
-	SlowError   outcome = "SLOW_ERROR"
+	SuccessOutcome     outcome = "SUCCESS"
+	ErrorOutcome       outcome = "ERROR"
+	SlowSuccessOutcome outcome = "SLOW_SUCCESS"
+	SlowErrorOutcome   outcome = "SLOW_ERROR"
 )
 
 type recorder interface {
@@ -358,13 +358,13 @@ func (agg *aggregation) record(duration time.Duration, outcome outcome) {
 	agg.numberOfCalls++
 	agg.totalDuration += duration
 	switch outcome {
-	case SlowSuccess:
+	case SlowSuccessOutcome:
 		agg.numberOfSlowCalls++
-	case SlowError:
+	case SlowErrorOutcome:
 		agg.numberOfSlowCalls++
 		agg.numberOfFailedCalls++
 		agg.numberOfSlowFailedCalls++
-	case Error:
+	case ErrorOutcome:
 		agg.numberOfFailedCalls++
 	}
 }

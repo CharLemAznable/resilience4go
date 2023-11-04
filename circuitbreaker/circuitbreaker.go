@@ -45,31 +45,31 @@ func (machine *stateMachine) Name() string {
 }
 
 func (machine *stateMachine) TransitionToDisabled() error {
-	return machine.stateTransition(Disabled, func(_ *state) *state {
+	return machine.stateTransition(DisabledState, func(_ *state) *state {
 		return disabled(machine)
 	})
 }
 
 func (machine *stateMachine) TransitionToForcedOpen() error {
-	return machine.stateTransition(ForcedOpen, func(current *state) *state {
+	return machine.stateTransition(ForcedOpenState, func(current *state) *state {
 		return forcedOpen(current.attempts, machine)
 	})
 }
 
 func (machine *stateMachine) TransitionToClosedState() error {
-	return machine.stateTransition(Closed, func(_ *state) *state {
+	return machine.stateTransition(ClosedState, func(_ *state) *state {
 		return closed(machine)
 	})
 }
 
 func (machine *stateMachine) TransitionToOpenState() error {
-	return machine.stateTransition(Open, func(current *state) *state {
+	return machine.stateTransition(OpenState, func(current *state) *state {
 		return open(current.attempts+1, current.metrics, machine)
 	})
 }
 
 func (machine *stateMachine) TransitionToHalfOpenState() error {
-	return machine.stateTransition(HalfOpen, func(current *state) *state {
+	return machine.stateTransition(HalfOpenState, func(current *state) *state {
 		return halfOpen(current.attempts, machine)
 	})
 }
