@@ -3,7 +3,6 @@ package circuitbreaker_test
 import (
 	"fmt"
 	"github.com/CharLemAznable/resilience4go/circuitbreaker"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
@@ -35,14 +34,30 @@ func TestConfig_String(t *testing.T) {
 		recordResultPredicate, any(recordResultPredicate),
 		waitIntervalFunctionInOpenState, any(waitIntervalFunctionInOpenState))
 	result := fmt.Sprintf("%v", config)
-	assert.Equal(t, expected, result)
+	if expected != result {
+		t.Errorf("Expected config string '%s', but got '%s'", expected, result)
+	}
 
-	assert.PanicsWithValue(t, "slidingWindowSize must be greater than 0", func() {
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				if r != "slidingWindowSize must be greater than 0" {
+					t.Errorf("Expected panic value 'slidingWindowSize must be greater than 0', but got '%v'", r)
+				}
+			}
+		}()
 		circuitbreaker.WithSlidingWindow(circuitbreaker.TimeBased, 0, 50)(config)
-	})
-	assert.PanicsWithValue(t, "minimumNumberOfCalls must be greater than 0", func() {
+	}()
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				if r != "minimumNumberOfCalls must be greater than 0" {
+					t.Errorf("Expected panic value 'minimumNumberOfCalls must be greater than 0', but got '%v'", r)
+				}
+			}
+		}()
 		circuitbreaker.WithSlidingWindow(circuitbreaker.TimeBased, 50, 0)(config)
-	})
+	}()
 
 	circuitbreaker.WithSlidingWindow(circuitbreaker.CountBased, 10, 50)(config)
 	expected = fmt.Sprintf("CircuitBreakerConfig"+
@@ -55,5 +70,7 @@ func TestConfig_String(t *testing.T) {
 		recordResultPredicate, any(recordResultPredicate),
 		waitIntervalFunctionInOpenState, any(waitIntervalFunctionInOpenState))
 	result = fmt.Sprintf("%v", config)
-	assert.Equal(t, expected, result)
+	if expected != result {
+		t.Errorf("Expected config string '%s', but got '%s'", expected, result)
+	}
 }

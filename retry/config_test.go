@@ -3,7 +3,6 @@ package retry_test
 import (
 	"fmt"
 	"github.com/CharLemAznable/resilience4go/retry"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
@@ -27,5 +26,7 @@ func TestConfig_String(t *testing.T) {
 		recordResultPredicate, any(recordResultPredicate),
 		waitIntervalFunction, any(waitIntervalFunction))
 	result := fmt.Sprintf("%v", config)
-	assert.Equal(t, expected, result)
+	if result != expected {
+		t.Errorf("Expected config string '%s', but got '%s'", expected, result)
+	}
 }

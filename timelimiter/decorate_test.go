@@ -3,7 +3,6 @@ package timelimiter_test
 import (
 	"errors"
 	"github.com/CharLemAznable/resilience4go/timelimiter"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
@@ -22,9 +21,16 @@ func TestDecorateRunnable(t *testing.T) {
 	// 调用DecorateRunnable函数
 	decoratedFn := timelimiter.DecorateRunnable(tl, fn)
 
-	assert.PanicsWithValue(t, "panic error", func() {
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				if r != "panic error" {
+					t.Errorf("Expected panic error 'panic error', but got '%v'", r)
+				}
+			}
+		}()
 		_ = decoratedFn()
-	})
+	}()
 }
 
 func TestDecorateSupplier(t *testing.T) {
@@ -43,8 +49,12 @@ func TestDecorateSupplier(t *testing.T) {
 
 	ret, err := decoratedFn()
 
-	assert.Equal(t, "error", ret)
-	assert.Equal(t, "error", err.Error())
+	if ret != "error" {
+		t.Errorf("Expected result 'error', but got '%s'", ret)
+	}
+	if err.Error() != "error" {
+		t.Errorf("Expected error 'error', but got '%s'", err.Error())
+	}
 }
 
 func TestDecorateConsumer(t *testing.T) {
@@ -63,8 +73,13 @@ func TestDecorateConsumer(t *testing.T) {
 
 	err := decoratedFn("error")
 	timeout, ok := err.(*timelimiter.TimeoutError)
-	assert.True(t, ok)
-	assert.Equal(t, "TimeLimiter 'test' recorded a timeout exception.", timeout.Error())
+	if !ok {
+		t.Errorf("Expected error type *timelimiter.TimeoutError, but got '%T'", err)
+	} else {
+		if timeout.Error() != "TimeLimiter 'test' recorded a timeout exception." {
+			t.Errorf("Expected error message 'TimeLimiter 'test' recorded a timeout exception.', but got '%s'", timeout.Error())
+		}
+	}
 }
 
 func TestDecorateFunction(t *testing.T) {
@@ -83,8 +98,15 @@ func TestDecorateFunction(t *testing.T) {
 
 	ret, err := decoratedFn("error")
 
-	assert.Equal(t, "", ret)
+	if ret != "" {
+		t.Errorf("Expected result '', but got '%s'", ret)
+	}
 	timeout, ok := err.(*timelimiter.TimeoutError)
-	assert.True(t, ok)
-	assert.Equal(t, "TimeLimiter 'test' recorded a timeout exception.", timeout.Error())
+	if !ok {
+		t.Errorf("Expected error type *timelimiter.TimeoutError, but got '%T'", err)
+	} else {
+		if timeout.Error() != "TimeLimiter 'test' recorded a timeout exception." {
+			t.Errorf("Expected error message 'TimeLimiter 'test' recorded a timeout exception.', but got '%s'", timeout.Error())
+		}
+	}
 }

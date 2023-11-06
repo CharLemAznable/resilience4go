@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/CharLemAznable/resilience4go/bulkhead"
-	"github.com/stretchr/testify/assert"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -21,33 +20,41 @@ func TestBulkheadPublishEvents(t *testing.T) {
 	bh := bulkhead.NewBulkhead("test",
 		bulkhead.WithMaxConcurrentCalls(1),
 		bulkhead.WithMaxWaitDuration(time.Second*1))
-	assert.Equal(t, "test", bh.Name())
+	if bh.Name() != "test" {
+		t.Errorf("Expected bulkhead name 'test', but got '%s'", bh.Name())
+	}
 	eventListener := bh.EventListener()
 	permitted := atomic.Int64{}
 	rejected := atomic.Int64{}
 	finished := atomic.Int64{}
 	eventListener.OnPermitted(func(event bulkhead.Event) {
-		assert.Equal(t, bulkhead.PERMITTED, event.EventType())
-		assert.Equal(t,
-			fmt.Sprintf("%v: Bulkhead '%s' permitted a call.",
-				event.CreationTime(), event.BulkheadName()),
-			fmt.Sprintf("%v", event))
+		if event.EventType() != bulkhead.PERMITTED {
+			t.Errorf("Expected event type PERMITTED, but got '%s'", event.EventType())
+		}
+		expectedMsg := fmt.Sprintf("%v: Bulkhead '%s' permitted a call.", event.CreationTime(), event.BulkheadName())
+		if fmt.Sprintf("%v", event) != expectedMsg {
+			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, fmt.Sprintf("%v", event))
+		}
 		permitted.Add(1)
 	})
 	eventListener.OnRejected(func(event bulkhead.Event) {
-		assert.Equal(t, bulkhead.REJECTED, event.EventType())
-		assert.Equal(t,
-			fmt.Sprintf("%v: Bulkhead '%s' rejected a call.",
-				event.CreationTime(), event.BulkheadName()),
-			fmt.Sprintf("%v", event))
+		if event.EventType() != bulkhead.REJECTED {
+			t.Errorf("Expected event type REJECTED, but got '%s'", event.EventType())
+		}
+		expectedMsg := fmt.Sprintf("%v: Bulkhead '%s' rejected a call.", event.CreationTime(), event.BulkheadName())
+		if fmt.Sprintf("%v", event) != expectedMsg {
+			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, fmt.Sprintf("%v", event))
+		}
 		rejected.Add(1)
 	})
 	eventListener.OnFinished(func(event bulkhead.Event) {
-		assert.Equal(t, bulkhead.FINISHED, event.EventType())
-		assert.Equal(t,
-			fmt.Sprintf("%v: Bulkhead '%s' has finished a call.",
-				event.CreationTime(), event.BulkheadName()),
-			fmt.Sprintf("%v", event))
+		if event.EventType() != bulkhead.FINISHED {
+			t.Errorf("Expected event type FINISHED, but got '%s'", event.EventType())
+		}
+		expectedMsg := fmt.Sprintf("%v: Bulkhead '%s' has finished a call.", event.CreationTime(), event.BulkheadName())
+		if fmt.Sprintf("%v", event) != expectedMsg {
+			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, fmt.Sprintf("%v", event))
+		}
 		finished.Add(1)
 	})
 
@@ -63,7 +70,13 @@ func TestBulkheadPublishEvents(t *testing.T) {
 	}()
 
 	time.Sleep(time.Second * 5)
-	assert.Equal(t, int64(1), permitted.Load())
-	assert.Equal(t, int64(1), rejected.Load())
-	assert.Equal(t, int64(1), finished.Load())
+	if permitted.Load() != int64(1) {
+		t.Errorf("Expected 1 permitted call, but got '%d'", permitted.Load())
+	}
+	if rejected.Load() != int64(1) {
+		t.Errorf("Expected 1 rejected call, but got '%d'", rejected.Load())
+	}
+	if finished.Load() != int64(1) {
+		t.Errorf("Expected 1 finished call, but got '%d'", finished.Load())
+	}
 }

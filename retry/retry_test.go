@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/CharLemAznable/resilience4go/retry"
-	"github.com/stretchr/testify/assert"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -14,28 +13,38 @@ func TestSuccess(t *testing.T) {
 	successRetry := retry.NewRetry("success",
 		retry.WithMaxAttempts(2),
 		retry.WithRecordResultPredicate(nil))
-	assert.Equal(t, "success", successRetry.Name())
+	if successRetry.Name() != "success" {
+		t.Errorf("Expected retry name 'success', but got '%s'", successRetry.Name())
+	}
 	listener := successRetry.EventListener()
 	listener.OnSuccess(func(event retry.Event) {
-		assert.Equal(t, retry.SUCCESS, event.EventType())
-		assert.Equal(t, fmt.Sprintf(
+		if event.EventType() != retry.SUCCESS {
+			t.Errorf("Expected event type SUCCESS, but got '%s'", event.EventType())
+		}
+		expected := fmt.Sprintf(
 			"%v: Retry '%s' recorded a successful retry attempt."+
 				" Number of retry attempts: '%d', Last result was: ('%v', '%v').",
 			event.CreationTime(), event.RetryName(),
-			event.NumOfAttempts(), event.RetVal(), event.RetErr()),
-			fmt.Sprintf("%v", event))
+			event.NumOfAttempts(), event.RetVal(), event.RetErr())
+		if fmt.Sprintf("%v", event) != expected {
+			t.Errorf("Expected event string '%s', but got '%v'", expected, event)
+		}
 	})
 	listener.OnError(func(event retry.Event) {
-		assert.Fail(t, "should not listen error event")
+		t.Error("Should not listen error event")
 	})
 	listener.OnRetry(func(event retry.Event) {
-		assert.Equal(t, retry.RETRY, event.EventType())
-		assert.Equal(t, fmt.Sprintf(
+		if event.EventType() != retry.RETRY {
+			t.Errorf("Expected event type RETRY, but got '%s'", event.EventType())
+		}
+		expected := fmt.Sprintf(
 			"%v: Retry '%s', waiting %v until attempt '%d'."+
 				" Last result was: ('%v', '%v').",
 			event.CreationTime(), event.RetryName(), retry.DefaultWaitDuration,
-			event.NumOfAttempts(), event.RetVal(), event.RetErr()),
-			fmt.Sprintf("%v", event))
+			event.NumOfAttempts(), event.RetVal(), event.RetErr())
+		if fmt.Sprintf("%v", event) != expected {
+			t.Errorf("Expected event string '%s', but got '%v'", expected, event)
+		}
 	})
 
 	var count atomic.Int64
@@ -48,7 +57,9 @@ func TestSuccess(t *testing.T) {
 	decoratedFn := retry.DecorateRunnable(successRetry, fn)
 
 	err := decoratedFn()
-	assert.NoError(t, err)
+	if err != nil {
+		t.Errorf("Expected nil error, but got '%v'", err)
+	}
 
 	time.Sleep(time.Second)
 }
@@ -57,28 +68,38 @@ func TestError(t *testing.T) {
 	successRetry := retry.NewRetry("error",
 		retry.WithMaxAttempts(2),
 		retry.WithWaitIntervalFunction(nil))
-	assert.Equal(t, "error", successRetry.Name())
+	if successRetry.Name() != "error" {
+		t.Errorf("Expected retry name 'error', but got '%s'", successRetry.Name())
+	}
 	listener := successRetry.EventListener()
 	listener.OnSuccess(func(event retry.Event) {
-		assert.Fail(t, "should not listen success event")
+		t.Error("Should not listen success event")
 	})
 	listener.OnError(func(event retry.Event) {
-		assert.Equal(t, retry.ERROR, event.EventType())
-		assert.Equal(t, fmt.Sprintf(
+		if event.EventType() != retry.ERROR {
+			t.Errorf("Expected event type ERROR, but got '%s'", event.EventType())
+		}
+		expected := fmt.Sprintf(
 			"%v: Retry '%s' recorded a failed retry attempt."+
 				" Number of retry attempts: '%d'. Giving up. Last result was: ('%v', '%v').",
 			event.CreationTime(), event.RetryName(),
-			event.NumOfAttempts(), event.RetVal(), event.RetErr()),
-			fmt.Sprintf("%v", event))
+			event.NumOfAttempts(), event.RetVal(), event.RetErr())
+		if fmt.Sprintf("%v", event) != expected {
+			t.Errorf("Expected event string '%s', but got '%v'", expected, event)
+		}
 	})
 	listener.OnRetry(func(event retry.Event) {
-		assert.Equal(t, retry.RETRY, event.EventType())
-		assert.Equal(t, fmt.Sprintf(
+		if event.EventType() != retry.RETRY {
+			t.Errorf("Expected event type RETRY, but got '%s'", event.EventType())
+		}
+		expected := fmt.Sprintf(
 			"%v: Retry '%s', waiting %v until attempt '%d'."+
 				" Last result was: ('%v', '%v').",
 			event.CreationTime(), event.RetryName(), retry.DefaultWaitDuration,
-			event.NumOfAttempts(), event.RetVal(), event.RetErr()),
-			fmt.Sprintf("%v", event))
+			event.NumOfAttempts(), event.RetVal(), event.RetErr())
+		if fmt.Sprintf("%v", event) != expected {
+			t.Errorf("Expected event string '%s', but got '%v'", expected, event)
+		}
 	})
 
 	var count atomic.Int64
@@ -91,7 +112,9 @@ func TestError(t *testing.T) {
 	decoratedFn := retry.DecorateRunnable(successRetry, fn)
 
 	err := decoratedFn()
-	assert.Error(t, err)
+	if err == nil {
+		t.Error("Expected non-nil error")
+	}
 
 	time.Sleep(time.Second)
 }

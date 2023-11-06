@@ -3,7 +3,6 @@ package retry_test
 import (
 	"errors"
 	"github.com/CharLemAznable/resilience4go/retry"
-	"github.com/stretchr/testify/assert"
 	"sync/atomic"
 	"testing"
 )
@@ -19,9 +18,16 @@ func TestDecorateRunnable(t *testing.T) {
 	}
 	decoratedFn := retry.DecorateRunnable(rt, fn)
 
-	assert.PanicsWithValue(t, "panic", func() {
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				if r != "panic" {
+					t.Errorf("Expected panic value 'panic', but got '%v'", r)
+				}
+			}
+		}()
 		_ = decoratedFn()
-	})
+	}()
 }
 
 func TestDecorateSupplier(t *testing.T) {
@@ -36,8 +42,12 @@ func TestDecorateSupplier(t *testing.T) {
 	decoratedFn := retry.DecorateSupplier(rt, fn)
 
 	i, err := decoratedFn()
-	assert.Equal(t, 0, i)
-	assert.NoError(t, err)
+	if i != 0 {
+		t.Errorf("Expected return value 0, but got '%d'", i)
+	}
+	if err != nil {
+		t.Errorf("Expected nil error, but got '%v'", err)
+	}
 }
 
 func TestDecorateConsumer(t *testing.T) {
@@ -56,8 +66,12 @@ func TestDecorateConsumer(t *testing.T) {
 	decoratedFn := retry.DecorateConsumer(rt, fn)
 
 	err := decoratedFn("test")
-	assert.NoError(t, err)
-	assert.Equal(t, 2, int(count.Load()))
+	if err != nil {
+		t.Errorf("Expected nil error, but got '%v'", err)
+	}
+	if int(count.Load()) != 2 {
+		t.Errorf("Expected count value 2, but got '%d'", int(count.Load()))
+	}
 }
 
 func TestDecorateFunction(t *testing.T) {
@@ -75,6 +89,15 @@ func TestDecorateFunction(t *testing.T) {
 	decoratedFn := retry.DecorateFunction(rt, fn)
 
 	ret, err := decoratedFn("notOK")
-	assert.Equal(t, "notOK", ret)
-	assert.EqualError(t, err, "Retry 'test' has exhausted all attempts (2)")
+	if ret != "notOK" {
+		t.Errorf("Expected return value 'notOK', but got '%s'", ret)
+	}
+	if err == nil {
+		t.Error("Expected non-nil error")
+	} else {
+		expectedErr := "Retry 'test' has exhausted all attempts (2)"
+		if err.Error() != expectedErr {
+			t.Errorf("Expected error '%s', but got '%v'", expectedErr, err)
+		}
+	}
 }

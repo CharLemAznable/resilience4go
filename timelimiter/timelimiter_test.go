@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/CharLemAznable/resilience4go/timelimiter"
-	"github.com/stretchr/testify/assert"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -14,34 +13,42 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 	// 创建一个TimeLimiter的mock对象
 	tl := timelimiter.NewTimeLimiter("test",
 		timelimiter.WithTimeoutDuration(time.Second*1))
-	assert.Equal(t, "test", tl.Name())
+	if tl.Name() != "test" {
+		t.Errorf("Expected time limiter name 'test', but got '%s'", tl.Name())
+	}
 	eventListener := tl.EventListener()
 	success := atomic.Int64{}
 	timeout := atomic.Int64{}
 	failure := atomic.Int64{}
 	panicMsg := "panic error"
 	eventListener.OnSuccess(func(event timelimiter.Event) {
-		assert.Equal(t, timelimiter.SUCCESS, event.EventType())
-		assert.Equal(t,
-			fmt.Sprintf("%v: TimeLimiter '%s' recorded a successful call.",
-				event.CreationTime(), event.TimeLimiterName()),
-			fmt.Sprintf("%v", event))
+		if event.EventType() != timelimiter.SUCCESS {
+			t.Errorf("Expected event type SUCCESS, but got '%s'", event.EventType())
+		}
+		expectedMsg := fmt.Sprintf("%v: TimeLimiter '%s' recorded a successful call.", event.CreationTime(), event.TimeLimiterName())
+		if fmt.Sprintf("%v", event) != expectedMsg {
+			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, fmt.Sprintf("%v", event))
+		}
 		success.Add(1)
 	})
 	eventListener.OnTimeout(func(event timelimiter.Event) {
-		assert.Equal(t, timelimiter.TIMEOUT, event.EventType())
-		assert.Equal(t,
-			fmt.Sprintf("%v: TimeLimiter '%s' recorded a timeout exception.",
-				event.CreationTime(), event.TimeLimiterName()),
-			fmt.Sprintf("%v", event))
+		if event.EventType() != timelimiter.TIMEOUT {
+			t.Errorf("Expected event type TIMEOUT, but got '%s'", event.EventType())
+		}
+		expectedMsg := fmt.Sprintf("%v: TimeLimiter '%s' recorded a timeout exception.", event.CreationTime(), event.TimeLimiterName())
+		if fmt.Sprintf("%v", event) != expectedMsg {
+			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, fmt.Sprintf("%v", event))
+		}
 		timeout.Add(1)
 	})
 	eventListener.OnFailure(func(event timelimiter.Event) {
-		assert.Equal(t, timelimiter.FAILURE, event.EventType())
-		assert.Equal(t,
-			fmt.Sprintf("%v: TimeLimiter '%s' recorded a failure call with panic: %v.",
-				event.CreationTime(), event.TimeLimiterName(), panicMsg),
-			fmt.Sprintf("%v", event))
+		if event.EventType() != timelimiter.FAILURE {
+			t.Errorf("Expected event type FAILURE, but got '%s'", event.EventType())
+		}
+		expectedMsg := fmt.Sprintf("%v: TimeLimiter '%s' recorded a failure call with panic: %v.", event.CreationTime(), event.TimeLimiterName(), panicMsg)
+		if fmt.Sprintf("%v", event) != expectedMsg {
+			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, fmt.Sprintf("%v", event))
+		}
 		failure.Add(1)
 	})
 
@@ -52,9 +59,16 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 	// 调用DecorateRunnable函数
 	decoratedFn := timelimiter.DecorateRunnable(tl, fn)
 
-	assert.PanicsWithValue(t, "panic error", func() {
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				if r != panicMsg {
+					t.Errorf("Expected panic error '%s', but got '%v'", panicMsg, r)
+				}
+			}
+		}()
 		_ = decoratedFn()
-	})
+	}()
 
 	// 创建一个可运行的函数
 	fn = func() error {
@@ -65,7 +79,9 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 	decoratedFn = timelimiter.DecorateRunnable(tl, fn)
 
 	err := decoratedFn()
-	assert.Equal(t, "TimeLimiter 'test' recorded a timeout exception.", err.Error())
+	if err.Error() != "TimeLimiter 'test' recorded a timeout exception." {
+		t.Errorf("Expected error message 'TimeLimiter 'test' recorded a timeout exception.', but got '%s'", err.Error())
+	}
 
 	// 创建一个可运行的函数
 	fn = func() error {
@@ -76,10 +92,18 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 	decoratedFn = timelimiter.DecorateRunnable(tl, fn)
 
 	err = decoratedFn()
-	assert.Equal(t, "error", err.Error())
+	if err.Error() != "error" {
+		t.Errorf("Expected error 'error', but got '%s'", err.Error())
+	}
 
 	time.Sleep(time.Second * 1)
-	assert.Equal(t, int64(1), success.Load())
-	assert.Equal(t, int64(1), timeout.Load())
-	assert.Equal(t, int64(1), failure.Load())
+	if success.Load() != int64(1) {
+		t.Errorf("Expected 1 success call, but got '%d'", success.Load())
+	}
+	if timeout.Load() != int64(1) {
+		t.Errorf("Expected 1 timeout call, but got '%d'", timeout.Load())
+	}
+	if failure.Load() != int64(1) {
+		t.Errorf("Expected 1 failure call, but got '%d'", failure.Load())
+	}
 }

@@ -3,7 +3,6 @@ package bulkhead_test
 import (
 	"errors"
 	"github.com/CharLemAznable/resilience4go/bulkhead"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
@@ -34,10 +33,18 @@ func TestDecorateRunnable(t *testing.T) {
 		err2 <- decoratedFn()
 	}()
 
-	assert.Equal(t, "error", (<-err1).Error())
-	fullErr, ok := (<-err2).(*bulkhead.FullError)
-	assert.True(t, ok)
-	assert.Equal(t, "Bulkhead 'test' is full and does not permit further calls", fullErr.Error())
+	if err := <-err1; err.Error() != "error" {
+		t.Errorf("Expected error 'error', but got '%s'", err.Error())
+	}
+	err := <-err2
+	fullErr, ok := err.(*bulkhead.FullError)
+	if !ok {
+		t.Errorf("Expected error type *bulkhead.FullError, but got '%T'", err)
+	} else {
+		if fullErr.Error() != "Bulkhead 'test' is full and does not permit further calls" {
+			t.Errorf("Expected error message 'Bulkhead 'test' is full and does not permit further calls', but got '%s'", fullErr.Error())
+		}
+	}
 }
 
 func TestDecorateSupplier(t *testing.T) {
@@ -72,12 +79,24 @@ func TestDecorateSupplier(t *testing.T) {
 		err2 <- err
 	}()
 
-	assert.Equal(t, "error", <-res1)
-	assert.Equal(t, "error", (<-err1).Error())
-	assert.Equal(t, "", <-res2)
-	fullErr, ok := (<-err2).(*bulkhead.FullError)
-	assert.True(t, ok)
-	assert.Equal(t, "Bulkhead 'test' is full and does not permit further calls", fullErr.Error())
+	if res := <-res1; res != "error" {
+		t.Errorf("Expected result 'error', but got '%s'", res)
+	}
+	if err := <-err1; err.Error() != "error" {
+		t.Errorf("Expected error 'error', but got '%s'", err.Error())
+	}
+	if res := <-res2; res != "" {
+		t.Errorf("Expected result '', but got '%s'", res)
+	}
+	err := <-err2
+	fullErr, ok := err.(*bulkhead.FullError)
+	if !ok {
+		t.Errorf("Expected error type *bulkhead.FullError, but got '%T'", err)
+	} else {
+		if fullErr.Error() != "Bulkhead 'test' is full and does not permit further calls" {
+			t.Errorf("Expected error message 'Bulkhead 'test' is full and does not permit further calls', but got '%s'", fullErr.Error())
+		}
+	}
 }
 
 func TestDecorateConsumer(t *testing.T) {
@@ -106,10 +125,18 @@ func TestDecorateConsumer(t *testing.T) {
 		err2 <- decoratedFn("failed")
 	}()
 
-	assert.Equal(t, "error", (<-err1).Error())
-	fullErr, ok := (<-err2).(*bulkhead.FullError)
-	assert.True(t, ok)
-	assert.Equal(t, "Bulkhead 'test' is full and does not permit further calls", fullErr.Error())
+	if err := <-err1; err.Error() != "error" {
+		t.Errorf("Expected error 'error', but got '%s'", err.Error())
+	}
+	err := <-err2
+	fullErr, ok := err.(*bulkhead.FullError)
+	if !ok {
+		t.Errorf("Expected error type *bulkhead.FullError, but got '%T'", err)
+	} else {
+		if fullErr.Error() != "Bulkhead 'test' is full and does not permit further calls" {
+			t.Errorf("Expected error message 'Bulkhead 'test' is full and does not permit further calls', but got '%s'", fullErr.Error())
+		}
+	}
 }
 
 func TestDecorateFunction(t *testing.T) {
@@ -144,10 +171,22 @@ func TestDecorateFunction(t *testing.T) {
 		err2 <- err
 	}()
 
-	assert.Equal(t, "error", <-res1)
-	assert.Equal(t, "error", (<-err1).Error())
-	assert.Equal(t, "", <-res2)
-	fullErr, ok := (<-err2).(*bulkhead.FullError)
-	assert.True(t, ok)
-	assert.Equal(t, "Bulkhead 'test' is full and does not permit further calls", fullErr.Error())
+	if res := <-res1; res != "error" {
+		t.Errorf("Expected result 'error', but got '%s'", <-res1)
+	}
+	if err := <-err1; err.Error() != "error" {
+		t.Errorf("Expected error 'error', but got '%s'", err.Error())
+	}
+	if res := <-res2; res != "" {
+		t.Errorf("Expected result '', but got '%s'", res)
+	}
+	err := <-err2
+	fullErr, ok := err.(*bulkhead.FullError)
+	if !ok {
+		t.Errorf("Expected error type *bulkhead.FullError, but got '%T'", err)
+	} else {
+		if fullErr.Error() != "Bulkhead 'test' is full and does not permit further calls" {
+			t.Errorf("Expected error message 'Bulkhead 'test' is full and does not permit further calls', but got '%s'", fullErr.Error())
+		}
+	}
 }

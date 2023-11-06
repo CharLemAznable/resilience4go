@@ -2,7 +2,6 @@ package ratelimiter_test
 
 import (
 	"github.com/CharLemAznable/resilience4go/ratelimiter"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
@@ -34,9 +33,15 @@ func TestDecorateRunnable(t *testing.T) {
 		}()
 	}
 
-	fullErr, ok := (<-errChan).(*ratelimiter.NotPermittedError)
-	assert.True(t, ok)
-	assert.Equal(t, "RateLimiter 'test' does not permit further calls", fullErr.Error())
+	err := <-errChan
+	fullErr, ok := err.(*ratelimiter.NotPermittedError)
+	if !ok {
+		t.Errorf("Expected error type *ratelimiter.NotPermittedError, but got '%T'", err)
+	} else {
+		if fullErr.Error() != "RateLimiter 'test' does not permit further calls" {
+			t.Errorf("Expected error message 'RateLimiter 'test' does not permit further calls', but got '%s'", fullErr.Error())
+		}
+	}
 }
 
 func TestDecorateSupplier(t *testing.T) {
@@ -66,9 +71,15 @@ func TestDecorateSupplier(t *testing.T) {
 		}()
 	}
 
-	fullErr, ok := (<-errChan).(*ratelimiter.NotPermittedError)
-	assert.True(t, ok)
-	assert.Equal(t, "RateLimiter 'test' does not permit further calls", fullErr.Error())
+	err := <-errChan
+	fullErr, ok := err.(*ratelimiter.NotPermittedError)
+	if !ok {
+		t.Errorf("Expected error type *ratelimiter.NotPermittedError, but got '%T'", err)
+	} else {
+		if fullErr.Error() != "RateLimiter 'test' does not permit further calls" {
+			t.Errorf("Expected error message 'RateLimiter 'test' does not permit further calls', but got '%s'", fullErr.Error())
+		}
+	}
 }
 
 func TestDecorateConsumer(t *testing.T) {
@@ -98,9 +109,15 @@ func TestDecorateConsumer(t *testing.T) {
 		}()
 	}
 
-	fullErr, ok := (<-errChan).(*ratelimiter.NotPermittedError)
-	assert.True(t, ok)
-	assert.Equal(t, "RateLimiter 'test' does not permit further calls", fullErr.Error())
+	err := <-errChan
+	fullErr, ok := err.(*ratelimiter.NotPermittedError)
+	if !ok {
+		t.Errorf("Expected error type *ratelimiter.NotPermittedError, but got '%T'", err)
+	} else {
+		if fullErr.Error() != "RateLimiter 'test' does not permit further calls" {
+			t.Errorf("Expected error message 'RateLimiter 'test' does not permit further calls', but got '%s'", fullErr.Error())
+		}
+	}
 }
 
 func TestDecorateFunction(t *testing.T) {
@@ -130,7 +147,13 @@ func TestDecorateFunction(t *testing.T) {
 		}()
 	}
 
-	fullErr, ok := (<-errChan).(*ratelimiter.NotPermittedError)
-	assert.True(t, ok)
-	assert.Equal(t, "RateLimiter 'test' does not permit further calls", fullErr.Error())
+	err := <-errChan
+	fullErr, ok := err.(*ratelimiter.NotPermittedError)
+	if !ok {
+		t.Errorf("Expected error type *ratelimiter.NotPermittedError, but got '%T'", err)
+	} else {
+		if fullErr.Error() != "RateLimiter 'test' does not permit further calls" {
+			t.Errorf("Expected error message 'RateLimiter 'test' does not permit further calls', but got '%s'", fullErr.Error())
+		}
+	}
 }

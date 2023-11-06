@@ -3,7 +3,6 @@ package ratelimiter_test
 import (
 	"fmt"
 	"github.com/CharLemAznable/resilience4go/ratelimiter"
-	"github.com/stretchr/testify/assert"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -15,24 +14,30 @@ func TestRateLimiterPublishEvents(t *testing.T) {
 		ratelimiter.WithTimeoutDuration(time.Second*2),
 		ratelimiter.WithLimitRefreshPeriod(time.Second*2),
 		ratelimiter.WithLimitForPeriod(2))
-	assert.Equal(t, "test", rl.Name())
+	if rl.Name() != "test" {
+		t.Errorf("Expected rate limiter name 'test', but got '%s'", rl.Name())
+	}
 	eventListener := rl.EventListener()
 	success := atomic.Int64{}
 	failure := atomic.Int64{}
 	eventListener.OnSuccess(func(event ratelimiter.Event) {
-		assert.Equal(t, ratelimiter.SUCCESSFUL, event.EventType())
-		assert.Equal(t,
-			fmt.Sprintf("RateLimiterEvent{type=%s, rateLimiterName='%s', creationTime=%v}",
-				event.EventType(), event.RateLimiterName(), event.CreationTime()),
-			fmt.Sprintf("%v", event))
+		if event.EventType() != ratelimiter.SUCCESSFUL {
+			t.Errorf("Expected event type SUCCESSFUL, but got '%s'", event.EventType())
+		}
+		expectedMsg := fmt.Sprintf("RateLimiterEvent{type=%s, rateLimiterName='%s', creationTime=%v}", event.EventType(), event.RateLimiterName(), event.CreationTime())
+		if fmt.Sprintf("%v", event) != expectedMsg {
+			t.Errorf("Expected event message '%s', but got '%v'", expectedMsg, event)
+		}
 		success.Add(1)
 	})
 	eventListener.OnFailure(func(event ratelimiter.Event) {
-		assert.Equal(t, ratelimiter.FAILED, event.EventType())
-		assert.Equal(t,
-			fmt.Sprintf("RateLimiterEvent{type=%s, rateLimiterName='%s', creationTime=%v}",
-				event.EventType(), event.RateLimiterName(), event.CreationTime()),
-			fmt.Sprintf("%v", event))
+		if event.EventType() != ratelimiter.FAILED {
+			t.Errorf("Expected event type FAILED, but got '%s'", event.EventType())
+		}
+		expectedMsg := fmt.Sprintf("RateLimiterEvent{type=%s, rateLimiterName='%s', creationTime=%v}", event.EventType(), event.RateLimiterName(), event.CreationTime())
+		if fmt.Sprintf("%v", event) != expectedMsg {
+			t.Errorf("Expected event message '%s', but got '%v'", expectedMsg, event)
+		}
 		failure.Add(1)
 	})
 
@@ -51,6 +56,10 @@ func TestRateLimiterPublishEvents(t *testing.T) {
 	}
 
 	time.Sleep(time.Second * 5)
-	assert.Equal(t, int64(4), success.Load())
-	assert.Equal(t, int64(1), failure.Load())
+	if success.Load() != int64(4) {
+		t.Errorf("Expected 4 successful calls, but got '%d'", success.Load())
+	}
+	if failure.Load() != int64(1) {
+		t.Errorf("Expected 1 failure call, but got '%d'", failure.Load())
+	}
 }
