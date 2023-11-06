@@ -8,6 +8,7 @@ import (
 
 type Bulkhead interface {
 	Name() string
+	Metrics() Metrics
 	EventListener() EventListener
 
 	acquire() error
@@ -24,6 +25,7 @@ func NewBulkhead(name string, configs ...ConfigBuilder) Bulkhead {
 		config:        config,
 		rootContext:   context.Background(),
 		semaphore:     semaphore.NewWeighted(config.maxConcurrentCalls),
+		metrics:       newMetric(config.maxConcurrentCalls),
 		eventListener: newEventListener(),
 	}
 }
@@ -33,11 +35,16 @@ type semaphoreBulkhead struct {
 	config        *Config
 	rootContext   context.Context
 	semaphore     *semaphore.Weighted
+	metrics       Metrics
 	eventListener EventListener
 }
 
 func (bulkhead *semaphoreBulkhead) Name() string {
 	return bulkhead.name
+}
+
+func (bulkhead *semaphoreBulkhead) Metrics() Metrics {
+	return bulkhead.metrics
 }
 
 func (bulkhead *semaphoreBulkhead) EventListener() EventListener {
@@ -62,6 +69,7 @@ func (bulkhead *semaphoreBulkhead) acquire() error {
 	}())
 
 	if permitted {
+		bulkhead.metrics.acquire(1)
 		return nil
 	}
 	return &FullError{name: bulkhead.name}
@@ -69,6 +77,7 @@ func (bulkhead *semaphoreBulkhead) acquire() error {
 
 func (bulkhead *semaphoreBulkhead) release() {
 	bulkhead.semaphore.Release(1)
+	bulkhead.metrics.release(1)
 	bulkhead.eventListener.consumeEvent(newFinishedEvent(bulkhead.name))
 }
 

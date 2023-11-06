@@ -10,12 +10,6 @@ import (
 )
 
 func TestBulkheadPublishEvents(t *testing.T) {
-	// 创建一个可运行的函数
-	fn := func() error {
-		time.Sleep(time.Second * 3)
-		return errors.New("error")
-	}
-
 	// 创建一个Bulkhead的mock对象
 	bh := bulkhead.NewBulkhead("test",
 		bulkhead.WithMaxConcurrentCalls(1),
@@ -57,6 +51,18 @@ func TestBulkheadPublishEvents(t *testing.T) {
 		}
 		finished.Add(1)
 	})
+
+	// 创建一个可运行的函数
+	fn := func() error {
+		if bh.Metrics().MaxAllowedConcurrentCalls() != 1 {
+			t.Errorf("Expected MaxAllowedConcurrentCalls is 1, but got '%d'", bh.Metrics().MaxAllowedConcurrentCalls())
+		}
+		if bh.Metrics().AvailableConcurrentCalls() != 0 {
+			t.Errorf("Expected AvailableConcurrentCalls is 0, but got '%d'", bh.Metrics().AvailableConcurrentCalls())
+		}
+		time.Sleep(time.Second * 3)
+		return errors.New("error")
+	}
 
 	// 调用DecorateRunnable函数
 	decoratedFn := bulkhead.DecorateRunnable(bh, fn)
