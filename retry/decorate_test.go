@@ -3,7 +3,6 @@ package retry_test
 import (
 	"errors"
 	"github.com/CharLemAznable/resilience4go/retry"
-	"sync/atomic"
 	"testing"
 )
 
@@ -52,25 +51,18 @@ func TestDecorateSupplier(t *testing.T) {
 
 func TestDecorateConsumer(t *testing.T) {
 	rt := retry.NewRetry("test",
-		retry.WithMaxAttempts(2),
+		retry.WithMaxAttempts(1),
 		retry.WithFailAfterMaxAttempts(true))
 
-	// retry success
-	var count atomic.Int64
+	// failed directly
 	fn := func(val any) error {
-		if count.Add(1) >= 2 {
-			return nil
-		}
 		return errors.New("error")
 	}
 	decoratedFn := retry.DecorateConsumer(rt, fn)
 
 	err := decoratedFn("test")
-	if err != nil {
-		t.Errorf("Expected nil error, but got '%v'", err)
-	}
-	if int(count.Load()) != 2 {
-		t.Errorf("Expected count value 2, but got '%d'", int(count.Load()))
+	if err == nil {
+		t.Error("Expected non-nil error")
 	}
 }
 

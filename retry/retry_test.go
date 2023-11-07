@@ -62,6 +62,23 @@ func TestSuccess(t *testing.T) {
 	}
 
 	time.Sleep(time.Second)
+	metrics := successRetry.Metrics()
+	if metrics.NumberOfSuccessfulCallsWithoutRetryAttempt() != 0 {
+		t.Errorf("Expected successful calls without retry attempt '0', but got '%d'",
+			metrics.NumberOfSuccessfulCallsWithoutRetryAttempt())
+	}
+	if metrics.NumberOfSuccessfulCallsWithRetryAttempt() != 1 {
+		t.Errorf("Expected successful calls with retry attempt '1', but got '%d'",
+			metrics.NumberOfSuccessfulCallsWithRetryAttempt())
+	}
+	if metrics.NumberOfFailedCallsWithoutRetryAttempt() != 0 {
+		t.Errorf("Expected failed calls without retry attempt '0', but got '%d'",
+			metrics.NumberOfFailedCallsWithoutRetryAttempt())
+	}
+	if metrics.NumberOfFailedCallsWithRetryAttempt() != 0 {
+		t.Errorf("Expected failed calls with retry attempt '0', but got '%d'",
+			metrics.NumberOfFailedCallsWithRetryAttempt())
+	}
 }
 
 func TestError(t *testing.T) {
@@ -117,4 +134,21 @@ func TestError(t *testing.T) {
 	}
 
 	time.Sleep(time.Second)
+	metrics := successRetry.Metrics()
+	if metrics.NumberOfSuccessfulCallsWithoutRetryAttempt() != 0 {
+		t.Errorf("Expected successful calls without retry attempt '0', but got '%d'",
+			metrics.NumberOfSuccessfulCallsWithoutRetryAttempt())
+	}
+	if metrics.NumberOfSuccessfulCallsWithRetryAttempt() != 0 {
+		t.Errorf("Expected successful calls with retry attempt '0', but got '%d'",
+			metrics.NumberOfSuccessfulCallsWithRetryAttempt())
+	}
+	if metrics.NumberOfFailedCallsWithoutRetryAttempt() != 0 {
+		t.Errorf("Expected failed calls without retry attempt '0', but got '%d'",
+			metrics.NumberOfFailedCallsWithoutRetryAttempt())
+	}
+	if metrics.NumberOfFailedCallsWithRetryAttempt() != 1 {
+		t.Errorf("Expected failed calls with retry attempt '1', but got '%d'",
+			metrics.NumberOfFailedCallsWithRetryAttempt())
+	}
 }

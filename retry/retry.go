@@ -8,6 +8,7 @@ import (
 
 type Retry interface {
 	Name() string
+	Metrics() Metrics
 	EventListener() EventListener
 
 	execute(func() (any, error)) (any, error)
@@ -21,6 +22,7 @@ func NewRetry(name string, configs ...ConfigBuilder) Retry {
 	return &retry{
 		name:          name,
 		config:        config,
+		metrics:       newMetrics(),
 		eventListener: newEventListener(),
 	}
 }
@@ -28,11 +30,16 @@ func NewRetry(name string, configs ...ConfigBuilder) Retry {
 type retry struct {
 	name          string
 	config        *Config
+	metrics       Metrics
 	eventListener EventListener
 }
 
 func (r *retry) Name() string {
 	return r.name
+}
+
+func (r *retry) Metrics() Metrics {
+	return r.metrics
 }
 
 func (r *retry) EventListener() EventListener {
@@ -42,6 +49,7 @@ func (r *retry) EventListener() EventListener {
 func (r *retry) execute(fn func() (any, error)) (any, error) {
 	context := r.executeOnce(fn)
 	if r.testResult(context) {
+		r.metrics.successfulCallsWithoutRetryAttemptIncrement()
 		return r.returnResult(context)
 	}
 	numOfAttempts := 1
@@ -53,6 +61,7 @@ func (r *retry) execute(fn func() (any, error)) (any, error) {
 
 		context = r.executeOnce(fn)
 		if r.testResult(context) {
+			r.metrics.successfulCallsWithRetryAttemptIncrement()
 			r.publishEvent(newSuccessEvent(r.name,
 				numOfAttempts, context.ret, context.err))
 			return r.returnResult(context)
@@ -64,6 +73,11 @@ func (r *retry) execute(fn func() (any, error)) (any, error) {
 		context.err = common.DefaultErrorFn(context.err, func() error {
 			return &MaxRetriesExceeded{name: r.name, maxAttempts: r.config.maxAttempts}
 		})
+	}
+	if numOfAttempts == 1 {
+		r.metrics.failedCallsWithoutRetryAttemptIncrement()
+	} else {
+		r.metrics.failedCallsWithRetryAttemptIncrement()
 	}
 	return r.returnResult(context)
 }
