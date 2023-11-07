@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/CharLemAznable/resilience4go/timelimiter"
-	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -17,9 +16,6 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 		t.Errorf("Expected time limiter name 'test', but got '%s'", tl.Name())
 	}
 	eventListener := tl.EventListener()
-	success := atomic.Int64{}
-	timeout := atomic.Int64{}
-	failure := atomic.Int64{}
 	panicMsg := "panic error"
 	eventListener.OnSuccess(func(event timelimiter.Event) {
 		if event.EventType() != timelimiter.SUCCESS {
@@ -29,7 +25,6 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 		if fmt.Sprintf("%v", event) != expectedMsg {
 			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, fmt.Sprintf("%v", event))
 		}
-		success.Add(1)
 	})
 	eventListener.OnTimeout(func(event timelimiter.Event) {
 		if event.EventType() != timelimiter.TIMEOUT {
@@ -39,7 +34,6 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 		if fmt.Sprintf("%v", event) != expectedMsg {
 			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, fmt.Sprintf("%v", event))
 		}
-		timeout.Add(1)
 	})
 	eventListener.OnFailure(func(event timelimiter.Event) {
 		if event.EventType() != timelimiter.FAILURE {
@@ -49,7 +43,6 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 		if fmt.Sprintf("%v", event) != expectedMsg {
 			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, fmt.Sprintf("%v", event))
 		}
-		failure.Add(1)
 	})
 
 	// 创建一个可运行的函数
@@ -97,13 +90,14 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 	}
 
 	time.Sleep(time.Second * 1)
-	if success.Load() != int64(1) {
-		t.Errorf("Expected 1 success call, but got '%d'", success.Load())
+	metrics := tl.Metrics()
+	if metrics.SuccessCount() != int64(1) {
+		t.Errorf("Expected 1 success call, but got '%d'", metrics.SuccessCount())
 	}
-	if timeout.Load() != int64(1) {
-		t.Errorf("Expected 1 timeout call, but got '%d'", timeout.Load())
+	if metrics.TimeoutCount() != int64(1) {
+		t.Errorf("Expected 1 timeout call, but got '%d'", metrics.TimeoutCount())
 	}
-	if failure.Load() != int64(1) {
-		t.Errorf("Expected 1 failure call, but got '%d'", failure.Load())
+	if metrics.FailureCount() != int64(1) {
+		t.Errorf("Expected 1 failure call, but got '%d'", metrics.FailureCount())
 	}
 }

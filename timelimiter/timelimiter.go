@@ -8,6 +8,7 @@ import (
 
 type TimeLimiter interface {
 	Name() string
+	Metrics() Metrics
 	EventListener() EventListener
 
 	execute(func() (any, error)) (any, error)
@@ -22,6 +23,7 @@ func NewTimeLimiter(name string, configs ...ConfigBuilder) TimeLimiter {
 		name:          name,
 		config:        config,
 		rootContext:   context.Background(),
+		metrics:       newMetric(),
 		eventListener: newEventListener(),
 	}
 }
@@ -30,11 +32,16 @@ type timeLimiter struct {
 	name          string
 	config        *Config
 	rootContext   context.Context
+	metrics       Metrics
 	eventListener EventListener
 }
 
 func (limiter *timeLimiter) Name() string {
 	return limiter.name
+}
+
+func (limiter *timeLimiter) Metrics() Metrics {
+	return limiter.metrics
 }
 
 func (limiter *timeLimiter) EventListener() EventListener {
@@ -65,14 +72,17 @@ func (limiter *timeLimiter) execute(fn func() (any, error)) (any, error) {
 }
 
 func (limiter *timeLimiter) onSuccess() {
+	limiter.metrics.successIncrement()
 	limiter.eventListener.consumeEvent(newSuccessEvent(limiter.name))
 }
 
 func (limiter *timeLimiter) onTimeout() {
+	limiter.metrics.timeoutIncrement()
 	limiter.eventListener.consumeEvent(newTimeoutEvent(limiter.name))
 }
 
 func (limiter *timeLimiter) onFailure(error any) {
+	limiter.metrics.failureIncrement()
 	limiter.eventListener.consumeEvent(newFailureEvent(limiter.name, error))
 }
 
