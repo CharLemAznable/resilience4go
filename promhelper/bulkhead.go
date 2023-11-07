@@ -1,4 +1,4 @@
-package promhelp
+package promhelper
 
 import (
 	"github.com/CharLemAznable/resilience4go/bulkhead"

@@ -1,10 +1,10 @@
-package promhelp_test
+package promhelper_test
 
 import (
 	"testing"
 
 	"github.com/CharLemAznable/resilience4go/bulkhead"
-	"github.com/CharLemAznable/resilience4go/promhelp"
+	"github.com/CharLemAznable/resilience4go/promhelper"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"google.golang.org/protobuf/proto"
@@ -12,7 +12,7 @@ import (
 
 func TestBulkheadCollectors(t *testing.T) {
 	entry := bulkhead.NewBulkhead("test") // Create a new bulkhead entry for testing
-	collectors := promhelp.BulkheadCollectors(entry)
+	collectors := promhelper.BulkheadCollectors(entry)
 	if len(collectors) != 2 {
 		t.Errorf("Expected 2 collectors, but got %d", len(collectors))
 	}
