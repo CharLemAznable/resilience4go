@@ -34,7 +34,7 @@ func newNotPermittedEvent(circuitBreakerName string) Event {
 	return &notPermittedEvent{event{circuitBreakerName: circuitBreakerName, creationTime: time.Now()}}
 }
 
-func newStateTransitionEvent(circuitBreakerName string, fromState, toState stateName) Event {
+func newStateTransitionEvent(circuitBreakerName string, fromState, toState State) Event {
 	return &stateTransitionEvent{event{circuitBreakerName: circuitBreakerName, creationTime: time.Now()}, fromState, toState}
 }
 
@@ -107,7 +107,7 @@ func (e *notPermittedEvent) String() string {
 
 type stateTransitionEvent struct {
 	event
-	fromState, toState stateName
+	fromState, toState State
 }
 
 func (e *stateTransitionEvent) EventType() EventType {

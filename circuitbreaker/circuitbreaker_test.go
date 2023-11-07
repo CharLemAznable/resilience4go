@@ -20,6 +20,10 @@ func TestCircuitBreaker(t *testing.T) {
 			return time.Second * 5
 		}),
 		circuitbreaker.WithPermittedNumberOfCallsInHalfOpenState(2))
+	state := breaker.State()
+	if state != circuitbreaker.Closed {
+		t.Errorf("Expected circuitbreaker state is CLOSED, but got %s", state)
+	}
 	listener := breaker.EventListener()
 	listener.OnSuccess(func(event circuitbreaker.Event) {
 		if event.EventType() != circuitbreaker.Success {
@@ -124,7 +128,10 @@ func TestCircuitBreaker(t *testing.T) {
 	if e.Error() != "CircuitBreaker 'test' is OPEN and does not permit further calls" {
 		t.Errorf("Expected error message 'CircuitBreaker 'test' is OPEN and does not permit further calls', but got '%s'", e.Error())
 	}
-
+	state = breaker.State()
+	if state != circuitbreaker.Open {
+		t.Errorf("Expected circuitbreaker state is OPEN, but got %s", state)
+	}
 	metrics = breaker.Metrics()
 	if metrics.NumberOfNotPermittedCalls() != 1 {
 		t.Errorf("Expected number of not permitted calls 1, but got %d", metrics.NumberOfNotPermittedCalls())
@@ -136,6 +143,10 @@ func TestCircuitBreaker(t *testing.T) {
 	_, err = decoratedFn()
 	if err == nil {
 		t.Error("Expected error, but got nil")
+	}
+	state = breaker.State()
+	if state != circuitbreaker.HalfOpen {
+		t.Errorf("Expected circuitbreaker state is HALF_OPEN, but got %s", state)
 	}
 	_, err = decoratedFn()
 	if err != nil {
@@ -150,6 +161,10 @@ func TestCircuitBreaker(t *testing.T) {
 	if e.Error() != "CircuitBreaker 'test' is OPEN and does not permit further calls" {
 		t.Errorf("Expected error message 'CircuitBreaker 'test' is OPEN and does not permit further calls', but got '%s'", e.Error())
 	}
+	state = breaker.State()
+	if state != circuitbreaker.Open {
+		t.Errorf("Expected circuitbreaker state is OPEN, but got %s", state)
+	}
 
 	time.Sleep(time.Second * 5)
 
@@ -158,6 +173,10 @@ func TestCircuitBreaker(t *testing.T) {
 	_, err = decoratedFn()
 	if err != nil {
 		t.Errorf("Expected nil error, but got %v", err)
+	}
+	state = breaker.State()
+	if state != circuitbreaker.HalfOpen {
+		t.Errorf("Expected circuitbreaker state is HALF_OPEN, but got %s", state)
 	}
 	count.Add(1)
 	_, err = decoratedFn()
@@ -169,6 +188,10 @@ func TestCircuitBreaker(t *testing.T) {
 	_, err = decoratedFn()
 	if err != nil {
 		t.Errorf("Expected nil error, but got %v", err)
+	}
+	state = breaker.State()
+	if state != circuitbreaker.Closed {
+		t.Errorf("Expected circuitbreaker state is CLOSED, but got %s", state)
 	}
 
 	time.Sleep(time.Second)

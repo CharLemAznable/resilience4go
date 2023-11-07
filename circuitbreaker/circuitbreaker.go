@@ -9,6 +9,7 @@ import (
 
 type CircuitBreaker interface {
 	Name() string
+	State() State
 	Metrics() Metrics
 	EventListener() EventListener
 	TransitionToDisabled() error
@@ -46,6 +47,10 @@ type stateMachine struct {
 
 func (machine *stateMachine) Name() string {
 	return machine.name
+}
+
+func (machine *stateMachine) State() State {
+	return machine.loadState().name
 }
 
 func (machine *stateMachine) Metrics() Metrics {
@@ -86,7 +91,7 @@ func (machine *stateMachine) TransitionToHalfOpenState() error {
 	})
 }
 
-func (machine *stateMachine) stateTransition(newStateName stateName, generator func(*state) *state) error {
+func (machine *stateMachine) stateTransition(newStateName State, generator func(*state) *state) error {
 	var previous *state
 	previous, err := getAndUpdatePointer(&machine.state, func(currentState *state) (*state, error) {
 		if err := checkStateTransition(machine.name, currentState.name, newStateName); err != nil {
@@ -179,7 +184,7 @@ type channelValue struct {
 
 type NotPermittedError struct {
 	name      string
-	stateName stateName
+	stateName State
 }
 
 func (e *NotPermittedError) Error() string {

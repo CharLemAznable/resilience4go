@@ -8,18 +8,18 @@ import (
 	"time"
 )
 
-type stateName string
+type State string
 
 const (
-	Closed     stateName = "CLOSED"
-	Open       stateName = "OPEN"
-	HalfOpen   stateName = "HALF_OPEN"
-	Disabled   stateName = "DISABLED"
-	ForcedOpen stateName = "FORCED_OPEN"
+	Closed     State = "CLOSED"
+	Open       State = "OPEN"
+	HalfOpen   State = "HALF_OPEN"
+	Disabled   State = "DISABLED"
+	ForcedOpen State = "FORCED_OPEN"
 )
 
 type state struct {
-	name         stateName
+	name         State
 	allowPublish bool
 	attempts     int64
 	metrics      Metrics
@@ -204,7 +204,7 @@ func forcedOpen(attempts int64, breaker CircuitBreaker) *state {
 	return s
 }
 
-func checkStateTransition(name string, fromState, toState stateName) error {
+func checkStateTransition(name string, fromState, toState State) error {
 	if fromState == Closed && toState == HalfOpen {
 		return errors.New(fmt.Sprintf(
 			"CircuitBreaker '%s' tried an illegal state transition from %s to %s",
