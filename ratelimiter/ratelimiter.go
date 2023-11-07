@@ -20,23 +20,22 @@ func NewRateLimiter(name string, configs ...ConfigBuilder) RateLimiter {
 	for _, cfg := range configs {
 		cfg(config)
 	}
-	var pState atomic.Pointer[state]
-	pState.Store(&state{
-		activeCycle:       0,
-		activePermissions: config.limitForPeriod,
-		nanosToWait:       0,
-	})
 	limiter := &atomicRateLimiter{
 		name:          name,
 		config:        config,
 		nanoTimeStart: time.Now().UnixNano(),
-		state:         pState,
 		eventListener: newEventListener(),
 	}
+	limiter.state.Store(&state{
+		activeCycle:       0,
+		activePermissions: config.limitForPeriod,
+		nanosToWait:       0,
+	})
 	limiter.metrics = newMetrics(
 		func() int64 {
 			return limiter.waitingThreads.Load()
-		}, func() int64 {
+		},
+		func() int64 {
 			currentState := limiter.state.Load()
 			estimatedState := limiter.calculateNextState(-1, currentState)
 			return estimatedState.activePermissions

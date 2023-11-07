@@ -9,13 +9,13 @@ import (
 
 type CircuitBreaker interface {
 	Name() string
+	Metrics() Metrics
 	EventListener() EventListener
 	TransitionToDisabled() error
 	TransitionToForcedOpen() error
 	TransitionToClosedState() error
 	TransitionToOpenState() error
 	TransitionToHalfOpenState() error
-	Metrics() Metrics
 
 	config() *Config
 	execute(func() (any, error)) (any, error)
@@ -40,12 +40,16 @@ func NewCircuitBreaker(name string, configs ...ConfigBuilder) CircuitBreaker {
 type stateMachine struct {
 	name          string
 	conf          *Config
-	eventListener EventListener
 	state         atomic.Pointer[state]
+	eventListener EventListener
 }
 
 func (machine *stateMachine) Name() string {
 	return machine.name
+}
+
+func (machine *stateMachine) Metrics() Metrics {
+	return machine.loadState().metrics
 }
 
 func (machine *stateMachine) EventListener() EventListener {
@@ -97,10 +101,6 @@ func (machine *stateMachine) stateTransition(newStateName stateName, generator f
 		machine.publishEvent(newStateTransitionEvent(machine.name, previous.name, newStateName))
 	}
 	return err
-}
-
-func (machine *stateMachine) Metrics() Metrics {
-	return machine.loadState().metrics
 }
 
 func (machine *stateMachine) config() *Config {
