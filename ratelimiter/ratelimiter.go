@@ -9,6 +9,7 @@ import (
 
 type RateLimiter interface {
 	Name() string
+	Metrics() Metrics
 	EventListener() EventListener
 
 	acquirePermission() error
@@ -25,13 +26,22 @@ func NewRateLimiter(name string, configs ...ConfigBuilder) RateLimiter {
 		activePermissions: config.limitForPeriod,
 		nanosToWait:       0,
 	})
-	return &atomicRateLimiter{
+	limiter := &atomicRateLimiter{
 		name:          name,
 		config:        config,
 		nanoTimeStart: time.Now().UnixNano(),
 		state:         pState,
 		eventListener: newEventListener(),
 	}
+	limiter.metrics = newMetric(
+		func() int64 {
+			return limiter.waitingThreads.Load()
+		}, func() int64 {
+			currentState := limiter.state.Load()
+			estimatedState := limiter.calculateNextState(-1, currentState)
+			return estimatedState.activePermissions
+		})
+	return limiter
 }
 
 type atomicRateLimiter struct {
@@ -40,11 +50,16 @@ type atomicRateLimiter struct {
 	nanoTimeStart  int64
 	state          atomic.Pointer[state]
 	waitingThreads atomic.Int64
+	metrics        Metrics
 	eventListener  EventListener
 }
 
 func (limiter *atomicRateLimiter) Name() string {
 	return limiter.name
+}
+
+func (limiter *atomicRateLimiter) Metrics() Metrics {
+	return limiter.metrics
 }
 
 func (limiter *atomicRateLimiter) EventListener() EventListener {

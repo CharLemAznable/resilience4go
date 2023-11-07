@@ -17,6 +17,13 @@ func TestRateLimiterPublishEvents(t *testing.T) {
 	if rl.Name() != "test" {
 		t.Errorf("Expected rate limiter name 'test', but got '%s'", rl.Name())
 	}
+	metrics := rl.Metrics()
+	if metrics.NumberOfWaitingThreads() != 0 {
+		t.Errorf("Expected 0 waiting threads, but got '%d'", metrics.NumberOfWaitingThreads())
+	}
+	if metrics.AvailablePermissions() != 2 {
+		t.Errorf("Expected 2 available permissions, but got '%d'", metrics.AvailablePermissions())
+	}
 	eventListener := rl.EventListener()
 	success := atomic.Int64{}
 	failure := atomic.Int64{}
