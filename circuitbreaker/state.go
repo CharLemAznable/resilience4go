@@ -1,6 +1,7 @@
 package circuitbreaker
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync/atomic"
@@ -87,23 +88,17 @@ func open(attempts int64, metrics Metrics, breaker CircuitBreaker) *state {
 		s.metrics.onSuccess(duration)
 	}
 	if config.automaticTransitionFromOpenToHalfOpenEnabled {
-		var done atomic.Bool
-		timer := time.NewTimer(waitDuration)
-		cancel := make(chan bool, 1)
+		timeout, cancelFunc := context.WithTimeout(
+			context.Background(), waitDuration)
 		go func() {
 			select {
-			case <-timer.C:
-				if done.CompareAndSwap(false, true) {
+			case <-timeout.Done():
+				if timeout.Err() == context.DeadlineExceeded {
 					toHalfOpen()
 				}
-			case <-cancel:
 			}
 		}()
-		s.preTransitionHook = func() {
-			if done.CompareAndSwap(false, true) {
-				cancel <- true
-			}
-		}
+		s.preTransitionHook = cancelFunc
 	}
 	return s
 }
@@ -145,23 +140,17 @@ func halfOpen(attempts int64, breaker CircuitBreaker) *state {
 		checkIfThresholdsExceeded(s.metrics.onSuccess(duration))
 	}
 	if config.maxWaitDurationInHalfOpenState > 0 {
-		var done atomic.Bool
-		timer := time.NewTimer(config.maxWaitDurationInHalfOpenState)
-		cancel := make(chan bool, 1)
+		timeout, cancelFunc := context.WithTimeout(
+			context.Background(), config.maxWaitDurationInHalfOpenState)
 		go func() {
 			select {
-			case <-timer.C:
-				if done.CompareAndSwap(false, true) {
+			case <-timeout.Done():
+				if timeout.Err() == context.DeadlineExceeded {
 					toOpen()
 				}
-			case <-cancel:
 			}
 		}()
-		s.preTransitionHook = func() {
-			if done.CompareAndSwap(false, true) {
-				cancel <- true
-			}
-		}
+		s.preTransitionHook = cancelFunc
 	}
 	return s
 }
