@@ -12,7 +12,7 @@ type Metrics interface {
 	failureIncrement()
 }
 
-func newMetric() Metrics {
+func newMetrics() Metrics {
 	return &metrics{}
 }
 

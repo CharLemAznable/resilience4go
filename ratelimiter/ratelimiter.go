@@ -33,7 +33,7 @@ func NewRateLimiter(name string, configs ...ConfigBuilder) RateLimiter {
 		state:         pState,
 		eventListener: newEventListener(),
 	}
-	limiter.metrics = newMetric(
+	limiter.metrics = newMetrics(
 		func() int64 {
 			return limiter.waitingThreads.Load()
 		}, func() int64 {

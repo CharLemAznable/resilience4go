@@ -10,7 +10,7 @@ type Metrics interface {
 	release(n int64)
 }
 
-func newMetric(maxConcurrentCalls int64) Metrics {
+func newMetrics(maxConcurrentCalls int64) Metrics {
 	m := &metrics{
 		maxConcurrentCalls: maxConcurrentCalls,
 	}

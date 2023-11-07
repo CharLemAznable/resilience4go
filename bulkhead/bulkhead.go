@@ -25,7 +25,7 @@ func NewBulkhead(name string, configs ...ConfigBuilder) Bulkhead {
 		config:        config,
 		rootContext:   context.Background(),
 		semaphore:     semaphore.NewWeighted(config.maxConcurrentCalls),
-		metrics:       newMetric(config.maxConcurrentCalls),
+		metrics:       newMetrics(config.maxConcurrentCalls),
 		eventListener: newEventListener(),
 	}
 }

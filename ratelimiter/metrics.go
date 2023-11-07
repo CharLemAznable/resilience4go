@@ -5,7 +5,7 @@ type Metrics interface {
 	AvailablePermissions() int64
 }
 
-func newMetric(numberOfWaitingThreadsFn func() int64, availablePermissionsFn func() int64) Metrics {
+func newMetrics(numberOfWaitingThreadsFn func() int64, availablePermissionsFn func() int64) Metrics {
 	return &metrics{
 		numberOfWaitingThreadsFn: numberOfWaitingThreadsFn,
 		availablePermissionsFn:   availablePermissionsFn,

@@ -23,7 +23,7 @@ func NewTimeLimiter(name string, configs ...ConfigBuilder) TimeLimiter {
 		name:          name,
 		config:        config,
 		rootContext:   context.Background(),
-		metrics:       newMetric(),
+		metrics:       newMetrics(),
 		eventListener: newEventListener(),
 	}
 }
