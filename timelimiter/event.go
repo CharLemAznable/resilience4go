@@ -14,6 +14,7 @@ const (
 )
 
 type Event interface {
+	fmt.Stringer
 	TimeLimiterName() string
 	CreationTime() time.Time
 	EventType() EventType

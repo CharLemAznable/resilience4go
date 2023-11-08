@@ -26,8 +26,8 @@ func TestBulkheadPublishEvents(t *testing.T) {
 			t.Errorf("Expected event type PERMITTED, but got '%s'", event.EventType())
 		}
 		expectedMsg := fmt.Sprintf("%v: Bulkhead '%s' permitted a call.", event.CreationTime(), event.BulkheadName())
-		if fmt.Sprintf("%v", event) != expectedMsg {
-			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, fmt.Sprintf("%v", event))
+		if event.String() != expectedMsg {
+			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, event)
 		}
 		permitted.Add(1)
 	})
@@ -36,8 +36,8 @@ func TestBulkheadPublishEvents(t *testing.T) {
 			t.Errorf("Expected event type REJECTED, but got '%s'", event.EventType())
 		}
 		expectedMsg := fmt.Sprintf("%v: Bulkhead '%s' rejected a call.", event.CreationTime(), event.BulkheadName())
-		if fmt.Sprintf("%v", event) != expectedMsg {
-			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, fmt.Sprintf("%v", event))
+		if event.String() != expectedMsg {
+			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, event)
 		}
 		rejected.Add(1)
 	})
@@ -46,8 +46,8 @@ func TestBulkheadPublishEvents(t *testing.T) {
 			t.Errorf("Expected event type FINISHED, but got '%s'", event.EventType())
 		}
 		expectedMsg := fmt.Sprintf("%v: Bulkhead '%s' has finished a call.", event.CreationTime(), event.BulkheadName())
-		if fmt.Sprintf("%v", event) != expectedMsg {
-			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, fmt.Sprintf("%v", event))
+		if event.String() != expectedMsg {
+			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, event)
 		}
 		finished.Add(1)
 	})

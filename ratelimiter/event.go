@@ -13,6 +13,7 @@ const (
 )
 
 type Event interface {
+	fmt.Stringer
 	RateLimiterName() string
 	CreationTime() time.Time
 	EventType() EventType

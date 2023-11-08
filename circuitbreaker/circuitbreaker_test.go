@@ -25,19 +25,21 @@ func TestCircuitBreaker(t *testing.T) {
 		t.Errorf("Expected circuitbreaker state is CLOSED, but got %s", state)
 	}
 	listener := breaker.EventListener()
-	listener.OnSuccess(func(event circuitbreaker.Event) {
+	listener.OnSuccess(func(event circuitbreaker.EventWithDuration) {
 		if event.EventType() != circuitbreaker.Success {
 			t.Errorf("Expected event type Success, but got %s", event.EventType())
 		}
-		if !strings.HasPrefix(fmt.Sprintf("%v", event), fmt.Sprintf("%v: CircuitBreaker '%s'", event.CreationTime(), event.CircuitBreakerName())) {
+		if !strings.HasPrefix(event.String(), fmt.Sprintf("%v: CircuitBreaker '%s'", event.CreationTime(), event.CircuitBreakerName())) ||
+			!strings.HasSuffix(event.String(), fmt.Sprintf("Elapsed time: %v", event.Duration())) {
 			t.Errorf("Unexpected event message: %v", event)
 		}
 	})
-	listener.OnError(func(event circuitbreaker.Event) {
+	listener.OnError(func(event circuitbreaker.EventWithDuration) {
 		if event.EventType() != circuitbreaker.Error {
 			t.Errorf("Expected event type Error, but got %s", event.EventType())
 		}
-		if !strings.HasPrefix(fmt.Sprintf("%v", event), fmt.Sprintf("%v: CircuitBreaker '%s'", event.CreationTime(), event.CircuitBreakerName())) {
+		if !strings.HasPrefix(event.String(), fmt.Sprintf("%v: CircuitBreaker '%s'", event.CreationTime(), event.CircuitBreakerName())) ||
+			!strings.HasSuffix(event.String(), fmt.Sprintf("Elapsed time: %v", event.Duration())) {
 			t.Errorf("Unexpected event message: %v", event)
 		}
 	})
@@ -45,7 +47,7 @@ func TestCircuitBreaker(t *testing.T) {
 		if event.EventType() != circuitbreaker.NotPermitted {
 			t.Errorf("Expected event type NotPermitted, but got %s", event.EventType())
 		}
-		if !strings.HasPrefix(fmt.Sprintf("%v", event), fmt.Sprintf("%v: CircuitBreaker '%s'", event.CreationTime(), event.CircuitBreakerName())) {
+		if !strings.HasPrefix(event.String(), fmt.Sprintf("%v: CircuitBreaker '%s'", event.CreationTime(), event.CircuitBreakerName())) {
 			t.Errorf("Unexpected event message: %v", event)
 		}
 	})
@@ -53,7 +55,7 @@ func TestCircuitBreaker(t *testing.T) {
 		if event.EventType() != circuitbreaker.StateTransition {
 			t.Errorf("Expected event type StateTransition, but got %s", event.EventType())
 		}
-		if !strings.HasPrefix(fmt.Sprintf("%v", event), fmt.Sprintf("%v: CircuitBreaker '%s'", event.CreationTime(), event.CircuitBreakerName())) {
+		if !strings.HasPrefix(event.String(), fmt.Sprintf("%v: CircuitBreaker '%s'", event.CreationTime(), event.CircuitBreakerName())) {
 			t.Errorf("Unexpected event message: %v", event)
 		}
 	})
@@ -61,7 +63,7 @@ func TestCircuitBreaker(t *testing.T) {
 		if event.EventType() != circuitbreaker.FailureRateExceeded {
 			t.Errorf("Expected event type FailureRateExceeded, but got %s", event.EventType())
 		}
-		if !strings.HasPrefix(fmt.Sprintf("%v", event), fmt.Sprintf("%v: CircuitBreaker '%s'", event.CreationTime(), event.CircuitBreakerName())) {
+		if !strings.HasPrefix(event.String(), fmt.Sprintf("%v: CircuitBreaker '%s'", event.CreationTime(), event.CircuitBreakerName())) {
 			t.Errorf("Unexpected event message: %v", event)
 		}
 	})
@@ -205,22 +207,23 @@ func TestCircuitBreakerSlow(t *testing.T) {
 		circuitbreaker.WithPermittedNumberOfCallsInHalfOpenState(2),
 		circuitbreaker.WithMaxWaitDurationInHalfOpenState(time.Second*5))
 	listener := breaker.EventListener()
-	listener.OnSuccess(func(event circuitbreaker.Event) {
+	listener.OnSuccess(func(event circuitbreaker.EventWithDuration) {
 		if event.EventType() != circuitbreaker.Success {
 			t.Errorf("Expected event type Success, but got %s", event.EventType())
 		}
-		if !strings.HasPrefix(fmt.Sprintf("%v", event), fmt.Sprintf("%v: CircuitBreaker '%s'", event.CreationTime(), event.CircuitBreakerName())) {
+		if !strings.HasPrefix(event.String(), fmt.Sprintf("%v: CircuitBreaker '%s'", event.CreationTime(), event.CircuitBreakerName())) ||
+			!strings.HasSuffix(event.String(), fmt.Sprintf("Elapsed time: %v", event.Duration())) {
 			t.Errorf("Unexpected event message: %v", event)
 		}
 	})
-	listener.OnError(func(event circuitbreaker.Event) {
+	listener.OnError(func(event circuitbreaker.EventWithDuration) {
 		t.Error("should not listen error event")
 	})
 	listener.OnNotPermitted(func(event circuitbreaker.Event) {
 		if event.EventType() != circuitbreaker.NotPermitted {
 			t.Errorf("Expected event type NotPermitted, but got %s", event.EventType())
 		}
-		if !strings.HasPrefix(fmt.Sprintf("%v", event), fmt.Sprintf("%v: CircuitBreaker '%s'", event.CreationTime(), event.CircuitBreakerName())) {
+		if !strings.HasPrefix(event.String(), fmt.Sprintf("%v: CircuitBreaker '%s'", event.CreationTime(), event.CircuitBreakerName())) {
 			t.Errorf("Unexpected event message: %v", event)
 		}
 	})
@@ -228,7 +231,7 @@ func TestCircuitBreakerSlow(t *testing.T) {
 		if event.EventType() != circuitbreaker.StateTransition {
 			t.Errorf("Expected event type StateTransition, but got %s", event.EventType())
 		}
-		if !strings.HasPrefix(fmt.Sprintf("%v", event), fmt.Sprintf("%v: CircuitBreaker '%s'", event.CreationTime(), event.CircuitBreakerName())) {
+		if !strings.HasPrefix(event.String(), fmt.Sprintf("%v: CircuitBreaker '%s'", event.CreationTime(), event.CircuitBreakerName())) {
 			t.Errorf("Unexpected event message: %v", event)
 		}
 	})
@@ -239,7 +242,7 @@ func TestCircuitBreakerSlow(t *testing.T) {
 		if event.EventType() != circuitbreaker.SlowCallRateExceeded {
 			t.Errorf("Expected event type SlowCallRateExceeded, but got %s", event.EventType())
 		}
-		if !strings.HasPrefix(fmt.Sprintf("%v", event), fmt.Sprintf("%v: CircuitBreaker '%s'", event.CreationTime(), event.CircuitBreakerName())) {
+		if !strings.HasPrefix(event.String(), fmt.Sprintf("%v: CircuitBreaker '%s'", event.CreationTime(), event.CircuitBreakerName())) {
 			t.Errorf("Unexpected event message: %v", event)
 		}
 	})

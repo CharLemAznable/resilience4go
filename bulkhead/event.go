@@ -14,6 +14,7 @@ const (
 )
 
 type Event interface {
+	fmt.Stringer
 	BulkheadName() string
 	CreationTime() time.Time
 	EventType() EventType

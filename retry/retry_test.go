@@ -26,8 +26,8 @@ func TestSuccess(t *testing.T) {
 				" Number of retry attempts: '%d', Last result was: ('%v', '%v').",
 			event.CreationTime(), event.RetryName(),
 			event.NumOfAttempts(), event.RetVal(), event.RetErr())
-		if fmt.Sprintf("%v", event) != expected {
-			t.Errorf("Expected event string '%s', but got '%v'", expected, event)
+		if event.String() != expected {
+			t.Errorf("Expected event string '%s', but got '%s'", expected, event)
 		}
 	})
 	listener.OnError(func(event retry.Event) {
@@ -42,8 +42,8 @@ func TestSuccess(t *testing.T) {
 				" Last result was: ('%v', '%v').",
 			event.CreationTime(), event.RetryName(), retry.DefaultWaitDuration,
 			event.NumOfAttempts(), event.RetVal(), event.RetErr())
-		if fmt.Sprintf("%v", event) != expected {
-			t.Errorf("Expected event string '%s', but got '%v'", expected, event)
+		if event.String() != expected {
+			t.Errorf("Expected event string '%s', but got '%s'", expected, event)
 		}
 	})
 
@@ -101,8 +101,8 @@ func TestError(t *testing.T) {
 				" Number of retry attempts: '%d'. Giving up. Last result was: ('%v', '%v').",
 			event.CreationTime(), event.RetryName(),
 			event.NumOfAttempts(), event.RetVal(), event.RetErr())
-		if fmt.Sprintf("%v", event) != expected {
-			t.Errorf("Expected event string '%s', but got '%v'", expected, event)
+		if event.String() != expected {
+			t.Errorf("Expected event string '%s', but got '%s'", expected, event)
 		}
 	})
 	listener.OnRetry(func(event retry.Event) {
@@ -114,8 +114,8 @@ func TestError(t *testing.T) {
 				" Last result was: ('%v', '%v').",
 			event.CreationTime(), event.RetryName(), retry.DefaultWaitDuration,
 			event.NumOfAttempts(), event.RetVal(), event.RetErr())
-		if fmt.Sprintf("%v", event) != expected {
-			t.Errorf("Expected event string '%s', but got '%v'", expected, event)
+		if event.String() != expected {
+			t.Errorf("Expected event string '%s', but got '%s'", expected, event)
 		}
 	})
 

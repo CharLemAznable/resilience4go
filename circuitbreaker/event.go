@@ -17,9 +17,15 @@ const (
 )
 
 type Event interface {
+	fmt.Stringer
 	CircuitBreakerName() string
 	CreationTime() time.Time
 	EventType() EventType
+}
+
+type EventWithDuration interface {
+	Event
+	Duration() time.Duration
 }
 
 func newSuccessEvent(circuitBreakerName string, duration time.Duration) Event {
@@ -68,6 +74,10 @@ func (e *successEvent) EventType() EventType {
 	return Success
 }
 
+func (e *successEvent) Duration() time.Duration {
+	return e.duration
+}
+
 func (e *successEvent) String() string {
 	return fmt.Sprintf(
 		"%v: CircuitBreaker '%s' recorded a successful call. Elapsed time: %v",
@@ -83,6 +93,10 @@ type errorEvent struct {
 
 func (e *errorEvent) EventType() EventType {
 	return Error
+}
+
+func (e *errorEvent) Duration() time.Duration {
+	return e.duration
 }
 
 func (e *errorEvent) String() string {

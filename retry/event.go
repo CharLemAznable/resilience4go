@@ -14,6 +14,7 @@ const (
 )
 
 type Event interface {
+	fmt.Stringer
 	RetryName() string
 	CreationTime() time.Time
 	EventType() EventType

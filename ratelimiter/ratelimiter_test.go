@@ -32,8 +32,8 @@ func TestRateLimiterPublishEvents(t *testing.T) {
 			t.Errorf("Expected event type SUCCESSFUL, but got '%s'", event.EventType())
 		}
 		expectedMsg := fmt.Sprintf("RateLimiterEvent{type=%s, rateLimiterName='%s', creationTime=%v}", event.EventType(), event.RateLimiterName(), event.CreationTime())
-		if fmt.Sprintf("%v", event) != expectedMsg {
-			t.Errorf("Expected event message '%s', but got '%v'", expectedMsg, event)
+		if event.String() != expectedMsg {
+			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, event)
 		}
 		success.Add(1)
 	})
@@ -42,8 +42,8 @@ func TestRateLimiterPublishEvents(t *testing.T) {
 			t.Errorf("Expected event type FAILED, but got '%s'", event.EventType())
 		}
 		expectedMsg := fmt.Sprintf("RateLimiterEvent{type=%s, rateLimiterName='%s', creationTime=%v}", event.EventType(), event.RateLimiterName(), event.CreationTime())
-		if fmt.Sprintf("%v", event) != expectedMsg {
-			t.Errorf("Expected event message '%s', but got '%v'", expectedMsg, event)
+		if event.String() != expectedMsg {
+			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, event)
 		}
 		failure.Add(1)
 	})

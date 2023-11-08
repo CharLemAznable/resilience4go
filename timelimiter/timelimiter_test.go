@@ -22,8 +22,8 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 			t.Errorf("Expected event type SUCCESS, but got '%s'", event.EventType())
 		}
 		expectedMsg := fmt.Sprintf("%v: TimeLimiter '%s' recorded a successful call.", event.CreationTime(), event.TimeLimiterName())
-		if fmt.Sprintf("%v", event) != expectedMsg {
-			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, fmt.Sprintf("%v", event))
+		if event.String() != expectedMsg {
+			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, event)
 		}
 	})
 	eventListener.OnTimeout(func(event timelimiter.Event) {
@@ -31,8 +31,8 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 			t.Errorf("Expected event type TIMEOUT, but got '%s'", event.EventType())
 		}
 		expectedMsg := fmt.Sprintf("%v: TimeLimiter '%s' recorded a timeout exception.", event.CreationTime(), event.TimeLimiterName())
-		if fmt.Sprintf("%v", event) != expectedMsg {
-			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, fmt.Sprintf("%v", event))
+		if event.String() != expectedMsg {
+			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, event)
 		}
 	})
 	eventListener.OnFailure(func(event timelimiter.Event) {
@@ -40,8 +40,8 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 			t.Errorf("Expected event type FAILURE, but got '%s'", event.EventType())
 		}
 		expectedMsg := fmt.Sprintf("%v: TimeLimiter '%s' recorded a failure call with panic: %v.", event.CreationTime(), event.TimeLimiterName(), panicMsg)
-		if fmt.Sprintf("%v", event) != expectedMsg {
-			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, fmt.Sprintf("%v", event))
+		if event.String() != expectedMsg {
+			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, event)
 		}
 	})
 
