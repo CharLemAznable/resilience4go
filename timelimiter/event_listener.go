@@ -1,11 +1,15 @@
 package timelimiter
 
+import "github.com/CharLemAznable/resilience4go/utils"
+
 type EventConsumer func(Event)
 
 type EventListener interface {
 	OnSuccess(EventConsumer) EventListener
 	OnTimeout(EventConsumer) EventListener
 	OnFailure(EventConsumer) EventListener
+	Dismiss(EventConsumer) EventListener
+	HasConsumer() bool
 	consumeEvent(Event)
 }
 
@@ -14,6 +18,7 @@ func newEventListener() EventListener {
 		onSuccess: make([]EventConsumer, 0),
 		onTimeout: make([]EventConsumer, 0),
 		onFailure: make([]EventConsumer, 0),
+		slices:    utils.NewSlicesWithPointer[EventConsumer](),
 	}
 }
 
@@ -21,6 +26,7 @@ type eventListener struct {
 	onSuccess []EventConsumer
 	onTimeout []EventConsumer
 	onFailure []EventConsumer
+	slices    utils.Slices[EventConsumer]
 }
 
 func (listener *eventListener) OnSuccess(consumer EventConsumer) EventListener {
@@ -38,7 +44,21 @@ func (listener *eventListener) OnFailure(consumer EventConsumer) EventListener {
 	return listener
 }
 
+func (listener *eventListener) Dismiss(consumer EventConsumer) EventListener {
+	listener.onSuccess = listener.slices.RemoveElementByValue(listener.onSuccess, consumer)
+	listener.onTimeout = listener.slices.RemoveElementByValue(listener.onTimeout, consumer)
+	listener.onFailure = listener.slices.RemoveElementByValue(listener.onFailure, consumer)
+	return listener
+}
+
+func (listener *eventListener) HasConsumer() bool {
+	return len(listener.onSuccess) > 0 || len(listener.onTimeout) > 0 || len(listener.onFailure) > 0
+}
+
 func (listener *eventListener) consumeEvent(event Event) {
+	if !listener.HasConsumer() {
+		return
+	}
 	var consumers []EventConsumer
 	switch event.EventType() {
 	case SUCCESS:

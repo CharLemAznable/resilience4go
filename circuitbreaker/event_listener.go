@@ -1,44 +1,49 @@
 package circuitbreaker
 
+import "github.com/CharLemAznable/resilience4go/utils"
+
 type EventConsumer func(Event)
-type EventWithDurationConsumer func(EventWithDuration)
 
 type EventListener interface {
-	OnSuccess(EventWithDurationConsumer) EventListener
-	OnError(EventWithDurationConsumer) EventListener
+	OnSuccess(EventConsumer) EventListener
+	OnError(EventConsumer) EventListener
 	OnNotPermitted(EventConsumer) EventListener
 	OnStateTransition(EventConsumer) EventListener
 	OnFailureRateExceeded(EventConsumer) EventListener
 	OnSlowCallRateExceeded(EventConsumer) EventListener
+	Dismiss(EventConsumer) EventListener
+	HasConsumer() bool
 	consumeEvent(Event)
 }
 
 func newEventListener() EventListener {
 	return &eventListener{
-		onSuccess:              make([]EventWithDurationConsumer, 0),
-		onError:                make([]EventWithDurationConsumer, 0),
+		onSuccess:              make([]EventConsumer, 0),
+		onError:                make([]EventConsumer, 0),
 		onNotPermitted:         make([]EventConsumer, 0),
 		onStateTransition:      make([]EventConsumer, 0),
 		onFailureRateExceeded:  make([]EventConsumer, 0),
 		onSlowCallRateExceeded: make([]EventConsumer, 0),
+		slices:                 utils.NewSlicesWithPointer[EventConsumer](),
 	}
 }
 
 type eventListener struct {
-	onSuccess              []EventWithDurationConsumer
-	onError                []EventWithDurationConsumer
+	onSuccess              []EventConsumer
+	onError                []EventConsumer
 	onNotPermitted         []EventConsumer
 	onStateTransition      []EventConsumer
 	onFailureRateExceeded  []EventConsumer
 	onSlowCallRateExceeded []EventConsumer
+	slices                 utils.Slices[EventConsumer]
 }
 
-func (listener *eventListener) OnSuccess(consumer EventWithDurationConsumer) EventListener {
+func (listener *eventListener) OnSuccess(consumer EventConsumer) EventListener {
 	listener.onSuccess = append(listener.onSuccess, consumer)
 	return listener
 }
 
-func (listener *eventListener) OnError(consumer EventWithDurationConsumer) EventListener {
+func (listener *eventListener) OnError(consumer EventConsumer) EventListener {
 	listener.onError = append(listener.onError, consumer)
 	return listener
 }
@@ -63,22 +68,31 @@ func (listener *eventListener) OnSlowCallRateExceeded(consumer EventConsumer) Ev
 	return listener
 }
 
+func (listener *eventListener) Dismiss(consumer EventConsumer) EventListener {
+	listener.onSuccess = listener.slices.RemoveElementByValue(listener.onSuccess, consumer)
+	listener.onError = listener.slices.RemoveElementByValue(listener.onError, consumer)
+	listener.onNotPermitted = listener.slices.RemoveElementByValue(listener.onNotPermitted, consumer)
+	listener.onStateTransition = listener.slices.RemoveElementByValue(listener.onStateTransition, consumer)
+	listener.onFailureRateExceeded = listener.slices.RemoveElementByValue(listener.onFailureRateExceeded, consumer)
+	listener.onSlowCallRateExceeded = listener.slices.RemoveElementByValue(listener.onSlowCallRateExceeded, consumer)
+	return listener
+}
+
+func (listener *eventListener) HasConsumer() bool {
+	return len(listener.onSuccess) > 0 || len(listener.onError) > 0 || len(listener.onNotPermitted) > 0 ||
+		len(listener.onStateTransition) > 0 || len(listener.onFailureRateExceeded) > 0 || len(listener.onSlowCallRateExceeded) > 0
+}
+
 func (listener *eventListener) consumeEvent(event Event) {
-	if eventWithDuration, ok := event.(EventWithDuration); ok {
-		var consumers []EventWithDurationConsumer
-		switch eventWithDuration.EventType() {
-		case Success:
-			consumers = listener.onSuccess
-		case Error:
-			consumers = listener.onError
-		}
-		for _, consumer := range consumers {
-			go consumer(eventWithDuration)
-		}
+	if !listener.HasConsumer() {
 		return
 	}
 	var consumers []EventConsumer
 	switch event.EventType() {
+	case Success:
+		consumers = listener.onSuccess
+	case Error:
+		consumers = listener.onError
 	case NotPermitted:
 		consumers = listener.onNotPermitted
 	case StateTransition:

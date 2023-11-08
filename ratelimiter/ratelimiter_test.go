@@ -27,7 +27,7 @@ func TestRateLimiterPublishEvents(t *testing.T) {
 	eventListener := rl.EventListener()
 	success := atomic.Int64{}
 	failure := atomic.Int64{}
-	eventListener.OnSuccess(func(event ratelimiter.Event) {
+	onSuccess := func(event ratelimiter.Event) {
 		if event.EventType() != ratelimiter.SUCCESSFUL {
 			t.Errorf("Expected event type SUCCESSFUL, but got '%s'", event.EventType())
 		}
@@ -36,8 +36,8 @@ func TestRateLimiterPublishEvents(t *testing.T) {
 			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, event)
 		}
 		success.Add(1)
-	})
-	eventListener.OnFailure(func(event ratelimiter.Event) {
+	}
+	onFailure := func(event ratelimiter.Event) {
 		if event.EventType() != ratelimiter.FAILED {
 			t.Errorf("Expected event type FAILED, but got '%s'", event.EventType())
 		}
@@ -46,7 +46,11 @@ func TestRateLimiterPublishEvents(t *testing.T) {
 			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, event)
 		}
 		failure.Add(1)
-	})
+	}
+	eventListener.OnSuccess(onSuccess).OnFailure(onFailure)
+	if !eventListener.HasConsumer() {
+		t.Error("Expected event listener has consumer, but not")
+	}
 
 	// 创建一个可运行的函数
 	fn := func() error {
@@ -68,5 +72,9 @@ func TestRateLimiterPublishEvents(t *testing.T) {
 	}
 	if failure.Load() != int64(1) {
 		t.Errorf("Expected 1 failure call, but got '%d'", failure.Load())
+	}
+	eventListener.Dismiss(onSuccess).Dismiss(onFailure)
+	if eventListener.HasConsumer() {
+		t.Error("Expected event listener has no consumer, but not")
 	}
 }

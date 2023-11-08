@@ -17,7 +17,7 @@ func TestSuccess(t *testing.T) {
 		t.Errorf("Expected retry name 'success', but got '%s'", successRetry.Name())
 	}
 	listener := successRetry.EventListener()
-	listener.OnSuccess(func(event retry.Event) {
+	onSuccess := func(event retry.Event) {
 		if event.EventType() != retry.SUCCESS {
 			t.Errorf("Expected event type SUCCESS, but got '%s'", event.EventType())
 		}
@@ -29,11 +29,11 @@ func TestSuccess(t *testing.T) {
 		if event.String() != expected {
 			t.Errorf("Expected event string '%s', but got '%s'", expected, event)
 		}
-	})
-	listener.OnError(func(event retry.Event) {
+	}
+	onError := func(event retry.Event) {
 		t.Error("Should not listen error event")
-	})
-	listener.OnRetry(func(event retry.Event) {
+	}
+	onRetry := func(event retry.Event) {
 		if event.EventType() != retry.RETRY {
 			t.Errorf("Expected event type RETRY, but got '%s'", event.EventType())
 		}
@@ -45,7 +45,11 @@ func TestSuccess(t *testing.T) {
 		if event.String() != expected {
 			t.Errorf("Expected event string '%s', but got '%s'", expected, event)
 		}
-	})
+	}
+	listener.OnSuccess(onSuccess).OnError(onError).OnRetry(onRetry)
+	if !listener.HasConsumer() {
+		t.Error("Expected event listener has consumer, but not")
+	}
 
 	var count atomic.Int64
 	fn := func() error {
@@ -79,6 +83,10 @@ func TestSuccess(t *testing.T) {
 		t.Errorf("Expected failed calls with retry attempt '0', but got '%d'",
 			metrics.NumberOfFailedCallsWithRetryAttempt())
 	}
+	listener.Dismiss(onSuccess).Dismiss(onError).Dismiss(onRetry)
+	if listener.HasConsumer() {
+		t.Error("Expected event listener has no consumer, but not")
+	}
 }
 
 func TestError(t *testing.T) {
@@ -89,10 +97,10 @@ func TestError(t *testing.T) {
 		t.Errorf("Expected retry name 'error', but got '%s'", successRetry.Name())
 	}
 	listener := successRetry.EventListener()
-	listener.OnSuccess(func(event retry.Event) {
+	onSuccess := func(event retry.Event) {
 		t.Error("Should not listen success event")
-	})
-	listener.OnError(func(event retry.Event) {
+	}
+	onError := func(event retry.Event) {
 		if event.EventType() != retry.ERROR {
 			t.Errorf("Expected event type ERROR, but got '%s'", event.EventType())
 		}
@@ -104,8 +112,8 @@ func TestError(t *testing.T) {
 		if event.String() != expected {
 			t.Errorf("Expected event string '%s', but got '%s'", expected, event)
 		}
-	})
-	listener.OnRetry(func(event retry.Event) {
+	}
+	onRetry := func(event retry.Event) {
 		if event.EventType() != retry.RETRY {
 			t.Errorf("Expected event type RETRY, but got '%s'", event.EventType())
 		}
@@ -117,7 +125,11 @@ func TestError(t *testing.T) {
 		if event.String() != expected {
 			t.Errorf("Expected event string '%s', but got '%s'", expected, event)
 		}
-	})
+	}
+	listener.OnSuccess(onSuccess).OnError(onError).OnRetry(onRetry)
+	if !listener.HasConsumer() {
+		t.Error("Expected event listener has consumer, but not")
+	}
 
 	var count atomic.Int64
 	fn := func() error {
@@ -150,5 +162,9 @@ func TestError(t *testing.T) {
 	if metrics.NumberOfFailedCallsWithRetryAttempt() != 1 {
 		t.Errorf("Expected failed calls with retry attempt '1', but got '%d'",
 			metrics.NumberOfFailedCallsWithRetryAttempt())
+	}
+	listener.Dismiss(onSuccess).Dismiss(onError).Dismiss(onRetry)
+	if listener.HasConsumer() {
+		t.Error("Expected event listener has no consumer, but not")
 	}
 }
