@@ -11,7 +11,7 @@ func RateLimiterCollectors(entry ratelimiter.RateLimiter) []prometheus.Collector
 			prometheus.GaugeOpts{
 				Name:        "resilience4go_ratelimiter_waiting_threads",
 				Help:        "The number of waiting threads",
-				ConstLabels: prometheus.Labels{"name": entry.Name()},
+				ConstLabels: prometheus.Labels{labelKeyName: entry.Name()},
 			},
 			func() float64 {
 				return float64(entry.Metrics().NumberOfWaitingThreads())
@@ -21,7 +21,7 @@ func RateLimiterCollectors(entry ratelimiter.RateLimiter) []prometheus.Collector
 			prometheus.GaugeOpts{
 				Name:        "resilience4go_ratelimiter_available_permissions",
 				Help:        "The number of available permissions",
-				ConstLabels: prometheus.Labels{"name": entry.Name()},
+				ConstLabels: prometheus.Labels{labelKeyName: entry.Name()},
 			},
 			func() float64 {
 				return float64(entry.Metrics().AvailablePermissions())
