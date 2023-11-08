@@ -32,17 +32,17 @@ type eventListener struct {
 }
 
 func (listener *eventListener) OnPermitted(consumer EventConsumer) EventListener {
-	listener.onPermitted = append(listener.onPermitted, consumer)
+	listener.onPermitted = listener.slices.AppendElementUnique(listener.onPermitted, consumer)
 	return listener
 }
 
 func (listener *eventListener) OnRejected(consumer EventConsumer) EventListener {
-	listener.onRejected = append(listener.onRejected, consumer)
+	listener.onRejected = listener.slices.AppendElementUnique(listener.onRejected, consumer)
 	return listener
 }
 
 func (listener *eventListener) OnFinished(consumer EventConsumer) EventListener {
-	listener.onFinished = append(listener.onFinished, consumer)
+	listener.onFinished = listener.slices.AppendElementUnique(listener.onFinished, consumer)
 	return listener
 }
 

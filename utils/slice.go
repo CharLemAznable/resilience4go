@@ -1,9 +1,12 @@
 package utils
 
-import "reflect"
+import (
+	"reflect"
+)
 
 type Slices[T any] interface {
 	RemoveElementByValue(slice []T, value T) []T
+	AppendElementUnique(slice []T, value T) []T
 }
 
 func NewSlices[T any](equals func(T, T) bool) Slices[T] {
@@ -21,11 +24,20 @@ type slices[T any] struct {
 }
 
 func (s *slices[T]) RemoveElementByValue(slice []T, value T) []T {
-	for i := 0; i < len(slice); i++ {
-		if s.equals(slice[i], value) {
-			result := make([]T, 0)
-			return append(append(result, slice[:i]...), slice[i+1:]...)
+	result := make([]T, 0)
+	start, cursor := 0, 0
+	for ; cursor < len(slice); cursor++ {
+		if s.equals(slice[cursor], value) {
+			if start != cursor {
+				result = append(result, slice[start:cursor]...)
+			}
+			start = cursor + 1
 		}
 	}
-	return slice
+	return append(result, slice[start:cursor]...)
+}
+
+func (s *slices[T]) AppendElementUnique(slice []T, value T) []T {
+	var removed []T = s.RemoveElementByValue(slice, value)
+	return append(removed, value)
 }

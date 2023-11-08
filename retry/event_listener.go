@@ -30,17 +30,17 @@ type eventListener struct {
 }
 
 func (listener *eventListener) OnSuccess(consumer EventConsumer) EventListener {
-	listener.onSuccess = append(listener.onSuccess, consumer)
+	listener.onSuccess = listener.slices.AppendElementUnique(listener.onSuccess, consumer)
 	return listener
 }
 
 func (listener *eventListener) OnError(consumer EventConsumer) EventListener {
-	listener.onError = append(listener.onError, consumer)
+	listener.onError = listener.slices.AppendElementUnique(listener.onError, consumer)
 	return listener
 }
 
 func (listener *eventListener) OnRetry(consumer EventConsumer) EventListener {
-	listener.onRetry = append(listener.onRetry, consumer)
+	listener.onRetry = listener.slices.AppendElementUnique(listener.onRetry, consumer)
 	return listener
 }
 

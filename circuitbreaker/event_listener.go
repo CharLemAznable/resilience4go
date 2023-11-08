@@ -39,32 +39,32 @@ type eventListener struct {
 }
 
 func (listener *eventListener) OnSuccess(consumer EventConsumer) EventListener {
-	listener.onSuccess = append(listener.onSuccess, consumer)
+	listener.onSuccess = listener.slices.AppendElementUnique(listener.onSuccess, consumer)
 	return listener
 }
 
 func (listener *eventListener) OnError(consumer EventConsumer) EventListener {
-	listener.onError = append(listener.onError, consumer)
+	listener.onError = listener.slices.AppendElementUnique(listener.onError, consumer)
 	return listener
 }
 
 func (listener *eventListener) OnNotPermitted(consumer EventConsumer) EventListener {
-	listener.onNotPermitted = append(listener.onNotPermitted, consumer)
+	listener.onNotPermitted = listener.slices.AppendElementUnique(listener.onNotPermitted, consumer)
 	return listener
 }
 
 func (listener *eventListener) OnStateTransition(consumer EventConsumer) EventListener {
-	listener.onStateTransition = append(listener.onStateTransition, consumer)
+	listener.onStateTransition = listener.slices.AppendElementUnique(listener.onStateTransition, consumer)
 	return listener
 }
 
 func (listener *eventListener) OnFailureRateExceeded(consumer EventConsumer) EventListener {
-	listener.onFailureRateExceeded = append(listener.onFailureRateExceeded, consumer)
+	listener.onFailureRateExceeded = listener.slices.AppendElementUnique(listener.onFailureRateExceeded, consumer)
 	return listener
 }
 
 func (listener *eventListener) OnSlowCallRateExceeded(consumer EventConsumer) EventListener {
-	listener.onSlowCallRateExceeded = append(listener.onSlowCallRateExceeded, consumer)
+	listener.onSlowCallRateExceeded = listener.slices.AppendElementUnique(listener.onSlowCallRateExceeded, consumer)
 	return listener
 }
 
