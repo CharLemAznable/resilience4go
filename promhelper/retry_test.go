@@ -10,7 +10,7 @@ import (
 )
 
 func TestRetryCollectors(t *testing.T) {
-	entry := retry.NewRetry("test") // Create a new timelimiter entry for testing
+	entry := retry.NewRetry("test") // Create a new retry entry for testing
 	collectors := promhelper.RetryCollectors(entry)
 	if len(collectors) != 4 {
 		t.Errorf("Expected 4 collectors, but got %d", len(collectors))
