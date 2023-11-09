@@ -22,4 +22,151 @@
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=CharLemAznable_resilience4go&metric=coverage)](https://sonarcloud.io/dashboard?id=CharLemAznable_resilience4go)
 [![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=CharLemAznable_resilience4go&metric=duplicated_lines_density)](https://sonarcloud.io/dashboard?id=CharLemAznable_resilience4go)
 
-golang resilience utils.
+Golang实现的弹性调用工具包, 参考 [resilience4j](https://github.com/resilience4j/resilience4j) 实现.
+
+#### 舱壁隔离(Bulkhead)
+
+用于限制并发调用的最大次数.
+
+```go
+import "github.com/CharLemAznable/resilience4go/bulkhead"
+
+entry := bulkhead.NewBulkhead("name")
+
+decoratedFn := bulkhead.DecorateRunnable(entry, func() error {
+	// do something
+	return nil
+})
+```
+
+#### 时长限制(TimeLimiter)
+
+用于限制调用的最大耗时.
+
+```go
+import "github.com/CharLemAznable/resilience4go/timelimiter"
+
+entry := timelimiter.NewTimeLimiter("name")
+
+decoratedFn := timelimiter.DecorateRunnable(entry, func() error {
+	// do something
+	return nil
+})
+```
+
+#### 速率限制(RateLimiter)
+
+用于限制并发调用的速率.
+
+```go
+import "github.com/CharLemAznable/resilience4go/ratelimiter"
+
+entry := ratelimiter.NewRateLimiter("name")
+
+decoratedFn := ratelimiter.DecorateRunnable(entry, func() error {
+	// do something
+	return nil
+})
+```
+
+#### 断路器(CircuitBreaker)
+
+对调用进行熔断，避免因持续的失败或拒绝而消耗资源.
+
+```go
+import "github.com/CharLemAznable/resilience4go/circuitbreaker"
+
+entry := circuitbreaker.NewCircuitBreaker("name")
+
+decoratedFn := circuitbreaker.DecorateRunnable(entry, func() error {
+	// do something
+	return nil
+})
+```
+
+#### 重试(Retry)
+
+在调用失败后, 自动尝试重试.
+
+```go
+import "github.com/CharLemAznable/resilience4go/retry"
+
+entry := retry.NewRetry("name")
+
+decoratedFn := retry.DecorateRunnable(entry, func() error {
+	// do something
+	return nil
+})
+```
+
+#### 故障恢复(Fallback)
+
+在调用失败后, 根据失败信息进行补偿操作.
+
+```go
+import "github.com/CharLemAznable/resilience4go/fallback"
+
+decoratedFn := fallback.DecorateRunnable(func() error {
+	// do something
+	return nil
+}, func(err error) error {
+	// fallback if has error
+	return nil
+})
+```
+
+#### 对如下四种类型的函数进行包装
+
+* Runnable
+
+```go
+import "github.com/CharLemAznable/resilience4go/decorator"
+
+decorator.OfRunnable(func() error {
+	// ...
+})
+```
+
+* Supplier
+
+```go
+import "github.com/CharLemAznable/resilience4go/decorator"
+
+decorator.OfSupplier[T any](func() (T, error) {
+	// ...
+})
+```
+
+* Consumer
+
+```go
+import "github.com/CharLemAznable/resilience4go/decorator"
+
+decorator.OfConsumer[T any](func(t T) error {
+	// ...
+})
+```
+
+* Function
+
+```go
+import "github.com/CharLemAznable/resilience4go/decorator"
+
+decorator.OfFunction[T any, R any](func(t T) (R, error) {
+	// ...
+})
+```
+
+#### 使用Prometheus监控弹性组件的指标
+
+```go
+import "github.com/CharLemAznable/resilience4go/promhelper"
+
+promhelper.BulkheadRegistry(bulkheadEntry)
+promhelper.TimeLimiterRegistry(timelimiterEntry)
+promhelper.RateLimiterRegistry(ratelimiterEntry)
+promhelper.CircuitBreakerRegistry(circuitbreakerEntry)
+promhelper.RetryRegistry(retryEntry)
+```
+
+以上方法返回两个函数, 分别为注册到Prometheus的函数和反注册Prometheus的函数.
