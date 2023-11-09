@@ -12,15 +12,21 @@ const (
 	cbKindNotPermitted = "not_permitted"
 )
 
-func CircuitBreakerCollectors(entry circuitbreaker.CircuitBreaker) (
-	collectors []prometheus.Collector, onSuccess circuitbreaker.EventConsumer, onError circuitbreaker.EventConsumer) {
-	var result []prometheus.Collector
-	result = append(result, stateGauges(entry)...)
-	result = append(result, callGauges(entry)...)
-	histograms, onSuccess, onError := callHistograms(entry)
-	result = append(result, histograms...)
-	entry.EventListener().OnSuccess(onSuccess).OnError(onError)
-	return append(result, notPermittedCallsCounter(entry)), onSuccess, onError
+func CircuitBreakerRegistry(entry circuitbreaker.CircuitBreaker, histogramBuckets ...float64) (RegisterFn, UnregisterFn) {
+	var collectors []prometheus.Collector
+	collectors = append(collectors, stateGauges(entry)...)
+	collectors = append(collectors, callGauges(entry)...)
+	histograms, onSuccess, onError := callHistograms(entry, histogramBuckets...)
+	collectors = append(collectors, histograms...)
+	collectors = append(collectors, notPermittedCallsCounter(entry))
+	registerFn, unregisterFn := buildRegisterFn(collectors...), buildUnregisterFn(collectors...)
+	return func(registerer prometheus.Registerer) error {
+			entry.EventListener().OnSuccess(onSuccess).OnError(onError)
+			return registerFn(registerer)
+		}, func(registerer prometheus.Registerer) bool {
+			entry.EventListener().Dismiss(onSuccess).Dismiss(onError)
+			return unregisterFn(registerer)
+		}
 }
 
 func stateGauges(entry circuitbreaker.CircuitBreaker) []prometheus.Collector {
@@ -118,25 +124,31 @@ func callGauges(entry circuitbreaker.CircuitBreaker) []prometheus.Collector {
 	}
 }
 
-func callHistograms(entry circuitbreaker.CircuitBreaker) (
+func callHistograms(entry circuitbreaker.CircuitBreaker, histogramBuckets ...float64) (
 	[]prometheus.Collector, circuitbreaker.EventConsumer, circuitbreaker.EventConsumer) {
+	buckets := prometheus.DefBuckets
+	if len(histogramBuckets) > 0 {
+		buckets = histogramBuckets
+	}
 	successfulCallsHistogram := prometheus.NewHistogram(
 		prometheus.HistogramOpts{
 			Name:        "resilience4go_circuitbreaker_calls",
 			Help:        "Total number of successful calls",
 			ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: cbKindSuccessful},
+			Buckets:     buckets,
 		})
 	onSuccess := func(event circuitbreaker.Event) {
-		successfulCallsHistogram.Observe(event.(circuitbreaker.EventWithDuration).Duration().Seconds())
+		successfulCallsHistogram.Observe(float64(event.(circuitbreaker.EventWithDuration).Duration()))
 	}
 	failedCallsHistogram := prometheus.NewHistogram(
 		prometheus.HistogramOpts{
 			Name:        "resilience4go_circuitbreaker_calls",
 			Help:        "Total number of failed calls",
 			ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: cbKindFailed},
+			Buckets:     buckets,
 		})
 	onError := func(event circuitbreaker.Event) {
-		failedCallsHistogram.Observe(event.(circuitbreaker.EventWithDuration).Duration().Seconds())
+		failedCallsHistogram.Observe(float64(event.(circuitbreaker.EventWithDuration).Duration()))
 	}
 	return []prometheus.Collector{successfulCallsHistogram, failedCallsHistogram}, onSuccess, onError
 }

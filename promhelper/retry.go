@@ -12,47 +12,52 @@ const (
 	rtKindFailedWithRetry        = "failed_with_retry"
 )
 
-func RetryCollectors(entry retry.Retry) []prometheus.Collector {
-	return []prometheus.Collector{
-		prometheus.NewCounterFunc(
-			prometheus.CounterOpts{
-				Name:        "resilience4go_retry_calls",
-				Help:        "The number of successful calls without a retry attempt",
-				ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: rtKindSuccessfulWithoutRetry},
-			},
-			func() float64 {
-				return float64(entry.Metrics().NumberOfSuccessfulCallsWithoutRetryAttempt())
-			},
-		),
-		prometheus.NewCounterFunc(
-			prometheus.CounterOpts{
-				Name:        "resilience4go_retry_calls",
-				Help:        "The number of successful calls after a retry attempt",
-				ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: rtKindSuccessfulWithRetry},
-			},
-			func() float64 {
-				return float64(entry.Metrics().NumberOfSuccessfulCallsWithRetryAttempt())
-			},
-		),
-		prometheus.NewCounterFunc(
-			prometheus.CounterOpts{
-				Name:        "resilience4go_retry_calls",
-				Help:        "The number of failed calls without a retry attempt",
-				ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: rtKindFailedWithoutRetry},
-			},
-			func() float64 {
-				return float64(entry.Metrics().NumberOfFailedCallsWithoutRetryAttempt())
-			},
-		),
-		prometheus.NewCounterFunc(
-			prometheus.CounterOpts{
-				Name:        "resilience4go_retry_calls",
-				Help:        "The number of failed calls after a retry attempt",
-				ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: rtKindFailedWithRetry},
-			},
-			func() float64 {
-				return float64(entry.Metrics().NumberOfFailedCallsWithRetryAttempt())
-			},
-		),
+func RetryRegistry(entry retry.Retry) (RegisterFn, UnregisterFn) {
+	numberOfSuccessfulCallsWithoutRetryAttemptCounter := prometheus.NewCounterFunc(
+		prometheus.CounterOpts{
+			Name:        "resilience4go_retry_calls",
+			Help:        "The number of successful calls without a retry attempt",
+			ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: rtKindSuccessfulWithoutRetry},
+		},
+		func() float64 {
+			return float64(entry.Metrics().NumberOfSuccessfulCallsWithoutRetryAttempt())
+		},
+	)
+	numberOfSuccessfulCallsWithRetryAttemptCounter := prometheus.NewCounterFunc(
+		prometheus.CounterOpts{
+			Name:        "resilience4go_retry_calls",
+			Help:        "The number of successful calls after a retry attempt",
+			ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: rtKindSuccessfulWithRetry},
+		},
+		func() float64 {
+			return float64(entry.Metrics().NumberOfSuccessfulCallsWithRetryAttempt())
+		},
+	)
+	numberOfFailedCallsWithoutRetryAttemptCounter := prometheus.NewCounterFunc(
+		prometheus.CounterOpts{
+			Name:        "resilience4go_retry_calls",
+			Help:        "The number of failed calls without a retry attempt",
+			ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: rtKindFailedWithoutRetry},
+		},
+		func() float64 {
+			return float64(entry.Metrics().NumberOfFailedCallsWithoutRetryAttempt())
+		},
+	)
+	numberOfFailedCallsWithRetryAttempt := prometheus.NewCounterFunc(
+		prometheus.CounterOpts{
+			Name:        "resilience4go_retry_calls",
+			Help:        "The number of failed calls after a retry attempt",
+			ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: rtKindFailedWithRetry},
+		},
+		func() float64 {
+			return float64(entry.Metrics().NumberOfFailedCallsWithRetryAttempt())
+		},
+	)
+	collectors := []prometheus.Collector{
+		numberOfSuccessfulCallsWithoutRetryAttemptCounter,
+		numberOfSuccessfulCallsWithRetryAttemptCounter,
+		numberOfFailedCallsWithoutRetryAttemptCounter,
+		numberOfFailedCallsWithRetryAttempt,
 	}
+	return buildRegisterFn(collectors...), buildUnregisterFn(collectors...)
 }

@@ -5,27 +5,30 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func RateLimiterCollectors(entry ratelimiter.RateLimiter) []prometheus.Collector {
-	return []prometheus.Collector{
-		prometheus.NewGaugeFunc(
-			prometheus.GaugeOpts{
-				Name:        "resilience4go_ratelimiter_waiting_threads",
-				Help:        "The number of waiting threads",
-				ConstLabels: prometheus.Labels{labelKeyName: entry.Name()},
-			},
-			func() float64 {
-				return float64(entry.Metrics().NumberOfWaitingThreads())
-			},
-		),
-		prometheus.NewGaugeFunc(
-			prometheus.GaugeOpts{
-				Name:        "resilience4go_ratelimiter_available_permissions",
-				Help:        "The number of available permissions",
-				ConstLabels: prometheus.Labels{labelKeyName: entry.Name()},
-			},
-			func() float64 {
-				return float64(entry.Metrics().AvailablePermissions())
-			},
-		),
+func RateLimiterRegistry(entry ratelimiter.RateLimiter) (RegisterFn, UnregisterFn) {
+	numberOfWaitingThreadsGauge := prometheus.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Name:        "resilience4go_ratelimiter_waiting_threads",
+			Help:        "The number of waiting threads",
+			ConstLabels: prometheus.Labels{labelKeyName: entry.Name()},
+		},
+		func() float64 {
+			return float64(entry.Metrics().NumberOfWaitingThreads())
+		},
+	)
+	availablePermissionsGauge := prometheus.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Name:        "resilience4go_ratelimiter_available_permissions",
+			Help:        "The number of available permissions",
+			ConstLabels: prometheus.Labels{labelKeyName: entry.Name()},
+		},
+		func() float64 {
+			return float64(entry.Metrics().AvailablePermissions())
+		},
+	)
+	collectors := []prometheus.Collector{
+		numberOfWaitingThreadsGauge,
+		availablePermissionsGauge,
 	}
+	return buildRegisterFn(collectors...), buildUnregisterFn(collectors...)
 }
