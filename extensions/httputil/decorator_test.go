@@ -27,6 +27,9 @@ func TestDecorateRoundTripper(t *testing.T) {
 		WithCircuitBreaker(circuitbreaker.NewCircuitBreaker("test")).
 		WithRetry(retry.NewRetry("test")).
 		WithFallback(func(err error) (*http.Response, error) {
+			if err.Error() != "error" {
+				t.Errorf("Expected error 'error', but got '%v'", err.Error())
+			}
 			return http.ReadResponse(bufio.NewReader(strings.NewReader(
 				"HTTP/1.1 200 OK\r\n"+
 					"\r\n"+
