@@ -19,27 +19,27 @@ type DecorateConsumer[T any] struct {
 }
 
 func (consumer *DecorateConsumer[T]) WithBulkhead(entry bulkhead.Bulkhead) *DecorateConsumer[T] {
-	return &DecorateConsumer[T]{bulkhead.DecorateConsumer(entry, consumer.Consumer)}
+	return OfConsumer(bulkhead.DecorateConsumer(entry, consumer.Consumer))
 }
 
 func (consumer *DecorateConsumer[T]) WithTimeLimiter(entry timelimiter.TimeLimiter) *DecorateConsumer[T] {
-	return &DecorateConsumer[T]{timelimiter.DecorateConsumer(entry, consumer.Consumer)}
+	return OfConsumer(timelimiter.DecorateConsumer(entry, consumer.Consumer))
 }
 
 func (consumer *DecorateConsumer[T]) WithRateLimiter(entry ratelimiter.RateLimiter) *DecorateConsumer[T] {
-	return &DecorateConsumer[T]{ratelimiter.DecorateConsumer(entry, consumer.Consumer)}
+	return OfConsumer(ratelimiter.DecorateConsumer(entry, consumer.Consumer))
 }
 
 func (consumer *DecorateConsumer[T]) WithCircuitBreaker(entry circuitbreaker.CircuitBreaker) *DecorateConsumer[T] {
-	return &DecorateConsumer[T]{circuitbreaker.DecorateConsumer(entry, consumer.Consumer)}
+	return OfConsumer(circuitbreaker.DecorateConsumer(entry, consumer.Consumer))
 }
 
 func (consumer *DecorateConsumer[T]) WithRetry(entry retry.Retry) *DecorateConsumer[T] {
-	return &DecorateConsumer[T]{retry.DecorateConsumer(entry, consumer.Consumer)}
+	return OfConsumer(retry.DecorateConsumer(entry, consumer.Consumer))
 }
 
 func (consumer *DecorateConsumer[T]) WithFallback(fn func(error) error) *DecorateConsumer[T] {
-	return &DecorateConsumer[T]{fallback.DecorateConsumer(consumer.Consumer, fn)}
+	return OfConsumer(fallback.DecorateConsumer(consumer.Consumer, fn))
 }
 
 func (consumer *DecorateConsumer[T]) Decorate() consumer.Consumer[T] {

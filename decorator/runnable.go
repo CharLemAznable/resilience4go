@@ -19,27 +19,27 @@ type DecorateRunnable struct {
 }
 
 func (runnable *DecorateRunnable) WithBulkhead(entry bulkhead.Bulkhead) *DecorateRunnable {
-	return &DecorateRunnable{bulkhead.DecorateRunnable(entry, runnable.Runnable)}
+	return OfRunnable(bulkhead.DecorateRunnable(entry, runnable.Runnable))
 }
 
 func (runnable *DecorateRunnable) WithTimeLimiter(entry timelimiter.TimeLimiter) *DecorateRunnable {
-	return &DecorateRunnable{timelimiter.DecorateRunnable(entry, runnable.Runnable)}
+	return OfRunnable(timelimiter.DecorateRunnable(entry, runnable.Runnable))
 }
 
 func (runnable *DecorateRunnable) WithRateLimiter(entry ratelimiter.RateLimiter) *DecorateRunnable {
-	return &DecorateRunnable{ratelimiter.DecorateRunnable(entry, runnable.Runnable)}
+	return OfRunnable(ratelimiter.DecorateRunnable(entry, runnable.Runnable))
 }
 
 func (runnable *DecorateRunnable) WithCircuitBreaker(entry circuitbreaker.CircuitBreaker) *DecorateRunnable {
-	return &DecorateRunnable{circuitbreaker.DecorateRunnable(entry, runnable.Runnable)}
+	return OfRunnable(circuitbreaker.DecorateRunnable(entry, runnable.Runnable))
 }
 
 func (runnable *DecorateRunnable) WithRetry(entry retry.Retry) *DecorateRunnable {
-	return &DecorateRunnable{retry.DecorateRunnable(entry, runnable.Runnable)}
+	return OfRunnable(retry.DecorateRunnable(entry, runnable.Runnable))
 }
 
 func (runnable *DecorateRunnable) WithFallback(fn func(error) error) *DecorateRunnable {
-	return &DecorateRunnable{fallback.DecorateRunnable(runnable.Runnable, fn)}
+	return OfRunnable(fallback.DecorateRunnable(runnable.Runnable, fn))
 }
 
 func (runnable *DecorateRunnable) Decorate() runnable.Runnable {

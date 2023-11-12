@@ -19,27 +19,27 @@ type DecorateFunction[T any, R any] struct {
 }
 
 func (function *DecorateFunction[T, R]) WithBulkhead(entry bulkhead.Bulkhead) *DecorateFunction[T, R] {
-	return &DecorateFunction[T, R]{bulkhead.DecorateFunction(entry, function.Function)}
+	return OfFunction(bulkhead.DecorateFunction(entry, function.Function))
 }
 
 func (function *DecorateFunction[T, R]) WithTimeLimiter(entry timelimiter.TimeLimiter) *DecorateFunction[T, R] {
-	return &DecorateFunction[T, R]{timelimiter.DecorateFunction(entry, function.Function)}
+	return OfFunction(timelimiter.DecorateFunction(entry, function.Function))
 }
 
 func (function *DecorateFunction[T, R]) WithRateLimiter(entry ratelimiter.RateLimiter) *DecorateFunction[T, R] {
-	return &DecorateFunction[T, R]{ratelimiter.DecorateFunction(entry, function.Function)}
+	return OfFunction(ratelimiter.DecorateFunction(entry, function.Function))
 }
 
 func (function *DecorateFunction[T, R]) WithCircuitBreaker(entry circuitbreaker.CircuitBreaker) *DecorateFunction[T, R] {
-	return &DecorateFunction[T, R]{circuitbreaker.DecorateFunction(entry, function.Function)}
+	return OfFunction(circuitbreaker.DecorateFunction(entry, function.Function))
 }
 
 func (function *DecorateFunction[T, R]) WithRetry(entry retry.Retry) *DecorateFunction[T, R] {
-	return &DecorateFunction[T, R]{retry.DecorateFunction(entry, function.Function)}
+	return OfFunction(retry.DecorateFunction(entry, function.Function))
 }
 
 func (function *DecorateFunction[T, R]) WithFallback(fn func(error) (R, error)) *DecorateFunction[T, R] {
-	return &DecorateFunction[T, R]{fallback.DecorateFunction(function.Function, fn)}
+	return OfFunction(fallback.DecorateFunction(function.Function, fn))
 }
 
 func (function *DecorateFunction[T, R]) Decorate() function.Function[T, R] {
