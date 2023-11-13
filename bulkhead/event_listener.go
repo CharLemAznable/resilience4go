@@ -2,6 +2,7 @@ package bulkhead
 
 import (
 	"github.com/CharLemAznable/resilience4go/utils"
+	"sync"
 )
 
 type EventConsumer func(Event)
@@ -25,6 +26,7 @@ func newEventListener() EventListener {
 }
 
 type eventListener struct {
+	mutex       sync.RWMutex
 	onPermitted []EventConsumer
 	onRejected  []EventConsumer
 	onFinished  []EventConsumer
@@ -32,21 +34,29 @@ type eventListener struct {
 }
 
 func (listener *eventListener) OnPermitted(consumer EventConsumer) EventListener {
+	listener.mutex.Lock()
+	defer listener.mutex.Unlock()
 	listener.onPermitted = listener.slices.AppendElementUnique(listener.onPermitted, consumer)
 	return listener
 }
 
 func (listener *eventListener) OnRejected(consumer EventConsumer) EventListener {
+	listener.mutex.Lock()
+	defer listener.mutex.Unlock()
 	listener.onRejected = listener.slices.AppendElementUnique(listener.onRejected, consumer)
 	return listener
 }
 
 func (listener *eventListener) OnFinished(consumer EventConsumer) EventListener {
+	listener.mutex.Lock()
+	defer listener.mutex.Unlock()
 	listener.onFinished = listener.slices.AppendElementUnique(listener.onFinished, consumer)
 	return listener
 }
 
 func (listener *eventListener) Dismiss(consumer EventConsumer) EventListener {
+	listener.mutex.Lock()
+	defer listener.mutex.Unlock()
 	listener.onPermitted = listener.slices.RemoveElementByValue(listener.onPermitted, consumer)
 	listener.onRejected = listener.slices.RemoveElementByValue(listener.onRejected, consumer)
 	listener.onFinished = listener.slices.RemoveElementByValue(listener.onFinished, consumer)
@@ -54,6 +64,8 @@ func (listener *eventListener) Dismiss(consumer EventConsumer) EventListener {
 }
 
 func (listener *eventListener) HasConsumer() bool {
+	listener.mutex.RLock()
+	defer listener.mutex.RUnlock()
 	return len(listener.onPermitted) > 0 || len(listener.onRejected) > 0 || len(listener.onFinished) > 0
 }
 
@@ -61,6 +73,8 @@ func (listener *eventListener) consumeEvent(event Event) {
 	if !listener.HasConsumer() {
 		return
 	}
+	listener.mutex.RLock()
+	defer listener.mutex.RUnlock()
 	var consumers []EventConsumer
 	switch event.EventType() {
 	case PERMITTED:
