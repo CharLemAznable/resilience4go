@@ -219,6 +219,7 @@ func TestCircuitBreakerRegistry(t *testing.T) {
 		time.Sleep(time.Second * 6)
 		return errors.New("error")
 	})()
+	time.Sleep(time.Second)
 	registerer.index = 0
 	registerer.testCases[5].metric.Gauge = &dto.Gauge{
 		Value: proto.Float64(1),
