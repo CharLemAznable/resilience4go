@@ -17,26 +17,26 @@ func TestDecorateFunction(t *testing.T) {
 			return "", errors.New("error")
 		}).
 		WithBulkhead(bulkhead.NewBulkhead("test")).
-		WhenFull(func(fullError *bulkhead.FullError) (string, error) {
+		WhenFull(func(_, _ string, fullError *bulkhead.FullError) (string, error) {
 			return "", nil
 		}).
 		WithTimeLimiter(timelimiter.NewTimeLimiter("test")).
-		WhenTimeout(func(timeoutError *timelimiter.TimeoutError) (string, error) {
+		WhenTimeout(func(_, _ string, timeoutError *timelimiter.TimeoutError) (string, error) {
 			return "", nil
 		}).
 		WithRateLimiter(ratelimiter.NewRateLimiter("test")).
-		WhenOverRate(func(notPermittedError *ratelimiter.NotPermittedError) (string, error) {
+		WhenOverRate(func(_, _ string, notPermittedError *ratelimiter.NotPermittedError) (string, error) {
 			return "", nil
 		}).
 		WithCircuitBreaker(circuitbreaker.NewCircuitBreaker("test")).
-		WhenOverLoad(func(notPermittedError *circuitbreaker.NotPermittedError) (string, error) {
+		WhenOverLoad(func(_, _ string, notPermittedError *circuitbreaker.NotPermittedError) (string, error) {
 			return "", nil
 		}).
 		WithRetry(retry.NewRetry("test")).
-		WhenMaxRetries(func(exceeded *retry.MaxRetriesExceeded) (string, error) {
+		WhenMaxRetries(func(_, _ string, exceeded *retry.MaxRetriesExceeded) (string, error) {
 			return "", nil
 		}).
-		WithFallback(func(err error) (string, error) { return "fallback", nil }).
+		WithFallback(func(_, _ string, err error) (string, error) { return "fallback", nil }).
 		Decorate()
 
 	if decoratedFunction == nil {

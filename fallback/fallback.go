@@ -2,6 +2,12 @@ package fallback
 
 import "github.com/CharLemAznable/gofn/common"
 
+type channelValue struct {
+	ret   any
+	err   error
+	panic any
+}
+
 func execute(fn func() (any, error)) *channelValue {
 	finished := make(chan *channelValue)
 	panicked := make(common.Panicked)
@@ -18,25 +24,39 @@ func execute(fn func() (any, error)) *channelValue {
 	}
 }
 
-func castErr[E error](val *channelValue) (E, bool) {
-	if e, ok := val.panic.(E); ok {
-		return e, ok
+type FailurePredicate[E error] func(err error, panic any) (bool, E)
+
+// 默认失败断言: 仅判断error非空且类型匹配
+func defaultFailurePredicate[E error]() FailurePredicate[E] {
+	return func(err error, panic any) (bool, E) {
+		if e, ok := panic.(E); ok {
+			return ok, e
+		}
+		if e, ok := err.(E); ok {
+			return ok, e
+		}
+		return false, common.Zero[E]()
 	}
-	if e, ok := val.err.(E); ok {
-		return e, ok
-	}
-	return common.Zero[E](), false
 }
 
-func result[T any](val *channelValue) (T, error) {
+func succeedReturn(val *channelValue) error {
 	if val.panic != nil {
 		panic(val.panic)
 	}
-	return common.CastQuietly[T](val.ret), val.err
+	return val.err
 }
 
-type channelValue struct {
-	ret   any
-	err   error
-	panic any
+type FailureResultPredicate[T any, E error] func(ret T, err error, panic any) (bool, T, E)
+
+// 带返回值的默认失败断言: 仅判断error非空且类型匹配
+func defaultFailureResultPredicate[T any, E error]() FailureResultPredicate[T, E] {
+	return func(ret T, err error, panic any) (bool, T, E) {
+		okErr, e := defaultFailurePredicate[E]()(err, panic)
+		return okErr, ret, e
+	}
+}
+
+func succeedResultReturn[T any](val *channelValue) (T, error) {
+	err := succeedReturn(val)
+	return common.CastQuietly[T](val.ret), err
 }

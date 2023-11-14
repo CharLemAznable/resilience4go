@@ -23,7 +23,7 @@ func (runnable *DecorateRunnable) WithBulkhead(entry bulkhead.Bulkhead) *Decorat
 }
 
 func (runnable *DecorateRunnable) WhenFull(fn func(*bulkhead.FullError) error) *DecorateRunnable {
-	return OfRunnable(fallback.DecorateRunnable(runnable.Runnable, fn))
+	return OfRunnable(fallback.DecorateRunnableDefault(runnable.Runnable, fn))
 }
 
 func (runnable *DecorateRunnable) WithTimeLimiter(entry timelimiter.TimeLimiter) *DecorateRunnable {
@@ -31,7 +31,7 @@ func (runnable *DecorateRunnable) WithTimeLimiter(entry timelimiter.TimeLimiter)
 }
 
 func (runnable *DecorateRunnable) WhenTimeout(fn func(*timelimiter.TimeoutError) error) *DecorateRunnable {
-	return OfRunnable(fallback.DecorateRunnable(runnable.Runnable, fn))
+	return OfRunnable(fallback.DecorateRunnableDefault(runnable.Runnable, fn))
 }
 
 func (runnable *DecorateRunnable) WithRateLimiter(entry ratelimiter.RateLimiter) *DecorateRunnable {
@@ -39,7 +39,7 @@ func (runnable *DecorateRunnable) WithRateLimiter(entry ratelimiter.RateLimiter)
 }
 
 func (runnable *DecorateRunnable) WhenOverRate(fn func(*ratelimiter.NotPermittedError) error) *DecorateRunnable {
-	return OfRunnable(fallback.DecorateRunnable(runnable.Runnable, fn))
+	return OfRunnable(fallback.DecorateRunnableDefault(runnable.Runnable, fn))
 }
 
 func (runnable *DecorateRunnable) WithCircuitBreaker(entry circuitbreaker.CircuitBreaker) *DecorateRunnable {
@@ -47,7 +47,7 @@ func (runnable *DecorateRunnable) WithCircuitBreaker(entry circuitbreaker.Circui
 }
 
 func (runnable *DecorateRunnable) WhenOverLoad(fn func(*circuitbreaker.NotPermittedError) error) *DecorateRunnable {
-	return OfRunnable(fallback.DecorateRunnable(runnable.Runnable, fn))
+	return OfRunnable(fallback.DecorateRunnableDefault(runnable.Runnable, fn))
 }
 
 func (runnable *DecorateRunnable) WithRetry(entry retry.Retry) *DecorateRunnable {
@@ -55,11 +55,11 @@ func (runnable *DecorateRunnable) WithRetry(entry retry.Retry) *DecorateRunnable
 }
 
 func (runnable *DecorateRunnable) WhenMaxRetries(fn func(*retry.MaxRetriesExceeded) error) *DecorateRunnable {
-	return OfRunnable(fallback.DecorateRunnable(runnable.Runnable, fn))
+	return OfRunnable(fallback.DecorateRunnableDefault(runnable.Runnable, fn))
 }
 
 func (runnable *DecorateRunnable) WithFallback(fn func(error) error) *DecorateRunnable {
-	return OfRunnable(fallback.DecorateRunnable(runnable.Runnable, fn))
+	return OfRunnable(fallback.DecorateRunnableDefault(runnable.Runnable, fn))
 }
 
 func (runnable *DecorateRunnable) Decorate() runnable.Runnable {

@@ -22,44 +22,44 @@ func (function *DecorateFunction[T, R]) WithBulkhead(entry bulkhead.Bulkhead) *D
 	return OfFunction(bulkhead.DecorateFunction(entry, function.Function))
 }
 
-func (function *DecorateFunction[T, R]) WhenFull(fn func(*bulkhead.FullError) (R, error)) *DecorateFunction[T, R] {
-	return OfFunction(fallback.DecorateFunction(function.Function, fn))
+func (function *DecorateFunction[T, R]) WhenFull(fn func(T, R, *bulkhead.FullError) (R, error)) *DecorateFunction[T, R] {
+	return OfFunction(fallback.DecorateFunctionDefault(function.Function, fn))
 }
 
 func (function *DecorateFunction[T, R]) WithTimeLimiter(entry timelimiter.TimeLimiter) *DecorateFunction[T, R] {
 	return OfFunction(timelimiter.DecorateFunction(entry, function.Function))
 }
 
-func (function *DecorateFunction[T, R]) WhenTimeout(fn func(*timelimiter.TimeoutError) (R, error)) *DecorateFunction[T, R] {
-	return OfFunction(fallback.DecorateFunction(function.Function, fn))
+func (function *DecorateFunction[T, R]) WhenTimeout(fn func(T, R, *timelimiter.TimeoutError) (R, error)) *DecorateFunction[T, R] {
+	return OfFunction(fallback.DecorateFunctionDefault(function.Function, fn))
 }
 
 func (function *DecorateFunction[T, R]) WithRateLimiter(entry ratelimiter.RateLimiter) *DecorateFunction[T, R] {
 	return OfFunction(ratelimiter.DecorateFunction(entry, function.Function))
 }
 
-func (function *DecorateFunction[T, R]) WhenOverRate(fn func(*ratelimiter.NotPermittedError) (R, error)) *DecorateFunction[T, R] {
-	return OfFunction(fallback.DecorateFunction(function.Function, fn))
+func (function *DecorateFunction[T, R]) WhenOverRate(fn func(T, R, *ratelimiter.NotPermittedError) (R, error)) *DecorateFunction[T, R] {
+	return OfFunction(fallback.DecorateFunctionDefault(function.Function, fn))
 }
 
 func (function *DecorateFunction[T, R]) WithCircuitBreaker(entry circuitbreaker.CircuitBreaker) *DecorateFunction[T, R] {
 	return OfFunction(circuitbreaker.DecorateFunction(entry, function.Function))
 }
 
-func (function *DecorateFunction[T, R]) WhenOverLoad(fn func(*circuitbreaker.NotPermittedError) (R, error)) *DecorateFunction[T, R] {
-	return OfFunction(fallback.DecorateFunction(function.Function, fn))
+func (function *DecorateFunction[T, R]) WhenOverLoad(fn func(T, R, *circuitbreaker.NotPermittedError) (R, error)) *DecorateFunction[T, R] {
+	return OfFunction(fallback.DecorateFunctionDefault(function.Function, fn))
 }
 
 func (function *DecorateFunction[T, R]) WithRetry(entry retry.Retry) *DecorateFunction[T, R] {
 	return OfFunction(retry.DecorateFunction(entry, function.Function))
 }
 
-func (function *DecorateFunction[T, R]) WhenMaxRetries(fn func(*retry.MaxRetriesExceeded) (R, error)) *DecorateFunction[T, R] {
-	return OfFunction(fallback.DecorateFunction(function.Function, fn))
+func (function *DecorateFunction[T, R]) WhenMaxRetries(fn func(T, R, *retry.MaxRetriesExceeded) (R, error)) *DecorateFunction[T, R] {
+	return OfFunction(fallback.DecorateFunctionDefault(function.Function, fn))
 }
 
-func (function *DecorateFunction[T, R]) WithFallback(fn func(error) (R, error)) *DecorateFunction[T, R] {
-	return OfFunction(fallback.DecorateFunction(function.Function, fn))
+func (function *DecorateFunction[T, R]) WithFallback(fn func(T, R, error) (R, error)) *DecorateFunction[T, R] {
+	return OfFunction(fallback.DecorateFunctionDefault(function.Function, fn))
 }
 
 func (function *DecorateFunction[T, R]) Decorate() function.Function[T, R] {
