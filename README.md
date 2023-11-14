@@ -112,6 +112,9 @@ decoratedFn := fallback.DecorateRunnable(func() error {
 }, func(err error) error {
 	// fallback if has error
 	return nil
+}, func(err error, panic any) (bool, error) {
+	// ...
+	// 判断调用结果是否需要恢复
 })
 ```
 
