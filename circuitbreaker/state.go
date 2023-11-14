@@ -115,8 +115,7 @@ func halfOpen(attempts int64, breaker CircuitBreaker) *state {
 	var permittedNumberOfCalls atomic.Int64
 	permittedNumberOfCalls.Store(permittedNumber)
 	s.acquirePermission = func() error {
-		if getAndUpdateInt64(&permittedNumberOfCalls,
-			permittedNumberDecrement) > 0 {
+		if permittedNumberOfCalls.Add(-1) >= 0 {
 			return nil
 		}
 		s.metrics.onCallNotPermitted()
@@ -153,14 +152,6 @@ func halfOpen(attempts int64, breaker CircuitBreaker) *state {
 		s.preTransitionHook = cancelFunc
 	}
 	return s
-}
-
-func permittedNumberDecrement(current int64) int64 {
-	if current == 0 {
-		return current
-	} else {
-		return current - 1
-	}
 }
 
 func atomicHalfOpen(breaker CircuitBreaker) (func(), func()) {
