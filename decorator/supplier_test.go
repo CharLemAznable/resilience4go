@@ -36,7 +36,13 @@ func TestDecorateSupplier(t *testing.T) {
 		WhenMaxRetries(func(_ string, exceeded *retry.MaxRetriesExceeded) (string, error) {
 			return "", nil
 		}).
-		WithFallback(func(_ string, err error) (string, error) { return "fallback", nil }).
+		WithFallback(
+			func(_ string, err error) (string, error) {
+				return "fallback", nil
+			},
+			func(ret string, err error, panic any) (bool, string, error) {
+				return err != nil, ret, err
+			}).
 		Decorate()
 
 	if decoratedSupplier == nil {

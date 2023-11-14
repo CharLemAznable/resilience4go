@@ -58,8 +58,8 @@ func (function *DecorateFunction[T, R]) WhenMaxRetries(fn func(T, R, *retry.MaxR
 	return OfFunction(fallback.DecorateFunctionDefault(function.Function, fn))
 }
 
-func (function *DecorateFunction[T, R]) WithFallback(fn func(T, R, error) (R, error)) *DecorateFunction[T, R] {
-	return OfFunction(fallback.DecorateFunctionDefault(function.Function, fn))
+func (function *DecorateFunction[T, R]) WithFallback(fn func(T, R, error) (R, error), predicate fallback.FailureResultPredicate[R, error]) *DecorateFunction[T, R] {
+	return OfFunction(fallback.DecorateFunction(function.Function, fn, predicate))
 }
 
 func (function *DecorateFunction[T, R]) Decorate() function.Function[T, R] {

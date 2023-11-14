@@ -58,8 +58,8 @@ func (function *DecorateSupplier[T]) WhenMaxRetries(fn func(T, *retry.MaxRetries
 	return OfSupplier(fallback.DecorateSupplierDefault(function.Supplier, fn))
 }
 
-func (function *DecorateSupplier[T]) WithFallback(fn func(T, error) (T, error)) *DecorateSupplier[T] {
-	return OfSupplier(fallback.DecorateSupplierDefault(function.Supplier, fn))
+func (function *DecorateSupplier[T]) WithFallback(fn func(T, error) (T, error), predicate fallback.FailureResultPredicate[T, error]) *DecorateSupplier[T] {
+	return OfSupplier(fallback.DecorateSupplier(function.Supplier, fn, predicate))
 }
 
 func (function *DecorateSupplier[T]) Decorate() supplier.Supplier[T] {

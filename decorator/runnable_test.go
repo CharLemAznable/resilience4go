@@ -37,7 +37,13 @@ func TestDecorateRunnable(t *testing.T) {
 		WhenMaxRetries(func(exceeded *retry.MaxRetriesExceeded) error {
 			return nil
 		}).
-		WithFallback(func(err error) error { return nil }).
+		WithFallback(
+			func(err error) error {
+				return nil
+			},
+			func(err error, panic any) (bool, error) {
+				return err != nil, err
+			}).
 		Decorate()
 
 	if decoratedRunnable == nil {

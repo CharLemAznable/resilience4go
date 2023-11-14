@@ -58,8 +58,8 @@ func (runnable *DecorateRunnable) WhenMaxRetries(fn func(*retry.MaxRetriesExceed
 	return OfRunnable(fallback.DecorateRunnableDefault(runnable.Runnable, fn))
 }
 
-func (runnable *DecorateRunnable) WithFallback(fn func(error) error) *DecorateRunnable {
-	return OfRunnable(fallback.DecorateRunnableDefault(runnable.Runnable, fn))
+func (runnable *DecorateRunnable) WithFallback(fn func(error) error, predicate fallback.FailurePredicate[error]) *DecorateRunnable {
+	return OfRunnable(fallback.DecorateRunnable(runnable.Runnable, fn, predicate))
 }
 
 func (runnable *DecorateRunnable) Decorate() runnable.Runnable {

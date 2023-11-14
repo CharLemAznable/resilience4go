@@ -36,7 +36,13 @@ func TestDecorateConsumer(t *testing.T) {
 		WhenMaxRetries(func(_ string, exceeded *retry.MaxRetriesExceeded) error {
 			return nil
 		}).
-		WithFallback(func(_ string, err error) error { return nil }).
+		WithFallback(
+			func(_ string, err error) error {
+				return nil
+			},
+			func(err error, panic any) (bool, error) {
+				return err != nil, err
+			}).
 		Decorate()
 
 	if decoratedConsumer == nil {

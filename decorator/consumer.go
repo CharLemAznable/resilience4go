@@ -58,8 +58,8 @@ func (consumer *DecorateConsumer[T]) WhenMaxRetries(fn func(T, *retry.MaxRetries
 	return OfConsumer(fallback.DecorateConsumerDefault(consumer.Consumer, fn))
 }
 
-func (consumer *DecorateConsumer[T]) WithFallback(fn func(T, error) error) *DecorateConsumer[T] {
-	return OfConsumer(fallback.DecorateConsumerDefault(consumer.Consumer, fn))
+func (consumer *DecorateConsumer[T]) WithFallback(fn func(T, error) error, predicate fallback.FailurePredicate[error]) *DecorateConsumer[T] {
+	return OfConsumer(fallback.DecorateConsumer(consumer.Consumer, fn, predicate))
 }
 
 func (consumer *DecorateConsumer[T]) Decorate() consumer.Consumer[T] {

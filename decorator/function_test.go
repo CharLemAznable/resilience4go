@@ -36,7 +36,13 @@ func TestDecorateFunction(t *testing.T) {
 		WhenMaxRetries(func(_, _ string, exceeded *retry.MaxRetriesExceeded) (string, error) {
 			return "", nil
 		}).
-		WithFallback(func(_, _ string, err error) (string, error) { return "fallback", nil }).
+		WithFallback(
+			func(_, _ string, err error) (string, error) {
+				return "fallback", nil
+			},
+			func(ret string, err error, panic any) (bool, string, error) {
+				return err != nil, ret, err
+			}).
 		Decorate()
 
 	if decoratedFunction == nil {
