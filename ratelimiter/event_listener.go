@@ -59,19 +59,21 @@ func (listener *eventListener) HasConsumer() bool {
 }
 
 func (listener *eventListener) consumeEvent(event Event) {
-	if !listener.HasConsumer() {
-		return
-	}
-	listener.mutex.RLock()
-	defer listener.mutex.RUnlock()
-	var consumers []EventConsumer
-	switch event.EventType() {
-	case SUCCESSFUL:
-		consumers = listener.onSuccess
-	case FAILED:
-		consumers = listener.onFailure
-	}
-	for _, consumer := range consumers {
-		go consumer(event)
-	}
+	go func() {
+		if !listener.HasConsumer() {
+			return
+		}
+		listener.mutex.RLock()
+		defer listener.mutex.RUnlock()
+		var consumers []EventConsumer
+		switch event.EventType() {
+		case SUCCESSFUL:
+			consumers = listener.onSuccess
+		case FAILED:
+			consumers = listener.onFailure
+		}
+		for _, consumer := range consumers {
+			go consumer(event)
+		}
+	}()
 }

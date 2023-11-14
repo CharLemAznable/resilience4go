@@ -104,27 +104,29 @@ func (listener *eventListener) HasConsumer() bool {
 }
 
 func (listener *eventListener) consumeEvent(event Event) {
-	if !listener.HasConsumer() {
-		return
-	}
-	listener.mutex.RLock()
-	defer listener.mutex.RUnlock()
-	var consumers []EventConsumer
-	switch event.EventType() {
-	case Success:
-		consumers = listener.onSuccess
-	case Error:
-		consumers = listener.onError
-	case NotPermitted:
-		consumers = listener.onNotPermitted
-	case StateTransition:
-		consumers = listener.onStateTransition
-	case FailureRateExceeded:
-		consumers = listener.onFailureRateExceeded
-	case SlowCallRateExceeded:
-		consumers = listener.onSlowCallRateExceeded
-	}
-	for _, consumer := range consumers {
-		go consumer(event)
-	}
+	go func() {
+		if !listener.HasConsumer() {
+			return
+		}
+		listener.mutex.RLock()
+		defer listener.mutex.RUnlock()
+		var consumers []EventConsumer
+		switch event.EventType() {
+		case Success:
+			consumers = listener.onSuccess
+		case Error:
+			consumers = listener.onError
+		case NotPermitted:
+			consumers = listener.onNotPermitted
+		case StateTransition:
+			consumers = listener.onStateTransition
+		case FailureRateExceeded:
+			consumers = listener.onFailureRateExceeded
+		case SlowCallRateExceeded:
+			consumers = listener.onSlowCallRateExceeded
+		}
+		for _, consumer := range consumers {
+			go consumer(event)
+		}
+	}()
 }
