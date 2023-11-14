@@ -144,7 +144,7 @@ func (machine *stateMachine) acquirePermission() error {
 
 func (machine *stateMachine) onResult(start time.Time, ret any, err error) {
 	duration := time.Now().Sub(start)
-	if machine.conf.recordResultPredicateFn(ret, err) {
+	if machine.conf.failureResultPredicateFn(ret, err) {
 		machine.publishEvent(newErrorEvent(machine.name, duration, ret, err))
 		if fn := machine.loadState().onError; fn != nil {
 			fn(duration)

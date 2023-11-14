@@ -13,10 +13,10 @@ func TestConfig_String(t *testing.T) {
 	circuitbreaker.WithFailureRateThreshold(75)(config)
 	circuitbreaker.WithSlowCallRateThreshold(90)(config)
 	circuitbreaker.WithSlowCallDurationThreshold(time.Second * 30)(config)
-	recordResultPredicate := func(ret any, err error) bool {
+	failureResultPredicate := func(ret any, err error) bool {
 		return ret == nil || err != nil
 	}
-	circuitbreaker.WithRecordResultPredicate(recordResultPredicate)(config)
+	circuitbreaker.WithFailureResultPredicate(failureResultPredicate)(config)
 	circuitbreaker.WithAutomaticTransitionFromOpenToHalfOpenEnabled(true)(config)
 	waitIntervalFunctionInOpenState := func(_ int64) time.Duration {
 		return time.Second * 30
@@ -27,11 +27,11 @@ func TestConfig_String(t *testing.T) {
 	expected := fmt.Sprintf("CircuitBreakerConfig"+
 		" {slidingWindowType=TIME_BASED, slidingWindowSize=50, minimumNumberOfCalls=50"+
 		", failureRateThreshold=75.000000, slowCallRateThreshold=90.000000, slowCallDurationThreshold=30s"+
-		", recordResultPredicate %T[%v]"+
+		", failureResultPredicate %T[%v]"+
 		", automaticTransitionFromOpenToHalfOpenEnabled=true"+
 		", waitIntervalFunctionInOpenState %T[%v]"+
 		", permittedNumberOfCallsInHalfOpenState=5, maxWaitDurationInHalfOpenState=1s}",
-		recordResultPredicate, any(recordResultPredicate),
+		failureResultPredicate, any(failureResultPredicate),
 		waitIntervalFunctionInOpenState, any(waitIntervalFunctionInOpenState))
 	result := fmt.Sprintf("%v", config)
 	if expected != result {
@@ -63,11 +63,11 @@ func TestConfig_String(t *testing.T) {
 	expected = fmt.Sprintf("CircuitBreakerConfig"+
 		" {slidingWindowType=COUNT_BASED, slidingWindowSize=10, minimumNumberOfCalls=10"+
 		", failureRateThreshold=75.000000, slowCallRateThreshold=90.000000, slowCallDurationThreshold=30s"+
-		", recordResultPredicate %T[%v]"+
+		", failureResultPredicate %T[%v]"+
 		", automaticTransitionFromOpenToHalfOpenEnabled=true"+
 		", waitIntervalFunctionInOpenState %T[%v]"+
 		", permittedNumberOfCallsInHalfOpenState=5, maxWaitDurationInHalfOpenState=1s}",
-		recordResultPredicate, any(recordResultPredicate),
+		failureResultPredicate, any(failureResultPredicate),
 		waitIntervalFunctionInOpenState, any(waitIntervalFunctionInOpenState))
 	result = fmt.Sprintf("%v", config)
 	if expected != result {

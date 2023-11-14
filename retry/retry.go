@@ -99,7 +99,7 @@ func (r *retry) executeOnce(fn func() (any, error)) *channelValue {
 }
 
 func (r *retry) testResult(result *channelValue) bool {
-	return !r.config.recordResultPredicateFn(result.ret, result.err)
+	return !r.config.failureResultPredicateFn(result.ret, result.err)
 }
 
 func (r *retry) returnResult(result *channelValue) (any, error) {

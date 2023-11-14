@@ -6,27 +6,27 @@ import (
 )
 
 type Config struct {
-	maxAttempts           int
-	failAfterMaxAttempts  bool
-	recordResultPredicate func(any, error) bool
-	waitIntervalFunction  func(int) time.Duration
+	maxAttempts            int
+	failAfterMaxAttempts   bool
+	failureResultPredicate func(any, error) bool
+	waitIntervalFunction   func(int) time.Duration
 }
 
 func (config *Config) String() string {
 	return fmt.Sprintf(
 		"RetryConfig"+
 			" {maxAttempts=%d, failAfterMaxAttempts=%t"+
-			", recordResultPredicate %T[%v], waitIntervalFunction %T[%v]}",
+			", failureResultPredicate %T[%v], waitIntervalFunction %T[%v]}",
 		config.maxAttempts, config.failAfterMaxAttempts,
-		config.recordResultPredicate, any(config.recordResultPredicate),
+		config.failureResultPredicate, any(config.failureResultPredicate),
 		config.waitIntervalFunction, any(config.waitIntervalFunction))
 }
 
-func (config *Config) recordResultPredicateFn(ret any, err error) bool {
-	if config.recordResultPredicate != nil {
-		return config.recordResultPredicate(ret, err)
+func (config *Config) failureResultPredicateFn(ret any, err error) bool {
+	if config.failureResultPredicate != nil {
+		return config.failureResultPredicate(ret, err)
 	}
-	return DefaultRecordResultPredicate(ret, err)
+	return DefaultFailureResultPredicate(ret, err)
 }
 
 func (config *Config) waitIntervalFunctionFn(attempts int) time.Duration {
@@ -50,9 +50,9 @@ func WithFailAfterMaxAttempts(failAfterMaxAttempts bool) ConfigBuilder {
 	}
 }
 
-func WithRecordResultPredicate(predicate func(any, error) bool) ConfigBuilder {
+func WithFailureResultPredicate(predicate func(any, error) bool) ConfigBuilder {
 	return func(config *Config) {
-		config.recordResultPredicate = predicate
+		config.failureResultPredicate = predicate
 	}
 }
 
@@ -65,7 +65,7 @@ func WithWaitIntervalFunction(function func(int) time.Duration) ConfigBuilder {
 const DefaultMaxAttempts int = 3
 const DefaultFailAfterMaxAttempts bool = false
 
-func DefaultRecordResultPredicate(_ any, err error) bool {
+func DefaultFailureResultPredicate(_ any, err error) bool {
 	return err != nil
 }
 
@@ -77,9 +77,9 @@ func DefaultWaitIntervalFunction(_ int) time.Duration {
 
 func defaultConfig() *Config {
 	return &Config{
-		maxAttempts:           DefaultMaxAttempts,
-		failAfterMaxAttempts:  DefaultFailAfterMaxAttempts,
-		recordResultPredicate: DefaultRecordResultPredicate,
-		waitIntervalFunction:  DefaultWaitIntervalFunction,
+		maxAttempts:            DefaultMaxAttempts,
+		failAfterMaxAttempts:   DefaultFailAfterMaxAttempts,
+		failureResultPredicate: DefaultFailureResultPredicate,
+		waitIntervalFunction:   DefaultWaitIntervalFunction,
 	}
 }

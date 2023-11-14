@@ -20,7 +20,7 @@ type Config struct {
 	failureRateThreshold                         float64
 	slowCallRateThreshold                        float64
 	slowCallDurationThreshold                    time.Duration
-	recordResultPredicate                        func(any, error) bool
+	failureResultPredicate                       func(any, error) bool
 	automaticTransitionFromOpenToHalfOpenEnabled bool
 	waitIntervalFunctionInOpenState              func(int64) time.Duration
 	permittedNumberOfCallsInHalfOpenState        int64
@@ -32,23 +32,23 @@ func (config *Config) String() string {
 		"CircuitBreakerConfig"+
 			" {slidingWindowType=%s, slidingWindowSize=%d, minimumNumberOfCalls=%d"+
 			", failureRateThreshold=%f, slowCallRateThreshold=%f, slowCallDurationThreshold=%v"+
-			", recordResultPredicate %T[%v]"+
+			", failureResultPredicate %T[%v]"+
 			", automaticTransitionFromOpenToHalfOpenEnabled=%t"+
 			", waitIntervalFunctionInOpenState %T[%v]"+
 			", permittedNumberOfCallsInHalfOpenState=%d, maxWaitDurationInHalfOpenState=%v}",
 		config.slidingWindowType, config.slidingWindowSize, config.minimumNumberOfCalls,
 		config.failureRateThreshold, config.slowCallRateThreshold, config.slowCallDurationThreshold,
-		config.recordResultPredicate, any(config.recordResultPredicate),
+		config.failureResultPredicate, any(config.failureResultPredicate),
 		config.automaticTransitionFromOpenToHalfOpenEnabled,
 		config.waitIntervalFunctionInOpenState, any(config.waitIntervalFunctionInOpenState),
 		config.permittedNumberOfCallsInHalfOpenState, config.maxWaitDurationInHalfOpenState)
 }
 
-func (config *Config) recordResultPredicateFn(ret any, err error) bool {
-	if config.recordResultPredicate != nil {
-		return config.recordResultPredicate(ret, err)
+func (config *Config) failureResultPredicateFn(ret any, err error) bool {
+	if config.failureResultPredicate != nil {
+		return config.failureResultPredicate(ret, err)
 	}
-	return DefaultRecordResultPredicate(ret, err)
+	return DefaultFailureResultPredicate(ret, err)
 }
 
 func (config *Config) waitIntervalFunctionInOpenStateFn(attempts int64) time.Duration {
@@ -96,9 +96,9 @@ func WithSlowCallDurationThreshold(slowCallDurationThreshold time.Duration) Conf
 	}
 }
 
-func WithRecordResultPredicate(predicate func(any, error) bool) ConfigBuilder {
+func WithFailureResultPredicate(predicate func(any, error) bool) ConfigBuilder {
 	return func(config *Config) {
-		config.recordResultPredicate = predicate
+		config.failureResultPredicate = predicate
 	}
 }
 
@@ -133,7 +133,7 @@ const DefaultFailureRateThreshold float64 = 50
 const DefaultSlowCallRateThreshold float64 = 100
 const DefaultSlowCallDurationThreshold = time.Second * 60
 
-func DefaultRecordResultPredicate(_ any, err error) bool {
+func DefaultFailureResultPredicate(_ any, err error) bool {
 	return err != nil
 }
 
@@ -155,7 +155,7 @@ func defaultConfig() *Config {
 		failureRateThreshold:                         DefaultFailureRateThreshold,
 		slowCallRateThreshold:                        DefaultSlowCallRateThreshold,
 		slowCallDurationThreshold:                    DefaultSlowCallDurationThreshold,
-		recordResultPredicate:                        DefaultRecordResultPredicate,
+		failureResultPredicate:                       DefaultFailureResultPredicate,
 		automaticTransitionFromOpenToHalfOpenEnabled: DefaultAutomaticTransitionFromOpenToHalfOpenEnabled,
 		waitIntervalFunctionInOpenState:              DefaultWaitIntervalFunctionInOpenState,
 		permittedNumberOfCallsInHalfOpenState:        DefaultPermittedNumberOfCallsInHalfOpenState,

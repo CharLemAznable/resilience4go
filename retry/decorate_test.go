@@ -70,7 +70,7 @@ func TestDecorateFunction(t *testing.T) {
 	rt := retry.NewRetry("test",
 		retry.WithMaxAttempts(2),
 		retry.WithFailAfterMaxAttempts(true),
-		retry.WithRecordResultPredicate(func(ret any, err error) bool {
+		retry.WithFailureResultPredicate(func(ret any, err error) bool {
 			return ret.(string) != "ok" || err != nil
 		}))
 

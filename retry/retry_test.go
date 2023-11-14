@@ -12,7 +12,7 @@ import (
 func TestSuccess(t *testing.T) {
 	successRetry := retry.NewRetry("success",
 		retry.WithMaxAttempts(2),
-		retry.WithRecordResultPredicate(nil))
+		retry.WithFailureResultPredicate(nil))
 	if successRetry.Name() != "success" {
 		t.Errorf("Expected retry name 'success', but got '%s'", successRetry.Name())
 	}

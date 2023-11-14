@@ -385,7 +385,7 @@ func TestCircuitBreakerHalfOpenError(t *testing.T) {
 
 func TestCircuitBreakerDisabled(t *testing.T) {
 	breaker := circuitbreaker.NewCircuitBreaker("disabled",
-		circuitbreaker.WithRecordResultPredicate(nil))
+		circuitbreaker.WithFailureResultPredicate(nil))
 	_ = breaker.TransitionToDisabled()
 
 	// 创建一个可运行的函数
