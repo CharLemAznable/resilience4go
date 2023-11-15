@@ -28,19 +28,26 @@ func NewCache[K any, V any](name string, configs ...ConfigBuilder) Cache[K, V] {
 		IgnoreInternalCost: true,
 	})
 	common.PanicIfError(err)
-	return &cache[K, V]{
+	c := &cache[K, V]{
 		name:           name,
 		config:         config,
+		locks:          make([]*sync.Mutex, int(numShards)),
 		ristrettoCache: ristrettoCache,
 		metrics:        newMetrics(ristrettoCache.Metrics),
 		eventListener:  newEventListener(),
 	}
+	for i := range c.locks {
+		c.locks[i] = &sync.Mutex{}
+	}
+	return c
 }
+
+const numShards uint64 = 256
 
 type cache[K any, V any] struct {
 	name           string
 	config         *Config
-	mutex          sync.Mutex
+	locks          []*sync.Mutex
 	ristrettoCache *ristretto.Cache
 	metrics        Metrics
 	eventListener  EventListener
@@ -59,8 +66,11 @@ func (c *cache[K, V]) EventListener() EventListener {
 }
 
 func (c *cache[K, V]) getOrLoad(key K, loader func() (V, error)) (V, error) {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
+	keyHash, _ := c.config.keyToHashFn(key)
+	lockIdx := keyHash % numShards
+	c.locks[lockIdx].Lock()
+	defer c.locks[lockIdx].Unlock()
+
 	if v, found := c.ristrettoCache.Get(key); found {
 		c.eventListener.consumeEvent(newCacheHitEvent(c.name, key))
 		vv, err := common.Cast[*valueWithError](v)
