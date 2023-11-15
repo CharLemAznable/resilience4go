@@ -3,6 +3,7 @@ package decorator
 import (
 	"github.com/CharLemAznable/gofn/function"
 	"github.com/CharLemAznable/resilience4go/bulkhead"
+	"github.com/CharLemAznable/resilience4go/cache"
 	"github.com/CharLemAznable/resilience4go/circuitbreaker"
 	"github.com/CharLemAznable/resilience4go/fallback"
 	"github.com/CharLemAznable/resilience4go/ratelimiter"
@@ -60,6 +61,10 @@ func (function *DecorateFunction[T, R]) WhenMaxRetries(fn func(T, R, *retry.MaxR
 
 func (function *DecorateFunction[T, R]) WithFallback(fn func(T, R, error) (R, error), predicate fallback.FailureResultPredicate[R, error]) *DecorateFunction[T, R] {
 	return OfFunction(fallback.DecorateFunction(function.Function, fn, predicate))
+}
+
+func (function *DecorateFunction[T, R]) WithCache(entry cache.Cache[T, R]) *DecorateFunction[T, R] {
+	return OfFunction(cache.DecorateFunction(entry, function.Function))
 }
 
 func (function *DecorateFunction[T, R]) Decorate() function.Function[T, R] {

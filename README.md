@@ -118,6 +118,21 @@ decoratedFn := fallback.DecorateRunnable(func() error {
 })
 ```
 
+#### 缓存(Cache)
+
+缓存调用结果, 仅支持Function类型的函数包装.
+
+```go
+import "github.com/CharLemAznable/resilience4go/cache"
+
+entry := cache.NewCache[keyType, valueType]("name")
+
+decoratedFn := cache.DecorateFunction(entry, func(key keyType) (valueType, error) {
+	// do something
+	return value, nil
+})
+```
+
 #### 对如下四种类型的函数进行包装
 
 * Runnable
@@ -170,6 +185,7 @@ promhelper.TimeLimiterRegistry(timelimiterEntry)
 promhelper.RateLimiterRegistry(ratelimiterEntry)
 promhelper.CircuitBreakerRegistry(circuitbreakerEntry)
 promhelper.RetryRegistry(retryEntry)
+promhelper.CacheRegistry(cacheEntry)
 ```
 
 以上方法返回两个函数, 分别为注册到Prometheus的函数和反注册Prometheus的函数.

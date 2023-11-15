@@ -3,6 +3,7 @@ package decorator_test
 import (
 	"errors"
 	"github.com/CharLemAznable/resilience4go/bulkhead"
+	"github.com/CharLemAznable/resilience4go/cache"
 	"github.com/CharLemAznable/resilience4go/circuitbreaker"
 	"github.com/CharLemAznable/resilience4go/decorator"
 	"github.com/CharLemAznable/resilience4go/ratelimiter"
@@ -43,6 +44,7 @@ func TestDecorateFunction(t *testing.T) {
 			func(ret string, err error, panic any) (bool, string, error) {
 				return err != nil, ret, err
 			}).
+		WithCache(cache.NewCache[string, string]("test")).
 		Decorate()
 
 	if decoratedFunction == nil {
