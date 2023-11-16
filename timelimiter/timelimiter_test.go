@@ -34,16 +34,16 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, event)
 		}
 	}
-	onFailure := func(event timelimiter.FailureEvent) {
-		if event.EventType() != timelimiter.FAILURE {
-			t.Errorf("Expected event type FAILURE, but got '%s'", event.EventType())
+	onPanic := func(event timelimiter.PanicEvent) {
+		if event.EventType() != timelimiter.PANIC {
+			t.Errorf("Expected event type PANIC, but got '%s'", event.EventType())
 		}
 		expectedMsg := fmt.Sprintf("%v: TimeLimiter '%s' recorded a failure call with panic: %v.", event.CreationTime(), event.TimeLimiterName(), event.Panic())
 		if event.String() != expectedMsg {
 			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, event)
 		}
 	}
-	eventListener.OnSuccess(onSuccess).OnTimeout(onTimeout).OnFailure(onFailure)
+	eventListener.OnSuccess(onSuccess).OnTimeout(onTimeout).OnPanic(onPanic)
 
 	// 创建一个可运行的函数
 	fn := func() error {
@@ -97,8 +97,8 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 	if metrics.TimeoutCount() != int64(1) {
 		t.Errorf("Expected 1 timeout call, but got '%d'", metrics.TimeoutCount())
 	}
-	if metrics.FailureCount() != int64(1) {
-		t.Errorf("Expected 1 failure call, but got '%d'", metrics.FailureCount())
+	if metrics.PanicCount() != int64(1) {
+		t.Errorf("Expected 1 panic call, but got '%d'", metrics.PanicCount())
 	}
-	eventListener.Dismiss(onSuccess).Dismiss(onTimeout).Dismiss(onFailure)
+	eventListener.Dismiss(onSuccess).Dismiss(onTimeout).Dismiss(onPanic)
 }

@@ -43,10 +43,10 @@ func TestTimeLimiterRegistry(t *testing.T) {
 			},
 			{
 				name: "TestFailureCount",
-				desc: `Desc{fqName: "resilience4go_timelimiter_calls", help: "The number of failed calls", constLabels: {kind="failed",name="test"}, variableLabels: {}}`,
+				desc: `Desc{fqName: "resilience4go_timelimiter_calls", help: "The number of panicked calls", constLabels: {kind="panicked",name="test"}, variableLabels: {}}`,
 				metric: &dto.Metric{
 					Label: []*dto.LabelPair{
-						{Name: proto.String("kind"), Value: proto.String("failed")},
+						{Name: proto.String("kind"), Value: proto.String("panicked")},
 						{Name: proto.String("name"), Value: proto.String(entry.Name())},
 					},
 					Counter: &dto.Counter{

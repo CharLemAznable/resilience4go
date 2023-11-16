@@ -65,9 +65,9 @@ func (limiter *timeLimiter) execute(fn func() (any, error)) (any, error) {
 	case <-timeout.Done():
 		limiter.onTimeout()
 		return nil, &TimeoutError{name: limiter.name}
-	case err := <-panicked.Caught():
-		limiter.onFailure(err)
-		panic(err)
+	case v := <-panicked.Caught():
+		limiter.onPanic(v)
+		panic(v)
 	}
 }
 
@@ -81,9 +81,9 @@ func (limiter *timeLimiter) onTimeout() {
 	limiter.eventListener.consumeEvent(newTimeoutEvent(limiter.name))
 }
 
-func (limiter *timeLimiter) onFailure(error any) {
-	limiter.metrics.failureIncrement()
-	limiter.eventListener.consumeEvent(newFailureEvent(limiter.name, error))
+func (limiter *timeLimiter) onPanic(v any) {
+	limiter.metrics.panicIncrement()
+	limiter.eventListener.consumeEvent(newPanicEvent(limiter.name, v))
 }
 
 type channelValue struct {

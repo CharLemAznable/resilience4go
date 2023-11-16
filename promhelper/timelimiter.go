@@ -8,7 +8,7 @@ import (
 const (
 	tlKinkSuccessful = "successful"
 	tlKinkTimeout    = "timeout"
-	tlKinkFailed     = "failed"
+	tlKinkPanicked   = "panicked"
 )
 
 func TimeLimiterRegistry(entry timelimiter.TimeLimiter) (RegisterFn, UnregisterFn) {
@@ -32,16 +32,16 @@ func TimeLimiterRegistry(entry timelimiter.TimeLimiter) (RegisterFn, UnregisterF
 			return float64(entry.Metrics().TimeoutCount())
 		},
 	)
-	failureCounter := prometheus.NewCounterFunc(
+	panicCounter := prometheus.NewCounterFunc(
 		prometheus.CounterOpts{
 			Name:        "resilience4go_timelimiter_calls",
-			Help:        "The number of failed calls",
-			ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: tlKinkFailed},
+			Help:        "The number of panicked calls",
+			ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: tlKinkPanicked},
 		},
 		func() float64 {
-			return float64(entry.Metrics().FailureCount())
+			return float64(entry.Metrics().PanicCount())
 		},
 	)
-	collectors := []prometheus.Collector{successCounter, timeoutCounter, failureCounter}
+	collectors := []prometheus.Collector{successCounter, timeoutCounter, panicCounter}
 	return buildRegisterFn(collectors...), buildUnregisterFn(collectors...)
 }

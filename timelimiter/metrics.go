@@ -5,11 +5,11 @@ import "sync/atomic"
 type Metrics interface {
 	SuccessCount() int64
 	TimeoutCount() int64
-	FailureCount() int64
+	PanicCount() int64
 
 	successIncrement()
 	timeoutIncrement()
-	failureIncrement()
+	panicIncrement()
 }
 
 func newMetrics() Metrics {
@@ -19,7 +19,7 @@ func newMetrics() Metrics {
 type metrics struct {
 	successCounter atomic.Int64
 	timeoutCounter atomic.Int64
-	failureCounter atomic.Int64
+	panicCounter   atomic.Int64
 }
 
 func (m *metrics) SuccessCount() int64 {
@@ -30,8 +30,8 @@ func (m *metrics) TimeoutCount() int64 {
 	return m.timeoutCounter.Load()
 }
 
-func (m *metrics) FailureCount() int64 {
-	return m.failureCounter.Load()
+func (m *metrics) PanicCount() int64 {
+	return m.panicCounter.Load()
 }
 
 func (m *metrics) successIncrement() {
@@ -42,6 +42,6 @@ func (m *metrics) timeoutIncrement() {
 	m.timeoutCounter.Add(1)
 }
 
-func (m *metrics) failureIncrement() {
-	m.failureCounter.Add(1)
+func (m *metrics) panicIncrement() {
+	m.panicCounter.Add(1)
 }

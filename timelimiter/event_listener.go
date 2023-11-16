@@ -8,7 +8,7 @@ import (
 type EventListener interface {
 	OnSuccess(func(SuccessEvent)) EventListener
 	OnTimeout(func(TimeoutEvent)) EventListener
-	OnFailure(func(FailureEvent)) EventListener
+	OnPanic(func(PanicEvent)) EventListener
 	Dismiss(any) EventListener
 	consumeEvent(Event)
 }
@@ -17,7 +17,7 @@ func newEventListener() EventListener {
 	return &eventListener{
 		onSuccess: make([]func(SuccessEvent), 0),
 		onTimeout: make([]func(TimeoutEvent), 0),
-		onFailure: make([]func(FailureEvent), 0),
+		onPanic:   make([]func(PanicEvent), 0),
 	}
 }
 
@@ -25,7 +25,7 @@ type eventListener struct {
 	sync.RWMutex
 	onSuccess []func(SuccessEvent)
 	onTimeout []func(TimeoutEvent)
-	onFailure []func(FailureEvent)
+	onPanic   []func(PanicEvent)
 }
 
 func (listener *eventListener) OnSuccess(consumer func(SuccessEvent)) EventListener {
@@ -42,10 +42,10 @@ func (listener *eventListener) OnTimeout(consumer func(TimeoutEvent)) EventListe
 	return listener
 }
 
-func (listener *eventListener) OnFailure(consumer func(FailureEvent)) EventListener {
+func (listener *eventListener) OnPanic(consumer func(PanicEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onFailure = utils.AppendElementUnique(listener.onFailure, consumer)
+	listener.onPanic = utils.AppendElementUnique(listener.onPanic, consumer)
 	return listener
 }
 
@@ -58,8 +58,8 @@ func (listener *eventListener) Dismiss(consumer any) EventListener {
 	if c, ok := consumer.(func(TimeoutEvent)); ok {
 		listener.onTimeout = utils.RemoveElementByValue(listener.onTimeout, c)
 	}
-	if c, ok := consumer.(func(FailureEvent)); ok {
-		listener.onFailure = utils.RemoveElementByValue(listener.onFailure, c)
+	if c, ok := consumer.(func(PanicEvent)); ok {
+		listener.onPanic = utils.RemoveElementByValue(listener.onPanic, c)
 	}
 	return listener
 }
@@ -73,8 +73,8 @@ func (listener *eventListener) consumeEvent(event Event) {
 			utils.ConsumeEvent(listener.onSuccess, SuccessEvent(e))
 		case *timeoutEvent:
 			utils.ConsumeEvent(listener.onTimeout, TimeoutEvent(e))
-		case *failureEvent:
-			utils.ConsumeEvent(listener.onFailure, FailureEvent(e))
+		case *panicEvent:
+			utils.ConsumeEvent(listener.onPanic, PanicEvent(e))
 		}
 	}()
 }
