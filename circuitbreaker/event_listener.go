@@ -5,96 +5,77 @@ import (
 	"sync"
 )
 
-type SuccessEventConsumer func(SuccessEvent)
-type ErrorEventConsumer func(ErrorEvent)
-type NotPermittedEventConsumer func(NotPermittedEvent)
-type StateTransitionEventConsumer func(StateTransitionEvent)
-type FailureRateExceededEventConsumer func(FailureRateExceededEvent)
-type SlowCallRateExceededEventConsumer func(SlowCallRateExceededEvent)
-
 type EventListener interface {
-	OnSuccess(SuccessEventConsumer) EventListener
-	OnError(ErrorEventConsumer) EventListener
-	OnNotPermitted(NotPermittedEventConsumer) EventListener
-	OnStateTransition(StateTransitionEventConsumer) EventListener
-	OnFailureRateExceeded(FailureRateExceededEventConsumer) EventListener
-	OnSlowCallRateExceeded(SlowCallRateExceededEventConsumer) EventListener
+	OnSuccess(func(SuccessEvent)) EventListener
+	OnError(func(ErrorEvent)) EventListener
+	OnNotPermitted(func(NotPermittedEvent)) EventListener
+	OnStateTransition(func(StateTransitionEvent)) EventListener
+	OnFailureRateExceeded(func(FailureRateExceededEvent)) EventListener
+	OnSlowCallRateExceeded(func(SlowCallRateExceededEvent)) EventListener
 	Dismiss(any) EventListener
 	consumeEvent(Event)
 }
 
 func newEventListener() EventListener {
 	return &eventListener{
-		onSuccess:                    make([]SuccessEventConsumer, 0),
-		onSuccessSlices:              utils.NewSlicesWithPointer[SuccessEventConsumer](),
-		onError:                      make([]ErrorEventConsumer, 0),
-		onErrorSlices:                utils.NewSlicesWithPointer[ErrorEventConsumer](),
-		onNotPermitted:               make([]NotPermittedEventConsumer, 0),
-		onNotPermittedSlices:         utils.NewSlicesWithPointer[NotPermittedEventConsumer](),
-		onStateTransition:            make([]StateTransitionEventConsumer, 0),
-		onStateTransitionSlices:      utils.NewSlicesWithPointer[StateTransitionEventConsumer](),
-		onFailureRateExceeded:        make([]FailureRateExceededEventConsumer, 0),
-		onFailureRateExceededSlices:  utils.NewSlicesWithPointer[FailureRateExceededEventConsumer](),
-		onSlowCallRateExceeded:       make([]SlowCallRateExceededEventConsumer, 0),
-		onSlowCallRateExceededSlices: utils.NewSlicesWithPointer[SlowCallRateExceededEventConsumer](),
+		onSuccess:              make([]func(SuccessEvent), 0),
+		onError:                make([]func(ErrorEvent), 0),
+		onNotPermitted:         make([]func(NotPermittedEvent), 0),
+		onStateTransition:      make([]func(StateTransitionEvent), 0),
+		onFailureRateExceeded:  make([]func(FailureRateExceededEvent), 0),
+		onSlowCallRateExceeded: make([]func(SlowCallRateExceededEvent), 0),
 	}
 }
 
 type eventListener struct {
 	sync.RWMutex
-	onSuccess                    []SuccessEventConsumer
-	onSuccessSlices              utils.Slices[SuccessEventConsumer]
-	onError                      []ErrorEventConsumer
-	onErrorSlices                utils.Slices[ErrorEventConsumer]
-	onNotPermitted               []NotPermittedEventConsumer
-	onNotPermittedSlices         utils.Slices[NotPermittedEventConsumer]
-	onStateTransition            []StateTransitionEventConsumer
-	onStateTransitionSlices      utils.Slices[StateTransitionEventConsumer]
-	onFailureRateExceeded        []FailureRateExceededEventConsumer
-	onFailureRateExceededSlices  utils.Slices[FailureRateExceededEventConsumer]
-	onSlowCallRateExceeded       []SlowCallRateExceededEventConsumer
-	onSlowCallRateExceededSlices utils.Slices[SlowCallRateExceededEventConsumer]
+	onSuccess              []func(SuccessEvent)
+	onError                []func(ErrorEvent)
+	onNotPermitted         []func(NotPermittedEvent)
+	onStateTransition      []func(StateTransitionEvent)
+	onFailureRateExceeded  []func(FailureRateExceededEvent)
+	onSlowCallRateExceeded []func(SlowCallRateExceededEvent)
 }
 
-func (listener *eventListener) OnSuccess(consumer SuccessEventConsumer) EventListener {
+func (listener *eventListener) OnSuccess(consumer func(SuccessEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onSuccess = listener.onSuccessSlices.AppendElementUnique(listener.onSuccess, consumer)
+	listener.onSuccess = utils.AppendElementUnique(listener.onSuccess, consumer)
 	return listener
 }
 
-func (listener *eventListener) OnError(consumer ErrorEventConsumer) EventListener {
+func (listener *eventListener) OnError(consumer func(ErrorEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onError = listener.onErrorSlices.AppendElementUnique(listener.onError, consumer)
+	listener.onError = utils.AppendElementUnique(listener.onError, consumer)
 	return listener
 }
 
-func (listener *eventListener) OnNotPermitted(consumer NotPermittedEventConsumer) EventListener {
+func (listener *eventListener) OnNotPermitted(consumer func(NotPermittedEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onNotPermitted = listener.onNotPermittedSlices.AppendElementUnique(listener.onNotPermitted, consumer)
+	listener.onNotPermitted = utils.AppendElementUnique(listener.onNotPermitted, consumer)
 	return listener
 }
 
-func (listener *eventListener) OnStateTransition(consumer StateTransitionEventConsumer) EventListener {
+func (listener *eventListener) OnStateTransition(consumer func(StateTransitionEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onStateTransition = listener.onStateTransitionSlices.AppendElementUnique(listener.onStateTransition, consumer)
+	listener.onStateTransition = utils.AppendElementUnique(listener.onStateTransition, consumer)
 	return listener
 }
 
-func (listener *eventListener) OnFailureRateExceeded(consumer FailureRateExceededEventConsumer) EventListener {
+func (listener *eventListener) OnFailureRateExceeded(consumer func(FailureRateExceededEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onFailureRateExceeded = listener.onFailureRateExceededSlices.AppendElementUnique(listener.onFailureRateExceeded, consumer)
+	listener.onFailureRateExceeded = utils.AppendElementUnique(listener.onFailureRateExceeded, consumer)
 	return listener
 }
 
-func (listener *eventListener) OnSlowCallRateExceeded(consumer SlowCallRateExceededEventConsumer) EventListener {
+func (listener *eventListener) OnSlowCallRateExceeded(consumer func(SlowCallRateExceededEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onSlowCallRateExceeded = listener.onSlowCallRateExceededSlices.AppendElementUnique(listener.onSlowCallRateExceeded, consumer)
+	listener.onSlowCallRateExceeded = utils.AppendElementUnique(listener.onSlowCallRateExceeded, consumer)
 	return listener
 }
 
@@ -102,22 +83,22 @@ func (listener *eventListener) Dismiss(consumer any) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
 	if c, ok := consumer.(func(SuccessEvent)); ok {
-		listener.onSuccess = listener.onSuccessSlices.RemoveElementByValue(listener.onSuccess, c)
+		listener.onSuccess = utils.RemoveElementByValue(listener.onSuccess, c)
 	}
 	if c, ok := consumer.(func(ErrorEvent)); ok {
-		listener.onError = listener.onErrorSlices.RemoveElementByValue(listener.onError, c)
+		listener.onError = utils.RemoveElementByValue(listener.onError, c)
 	}
 	if c, ok := consumer.(func(NotPermittedEvent)); ok {
-		listener.onNotPermitted = listener.onNotPermittedSlices.RemoveElementByValue(listener.onNotPermitted, c)
+		listener.onNotPermitted = utils.RemoveElementByValue(listener.onNotPermitted, c)
 	}
 	if c, ok := consumer.(func(StateTransitionEvent)); ok {
-		listener.onStateTransition = listener.onStateTransitionSlices.RemoveElementByValue(listener.onStateTransition, c)
+		listener.onStateTransition = utils.RemoveElementByValue(listener.onStateTransition, c)
 	}
 	if c, ok := consumer.(func(FailureRateExceededEvent)); ok {
-		listener.onFailureRateExceeded = listener.onFailureRateExceededSlices.RemoveElementByValue(listener.onFailureRateExceeded, c)
+		listener.onFailureRateExceeded = utils.RemoveElementByValue(listener.onFailureRateExceeded, c)
 	}
 	if c, ok := consumer.(func(SlowCallRateExceededEvent)); ok {
-		listener.onSlowCallRateExceeded = listener.onSlowCallRateExceededSlices.RemoveElementByValue(listener.onSlowCallRateExceeded, c)
+		listener.onSlowCallRateExceeded = utils.RemoveElementByValue(listener.onSlowCallRateExceeded, c)
 	}
 	return listener
 }
@@ -128,29 +109,17 @@ func (listener *eventListener) consumeEvent(event Event) {
 		defer listener.RUnlock()
 		switch e := event.(type) {
 		case *successEvent:
-			for _, consumer := range listener.onSuccess {
-				go consumer(e)
-			}
+			utils.ConsumeEvent(listener.onSuccess, SuccessEvent(e))
 		case *errorEvent:
-			for _, consumer := range listener.onError {
-				go consumer(e)
-			}
+			utils.ConsumeEvent(listener.onError, ErrorEvent(e))
 		case *notPermittedEvent:
-			for _, consumer := range listener.onNotPermitted {
-				go consumer(e)
-			}
+			utils.ConsumeEvent(listener.onNotPermitted, NotPermittedEvent(e))
 		case *stateTransitionEvent:
-			for _, consumer := range listener.onStateTransition {
-				go consumer(e)
-			}
+			utils.ConsumeEvent(listener.onStateTransition, StateTransitionEvent(e))
 		case *failureRateExceededEvent:
-			for _, consumer := range listener.onFailureRateExceeded {
-				go consumer(e)
-			}
+			utils.ConsumeEvent(listener.onFailureRateExceeded, FailureRateExceededEvent(e))
 		case *slowCallRateExceededEvent:
-			for _, consumer := range listener.onSlowCallRateExceeded {
-				go consumer(e)
-			}
+			utils.ConsumeEvent(listener.onSlowCallRateExceeded, SlowCallRateExceededEvent(e))
 		}
 	}()
 }

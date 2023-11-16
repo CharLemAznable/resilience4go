@@ -5,60 +5,47 @@ import (
 	"sync"
 )
 
-type SuccessEventConsumer func(SuccessEvent)
-
-//goland:noinspection GoNameStartsWithPackageName
-type RetryEventConsumer func(RetryEvent)
-
-type ErrorEventConsumer func(ErrorEvent)
-
 type EventListener interface {
-	OnSuccess(SuccessEventConsumer) EventListener
-	OnRetry(RetryEventConsumer) EventListener
-	OnError(ErrorEventConsumer) EventListener
+	OnSuccess(func(SuccessEvent)) EventListener
+	OnRetry(func(RetryEvent)) EventListener
+	OnError(func(ErrorEvent)) EventListener
 	Dismiss(any) EventListener
 	consumeEvent(Event)
 }
 
 func newEventListener() EventListener {
 	return &eventListener{
-		onSuccess:       make([]SuccessEventConsumer, 0),
-		onSuccessSlices: utils.NewSlicesWithPointer[SuccessEventConsumer](),
-		onRetry:         make([]RetryEventConsumer, 0),
-		onRetrySlices:   utils.NewSlicesWithPointer[RetryEventConsumer](),
-		onError:         make([]ErrorEventConsumer, 0),
-		onErrorSlices:   utils.NewSlicesWithPointer[ErrorEventConsumer](),
+		onSuccess: make([]func(SuccessEvent), 0),
+		onRetry:   make([]func(RetryEvent), 0),
+		onError:   make([]func(ErrorEvent), 0),
 	}
 }
 
 type eventListener struct {
 	sync.RWMutex
-	onSuccess       []SuccessEventConsumer
-	onSuccessSlices utils.Slices[SuccessEventConsumer]
-	onRetry         []RetryEventConsumer
-	onRetrySlices   utils.Slices[RetryEventConsumer]
-	onError         []ErrorEventConsumer
-	onErrorSlices   utils.Slices[ErrorEventConsumer]
+	onSuccess []func(SuccessEvent)
+	onRetry   []func(RetryEvent)
+	onError   []func(ErrorEvent)
 }
 
-func (listener *eventListener) OnSuccess(consumer SuccessEventConsumer) EventListener {
+func (listener *eventListener) OnSuccess(consumer func(SuccessEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onSuccess = listener.onSuccessSlices.AppendElementUnique(listener.onSuccess, consumer)
+	listener.onSuccess = utils.AppendElementUnique(listener.onSuccess, consumer)
 	return listener
 }
 
-func (listener *eventListener) OnRetry(consumer RetryEventConsumer) EventListener {
+func (listener *eventListener) OnRetry(consumer func(RetryEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onRetry = listener.onRetrySlices.AppendElementUnique(listener.onRetry, consumer)
+	listener.onRetry = utils.AppendElementUnique(listener.onRetry, consumer)
 	return listener
 }
 
-func (listener *eventListener) OnError(consumer ErrorEventConsumer) EventListener {
+func (listener *eventListener) OnError(consumer func(ErrorEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onError = listener.onErrorSlices.AppendElementUnique(listener.onError, consumer)
+	listener.onError = utils.AppendElementUnique(listener.onError, consumer)
 	return listener
 }
 
@@ -66,13 +53,13 @@ func (listener *eventListener) Dismiss(consumer any) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
 	if c, ok := consumer.(func(SuccessEvent)); ok {
-		listener.onSuccess = listener.onSuccessSlices.RemoveElementByValue(listener.onSuccess, c)
+		listener.onSuccess = utils.RemoveElementByValue(listener.onSuccess, c)
 	}
 	if c, ok := consumer.(func(RetryEvent)); ok {
-		listener.onRetry = listener.onRetrySlices.RemoveElementByValue(listener.onRetry, c)
+		listener.onRetry = utils.RemoveElementByValue(listener.onRetry, c)
 	}
 	if c, ok := consumer.(func(ErrorEvent)); ok {
-		listener.onError = listener.onErrorSlices.RemoveElementByValue(listener.onError, c)
+		listener.onError = utils.RemoveElementByValue(listener.onError, c)
 	}
 	return listener
 }
@@ -83,17 +70,11 @@ func (listener *eventListener) consumeEvent(event Event) {
 		defer listener.RUnlock()
 		switch e := event.(type) {
 		case *successEvent:
-			for _, consumer := range listener.onSuccess {
-				go consumer(e)
-			}
+			utils.ConsumeEvent(listener.onSuccess, SuccessEvent(e))
 		case *retryEvent:
-			for _, consumer := range listener.onRetry {
-				go consumer(e)
-			}
+			utils.ConsumeEvent(listener.onRetry, RetryEvent(e))
 		case *errorEvent:
-			for _, consumer := range listener.onError {
-				go consumer(e)
-			}
+			utils.ConsumeEvent(listener.onError, ErrorEvent(e))
 		}
 	}()
 }

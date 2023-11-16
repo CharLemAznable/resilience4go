@@ -125,7 +125,7 @@ func callGauges(entry circuitbreaker.CircuitBreaker) []prometheus.Collector {
 }
 
 func callHistograms(entry circuitbreaker.CircuitBreaker, histogramBuckets ...float64) (
-	[]prometheus.Collector, circuitbreaker.SuccessEventConsumer, circuitbreaker.ErrorEventConsumer) {
+	[]prometheus.Collector, func(circuitbreaker.SuccessEvent), func(circuitbreaker.ErrorEvent)) {
 	buckets := prometheus.DefBuckets
 	if len(histogramBuckets) > 0 {
 		buckets = histogramBuckets

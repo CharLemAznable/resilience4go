@@ -5,57 +5,47 @@ import (
 	"sync"
 )
 
-type PermittedEventConsumer func(PermittedEvent)
-type RejectedEventConsumer func(RejectedEvent)
-type FinishedEventConsumer func(FinishedEvent)
-
 type EventListener interface {
-	OnPermitted(PermittedEventConsumer) EventListener
-	OnRejected(RejectedEventConsumer) EventListener
-	OnFinished(FinishedEventConsumer) EventListener
+	OnPermitted(func(PermittedEvent)) EventListener
+	OnRejected(func(RejectedEvent)) EventListener
+	OnFinished(func(FinishedEvent)) EventListener
 	Dismiss(any) EventListener
 	consumeEvent(Event)
 }
 
 func newEventListener() EventListener {
 	return &eventListener{
-		onPermitted:       make([]PermittedEventConsumer, 0),
-		onPermittedSlices: utils.NewSlicesWithPointer[PermittedEventConsumer](),
-		onRejected:        make([]RejectedEventConsumer, 0),
-		onRejectedSlices:  utils.NewSlicesWithPointer[RejectedEventConsumer](),
-		onFinished:        make([]FinishedEventConsumer, 0),
-		onFinishedSlices:  utils.NewSlicesWithPointer[FinishedEventConsumer](),
+		onPermitted: make([]func(PermittedEvent), 0),
+		onRejected:  make([]func(RejectedEvent), 0),
+		onFinished:  make([]func(FinishedEvent), 0),
 	}
 }
 
 type eventListener struct {
 	sync.RWMutex
-	onPermitted       []PermittedEventConsumer
-	onPermittedSlices utils.Slices[PermittedEventConsumer]
-	onRejected        []RejectedEventConsumer
-	onRejectedSlices  utils.Slices[RejectedEventConsumer]
-	onFinished        []FinishedEventConsumer
-	onFinishedSlices  utils.Slices[FinishedEventConsumer]
+	onPermitted []func(PermittedEvent)
+	onRejected  []func(RejectedEvent)
+	onFinished  []func(FinishedEvent)
 }
 
-func (listener *eventListener) OnPermitted(consumer PermittedEventConsumer) EventListener {
+func (listener *eventListener) OnPermitted(consumer func(PermittedEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onPermitted = listener.onPermittedSlices.AppendElementUnique(listener.onPermitted, consumer)
+	listener.onPermitted = utils.AppendElementUnique(listener.onPermitted, consumer)
 	return listener
 }
 
-func (listener *eventListener) OnRejected(consumer RejectedEventConsumer) EventListener {
+func (listener *eventListener) OnRejected(consumer func(RejectedEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onRejected = listener.onRejectedSlices.AppendElementUnique(listener.onRejected, consumer)
+	listener.onRejected = utils.AppendElementUnique(listener.onRejected, consumer)
 	return listener
 }
 
-func (listener *eventListener) OnFinished(consumer FinishedEventConsumer) EventListener {
+func (listener *eventListener) OnFinished(consumer func(FinishedEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onFinished = listener.onFinishedSlices.AppendElementUnique(listener.onFinished, consumer)
+	listener.onFinished = utils.AppendElementUnique(listener.onFinished, consumer)
 	return listener
 }
 
@@ -63,13 +53,13 @@ func (listener *eventListener) Dismiss(consumer any) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
 	if c, ok := consumer.(func(PermittedEvent)); ok {
-		listener.onPermitted = listener.onPermittedSlices.RemoveElementByValue(listener.onPermitted, c)
+		listener.onPermitted = utils.RemoveElementByValue(listener.onPermitted, c)
 	}
 	if c, ok := consumer.(func(RejectedEvent)); ok {
-		listener.onRejected = listener.onRejectedSlices.RemoveElementByValue(listener.onRejected, c)
+		listener.onRejected = utils.RemoveElementByValue(listener.onRejected, c)
 	}
 	if c, ok := consumer.(func(FinishedEvent)); ok {
-		listener.onFinished = listener.onFinishedSlices.RemoveElementByValue(listener.onFinished, c)
+		listener.onFinished = utils.RemoveElementByValue(listener.onFinished, c)
 	}
 	return listener
 }
@@ -80,17 +70,11 @@ func (listener *eventListener) consumeEvent(event Event) {
 		defer listener.RUnlock()
 		switch e := event.(type) {
 		case *permittedEvent:
-			for _, consumer := range listener.onPermitted {
-				go consumer(e)
-			}
+			utils.ConsumeEvent(listener.onPermitted, PermittedEvent(e))
 		case *rejectedEvent:
-			for _, consumer := range listener.onRejected {
-				go consumer(e)
-			}
+			utils.ConsumeEvent(listener.onRejected, RejectedEvent(e))
 		case *finishedEvent:
-			for _, consumer := range listener.onFinished {
-				go consumer(e)
-			}
+			utils.ConsumeEvent(listener.onFinished, FinishedEvent(e))
 		}
 	}()
 }

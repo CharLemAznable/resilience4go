@@ -4,30 +4,16 @@ import (
 	"reflect"
 )
 
-type Slices[T any] interface {
-	RemoveElementByValue(slice []T, value T) []T
-	AppendElementUnique(slice []T, value T) []T
+func AppendElementUnique[T any](slice []T, value T) []T {
+	var removed []T = RemoveElementByValue(slice, value)
+	return append(removed, value)
 }
 
-func NewSlices[T any](equals func(T, T) bool) Slices[T] {
-	return &slices[T]{equals: equals}
-}
-
-func NewSlicesWithPointer[T any]() Slices[T] {
-	return NewSlices[T](func(x, y T) bool {
-		return reflect.ValueOf(x).Pointer() == reflect.ValueOf(y).Pointer()
-	})
-}
-
-type slices[T any] struct {
-	equals func(T, T) bool
-}
-
-func (s *slices[T]) RemoveElementByValue(slice []T, value T) []T {
+func RemoveElementByValue[T any](slice []T, value T) []T {
 	result := make([]T, 0)
 	start, cursor := 0, 0
 	for ; cursor < len(slice); cursor++ {
-		if s.equals(slice[cursor], value) {
+		if EqualsPointer(slice[cursor], value) {
 			if start != cursor {
 				result = append(result, slice[start:cursor]...)
 			}
@@ -37,7 +23,12 @@ func (s *slices[T]) RemoveElementByValue(slice []T, value T) []T {
 	return append(result, slice[start:cursor]...)
 }
 
-func (s *slices[T]) AppendElementUnique(slice []T, value T) []T {
-	var removed []T = s.RemoveElementByValue(slice, value)
-	return append(removed, value)
+func EqualsPointer[T any](x, y T) bool {
+	return reflect.ValueOf(x).Pointer() == reflect.ValueOf(y).Pointer()
+}
+
+func ConsumeEvent[T any](consumers []func(T), event T) {
+	for _, consumer := range consumers {
+		go consumer(event)
+	}
 }
