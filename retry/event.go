@@ -9,8 +9,8 @@ type EventType string
 
 const (
 	SUCCESS EventType = "SUCCESS"
-	ERROR   EventType = "ERROR"
 	RETRY   EventType = "RETRY"
+	ERROR   EventType = "ERROR"
 )
 
 type Event interface {
@@ -23,18 +23,22 @@ type Event interface {
 	RetErr() error
 }
 
-func newSuccessEvent(retryName string, numOfAttempts int, ret any, err error) Event {
-	return &successEvent{event{
-		retryName:     retryName,
-		creationTime:  time.Now(),
-		numOfAttempts: numOfAttempts,
-		ret:           ret,
-		err:           err,
-	}}
+type SuccessEvent interface {
+	Event
 }
 
-func newErrorEvent(retryName string, numOfAttempts int, ret any, err error) Event {
-	return &errorEvent{event{
+//goland:noinspection GoNameStartsWithPackageName
+type RetryEvent interface {
+	Event
+	WaitDuration() time.Duration
+}
+
+type ErrorEvent interface {
+	Event
+}
+
+func newSuccessEvent(retryName string, numOfAttempts int, ret any, err error) Event {
+	return &successEvent{event{
 		retryName:     retryName,
 		creationTime:  time.Now(),
 		numOfAttempts: numOfAttempts,
@@ -51,6 +55,16 @@ func newRetryEvent(retryName string, numOfAttempts int, ret any, err error, wait
 		ret:           ret,
 		err:           err,
 	}, waitDuration}
+}
+
+func newErrorEvent(retryName string, numOfAttempts int, ret any, err error) Event {
+	return &errorEvent{event{
+		retryName:     retryName,
+		creationTime:  time.Now(),
+		numOfAttempts: numOfAttempts,
+		ret:           ret,
+		err:           err,
+	}}
 }
 
 type event struct {
@@ -96,6 +110,26 @@ func (e *successEvent) String() string {
 		e.creationTime, e.retryName, e.numOfAttempts, e.ret, e.err)
 }
 
+type retryEvent struct {
+	event
+	waitDuration time.Duration
+}
+
+func (e *retryEvent) EventType() EventType {
+	return RETRY
+}
+
+func (e *retryEvent) WaitDuration() time.Duration {
+	return e.waitDuration
+}
+
+func (e *retryEvent) String() string {
+	return fmt.Sprintf(
+		"%v: Retry '%s', waiting %v until attempt '%d'."+
+			" Last result was: ('%v', '%v').",
+		e.creationTime, e.retryName, e.waitDuration, e.numOfAttempts, e.ret, e.err)
+}
+
 type errorEvent struct {
 	event
 }
@@ -109,20 +143,4 @@ func (e *errorEvent) String() string {
 		"%v: Retry '%s' recorded a failed retry attempt."+
 			" Number of retry attempts: '%d'. Giving up. Last result was: ('%v', '%v').",
 		e.creationTime, e.retryName, e.numOfAttempts, e.ret, e.err)
-}
-
-type retryEvent struct {
-	event
-	waitDuration time.Duration
-}
-
-func (e *retryEvent) EventType() EventType {
-	return RETRY
-}
-
-func (e *retryEvent) String() string {
-	return fmt.Sprintf(
-		"%v: Retry '%s', waiting %v until attempt '%d'."+
-			" Last result was: ('%v', '%v').",
-		e.creationTime, e.retryName, e.waitDuration, e.numOfAttempts, e.ret, e.err)
 }

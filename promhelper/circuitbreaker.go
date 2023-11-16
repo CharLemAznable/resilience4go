@@ -125,7 +125,7 @@ func callGauges(entry circuitbreaker.CircuitBreaker) []prometheus.Collector {
 }
 
 func callHistograms(entry circuitbreaker.CircuitBreaker, histogramBuckets ...float64) (
-	[]prometheus.Collector, circuitbreaker.EventConsumer, circuitbreaker.EventConsumer) {
+	[]prometheus.Collector, circuitbreaker.SuccessEventConsumer, circuitbreaker.ErrorEventConsumer) {
 	buckets := prometheus.DefBuckets
 	if len(histogramBuckets) > 0 {
 		buckets = histogramBuckets
@@ -137,8 +137,8 @@ func callHistograms(entry circuitbreaker.CircuitBreaker, histogramBuckets ...flo
 			ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: cbKindSuccessful},
 			Buckets:     buckets,
 		})
-	onSuccess := func(event circuitbreaker.Event) {
-		successfulCallsHistogram.Observe(float64(event.(circuitbreaker.EventWithDuration).Duration()))
+	onSuccess := func(event circuitbreaker.SuccessEvent) {
+		successfulCallsHistogram.Observe(float64(event.Duration()))
 	}
 	failedCallsHistogram := prometheus.NewHistogram(
 		prometheus.HistogramOpts{
@@ -147,8 +147,8 @@ func callHistograms(entry circuitbreaker.CircuitBreaker, histogramBuckets ...flo
 			ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: cbKindFailed},
 			Buckets:     buckets,
 		})
-	onError := func(event circuitbreaker.Event) {
-		failedCallsHistogram.Observe(float64(event.(circuitbreaker.EventWithDuration).Duration()))
+	onError := func(event circuitbreaker.ErrorEvent) {
+		failedCallsHistogram.Observe(float64(event.Duration()))
 	}
 	return []prometheus.Collector{successfulCallsHistogram, failedCallsHistogram}, onSuccess, onError
 }

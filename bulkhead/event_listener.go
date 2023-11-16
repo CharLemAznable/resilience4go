@@ -5,88 +5,92 @@ import (
 	"sync"
 )
 
-type EventConsumer func(Event)
+type PermittedEventConsumer func(PermittedEvent)
+type RejectedEventConsumer func(RejectedEvent)
+type FinishedEventConsumer func(FinishedEvent)
 
 type EventListener interface {
-	OnPermitted(EventConsumer) EventListener
-	OnRejected(EventConsumer) EventListener
-	OnFinished(EventConsumer) EventListener
-	Dismiss(EventConsumer) EventListener
-	HasConsumer() bool
+	OnPermitted(PermittedEventConsumer) EventListener
+	OnRejected(RejectedEventConsumer) EventListener
+	OnFinished(FinishedEventConsumer) EventListener
+	Dismiss(any) EventListener
 	consumeEvent(Event)
 }
 
 func newEventListener() EventListener {
 	return &eventListener{
-		onPermitted: make([]EventConsumer, 0),
-		onRejected:  make([]EventConsumer, 0),
-		onFinished:  make([]EventConsumer, 0),
-		slices:      utils.NewSlicesWithPointer[EventConsumer](),
+		onPermitted:       make([]PermittedEventConsumer, 0),
+		onPermittedSlices: utils.NewSlicesWithPointer[PermittedEventConsumer](),
+		onRejected:        make([]RejectedEventConsumer, 0),
+		onRejectedSlices:  utils.NewSlicesWithPointer[RejectedEventConsumer](),
+		onFinished:        make([]FinishedEventConsumer, 0),
+		onFinishedSlices:  utils.NewSlicesWithPointer[FinishedEventConsumer](),
 	}
 }
 
 type eventListener struct {
-	mutex       sync.RWMutex
-	onPermitted []EventConsumer
-	onRejected  []EventConsumer
-	onFinished  []EventConsumer
-	slices      utils.Slices[EventConsumer]
+	sync.RWMutex
+	onPermitted       []PermittedEventConsumer
+	onPermittedSlices utils.Slices[PermittedEventConsumer]
+	onRejected        []RejectedEventConsumer
+	onRejectedSlices  utils.Slices[RejectedEventConsumer]
+	onFinished        []FinishedEventConsumer
+	onFinishedSlices  utils.Slices[FinishedEventConsumer]
 }
 
-func (listener *eventListener) OnPermitted(consumer EventConsumer) EventListener {
-	listener.mutex.Lock()
-	defer listener.mutex.Unlock()
-	listener.onPermitted = listener.slices.AppendElementUnique(listener.onPermitted, consumer)
+func (listener *eventListener) OnPermitted(consumer PermittedEventConsumer) EventListener {
+	listener.Lock()
+	defer listener.Unlock()
+	listener.onPermitted = listener.onPermittedSlices.AppendElementUnique(listener.onPermitted, consumer)
 	return listener
 }
 
-func (listener *eventListener) OnRejected(consumer EventConsumer) EventListener {
-	listener.mutex.Lock()
-	defer listener.mutex.Unlock()
-	listener.onRejected = listener.slices.AppendElementUnique(listener.onRejected, consumer)
+func (listener *eventListener) OnRejected(consumer RejectedEventConsumer) EventListener {
+	listener.Lock()
+	defer listener.Unlock()
+	listener.onRejected = listener.onRejectedSlices.AppendElementUnique(listener.onRejected, consumer)
 	return listener
 }
 
-func (listener *eventListener) OnFinished(consumer EventConsumer) EventListener {
-	listener.mutex.Lock()
-	defer listener.mutex.Unlock()
-	listener.onFinished = listener.slices.AppendElementUnique(listener.onFinished, consumer)
+func (listener *eventListener) OnFinished(consumer FinishedEventConsumer) EventListener {
+	listener.Lock()
+	defer listener.Unlock()
+	listener.onFinished = listener.onFinishedSlices.AppendElementUnique(listener.onFinished, consumer)
 	return listener
 }
 
-func (listener *eventListener) Dismiss(consumer EventConsumer) EventListener {
-	listener.mutex.Lock()
-	defer listener.mutex.Unlock()
-	listener.onPermitted = listener.slices.RemoveElementByValue(listener.onPermitted, consumer)
-	listener.onRejected = listener.slices.RemoveElementByValue(listener.onRejected, consumer)
-	listener.onFinished = listener.slices.RemoveElementByValue(listener.onFinished, consumer)
+func (listener *eventListener) Dismiss(consumer any) EventListener {
+	listener.Lock()
+	defer listener.Unlock()
+	if c, ok := consumer.(func(PermittedEvent)); ok {
+		listener.onPermitted = listener.onPermittedSlices.RemoveElementByValue(listener.onPermitted, c)
+	}
+	if c, ok := consumer.(func(RejectedEvent)); ok {
+		listener.onRejected = listener.onRejectedSlices.RemoveElementByValue(listener.onRejected, c)
+	}
+	if c, ok := consumer.(func(FinishedEvent)); ok {
+		listener.onFinished = listener.onFinishedSlices.RemoveElementByValue(listener.onFinished, c)
+	}
 	return listener
-}
-
-func (listener *eventListener) HasConsumer() bool {
-	listener.mutex.RLock()
-	defer listener.mutex.RUnlock()
-	return len(listener.onPermitted) > 0 || len(listener.onRejected) > 0 || len(listener.onFinished) > 0
 }
 
 func (listener *eventListener) consumeEvent(event Event) {
 	go func() {
-		if !listener.HasConsumer() {
-			return
-		}
-		listener.mutex.RLock()
-		defer listener.mutex.RUnlock()
-		var consumers []EventConsumer
-		switch event.EventType() {
-		case PERMITTED:
-			consumers = listener.onPermitted
-		case REJECTED:
-			consumers = listener.onRejected
-		case FINISHED:
-			consumers = listener.onFinished
-		}
-		for _, consumer := range consumers {
-			go consumer(event)
+		listener.RLock()
+		defer listener.RUnlock()
+		switch e := event.(type) {
+		case *permittedEvent:
+			for _, consumer := range listener.onPermitted {
+				go consumer(e)
+			}
+		case *rejectedEvent:
+			for _, consumer := range listener.onRejected {
+				go consumer(e)
+			}
+		case *finishedEvent:
+			for _, consumer := range listener.onFinished {
+				go consumer(e)
+			}
 		}
 	}()
 }

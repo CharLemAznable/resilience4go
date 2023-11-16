@@ -16,8 +16,7 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 		t.Errorf("Expected time limiter name 'test', but got '%s'", tl.Name())
 	}
 	eventListener := tl.EventListener()
-	panicMsg := "panic error"
-	onSuccess := func(event timelimiter.Event) {
+	onSuccess := func(event timelimiter.SuccessEvent) {
 		if event.EventType() != timelimiter.SUCCESS {
 			t.Errorf("Expected event type SUCCESS, but got '%s'", event.EventType())
 		}
@@ -26,7 +25,7 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, event)
 		}
 	}
-	onTimeout := func(event timelimiter.Event) {
+	onTimeout := func(event timelimiter.TimeoutEvent) {
 		if event.EventType() != timelimiter.TIMEOUT {
 			t.Errorf("Expected event type TIMEOUT, but got '%s'", event.EventType())
 		}
@@ -35,19 +34,16 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, event)
 		}
 	}
-	onFailure := func(event timelimiter.Event) {
+	onFailure := func(event timelimiter.FailureEvent) {
 		if event.EventType() != timelimiter.FAILURE {
 			t.Errorf("Expected event type FAILURE, but got '%s'", event.EventType())
 		}
-		expectedMsg := fmt.Sprintf("%v: TimeLimiter '%s' recorded a failure call with panic: %v.", event.CreationTime(), event.TimeLimiterName(), panicMsg)
+		expectedMsg := fmt.Sprintf("%v: TimeLimiter '%s' recorded a failure call with panic: %v.", event.CreationTime(), event.TimeLimiterName(), event.Panic())
 		if event.String() != expectedMsg {
 			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, event)
 		}
 	}
 	eventListener.OnSuccess(onSuccess).OnTimeout(onTimeout).OnFailure(onFailure)
-	if !eventListener.HasConsumer() {
-		t.Error("Expected event listener has consumer, but not")
-	}
 
 	// 创建一个可运行的函数
 	fn := func() error {
@@ -59,8 +55,8 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 	func() {
 		defer func() {
 			if r := recover(); r != nil {
-				if r != panicMsg {
-					t.Errorf("Expected panic error '%s', but got '%v'", panicMsg, r)
+				if r != "panic error" {
+					t.Errorf("Expected panic error 'panic error', but got '%v'", r)
 				}
 			}
 		}()
@@ -105,7 +101,4 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 		t.Errorf("Expected 1 failure call, but got '%d'", metrics.FailureCount())
 	}
 	eventListener.Dismiss(onSuccess).Dismiss(onTimeout).Dismiss(onFailure)
-	if eventListener.HasConsumer() {
-		t.Error("Expected event listener has no consumer, but not")
-	}
 }

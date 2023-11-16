@@ -19,7 +19,7 @@ func TestCache(t *testing.T) {
 	eventListener := ch.EventListener()
 	var hits atomic.Int64
 	var misses atomic.Int64
-	onCacheHit := func(event cache.Event) {
+	onCacheHit := func(event cache.HitEvent) {
 		if event.EventType() != cache.OnHit {
 			t.Errorf("Expected event type CACHE_HIT, but got '%s'", event.EventType())
 		}
@@ -29,7 +29,7 @@ func TestCache(t *testing.T) {
 		}
 		hits.Add(1)
 	}
-	onCacheMiss := func(event cache.Event) {
+	onCacheMiss := func(event cache.MissEvent) {
 		if event.EventType() != cache.OnMiss {
 			t.Errorf("Expected event type CACHE_MISS, but got '%s'", event.EventType())
 		}
@@ -40,9 +40,6 @@ func TestCache(t *testing.T) {
 		misses.Add(1)
 	}
 	eventListener.OnCacheHit(onCacheHit).OnCacheMiss(onCacheMiss)
-	if !eventListener.HasConsumer() {
-		t.Error("Expected event listener has consumer, but not")
-	}
 
 	// fail with no error, max retries exceeded
 	fn := func(key string) (string, error) {
@@ -89,7 +86,4 @@ func TestCache(t *testing.T) {
 		t.Errorf("Expected 2 miss calls, but got '%d'", misses.Load())
 	}
 	eventListener.Dismiss(onCacheHit).Dismiss(onCacheMiss)
-	if eventListener.HasConsumer() {
-		t.Error("Expected event listener has no consumer, but not")
-	}
 }

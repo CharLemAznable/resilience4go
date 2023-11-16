@@ -19,6 +19,14 @@ type Event interface {
 	EventType() EventType
 }
 
+type SuccessEvent interface {
+	Event
+}
+
+type FailureEvent interface {
+	Event
+}
+
 func newSuccessEvent(rateLimiterName string) Event {
 	return &successEvent{event{rateLimiterName: rateLimiterName, creationTime: time.Now()}}
 }

@@ -21,7 +21,7 @@ func TestBulkheadPublishEvents(t *testing.T) {
 	permitted := atomic.Int64{}
 	rejected := atomic.Int64{}
 	finished := atomic.Int64{}
-	onPermitted := func(event bulkhead.Event) {
+	onPermitted := func(event bulkhead.PermittedEvent) {
 		if event.EventType() != bulkhead.PERMITTED {
 			t.Errorf("Expected event type PERMITTED, but got '%s'", event.EventType())
 		}
@@ -31,7 +31,7 @@ func TestBulkheadPublishEvents(t *testing.T) {
 		}
 		permitted.Add(1)
 	}
-	onRejected := func(event bulkhead.Event) {
+	onRejected := func(event bulkhead.RejectedEvent) {
 		if event.EventType() != bulkhead.REJECTED {
 			t.Errorf("Expected event type REJECTED, but got '%s'", event.EventType())
 		}
@@ -41,7 +41,7 @@ func TestBulkheadPublishEvents(t *testing.T) {
 		}
 		rejected.Add(1)
 	}
-	onFinished := func(event bulkhead.Event) {
+	onFinished := func(event bulkhead.FinishedEvent) {
 		if event.EventType() != bulkhead.FINISHED {
 			t.Errorf("Expected event type FINISHED, but got '%s'", event.EventType())
 		}
@@ -52,9 +52,6 @@ func TestBulkheadPublishEvents(t *testing.T) {
 		finished.Add(1)
 	}
 	eventListener.OnPermitted(onPermitted).OnRejected(onRejected).OnFinished(onFinished)
-	if !eventListener.HasConsumer() {
-		t.Error("Expected event listener has consumer, but not")
-	}
 
 	// 创建一个可运行的函数
 	fn := func() error {
@@ -90,7 +87,4 @@ func TestBulkheadPublishEvents(t *testing.T) {
 		t.Errorf("Expected 1 finished call, but got '%d'", finished.Load())
 	}
 	eventListener.Dismiss(onPermitted).Dismiss(onRejected).Dismiss(onFinished)
-	if eventListener.HasConsumer() {
-		t.Error("Expected event listener has no consumer, but not")
-	}
 }

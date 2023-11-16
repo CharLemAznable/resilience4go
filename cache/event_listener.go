@@ -5,75 +5,72 @@ import (
 	"sync"
 )
 
-type EventConsumer func(Event)
+type HitEventConsumer func(HitEvent)
+type MissEventConsumer func(MissEvent)
 
 type EventListener interface {
-	OnCacheHit(EventConsumer) EventListener
-	OnCacheMiss(EventConsumer) EventListener
-	Dismiss(EventConsumer) EventListener
-	HasConsumer() bool
+	OnCacheHit(HitEventConsumer) EventListener
+	OnCacheMiss(MissEventConsumer) EventListener
+	Dismiss(any) EventListener
 	consumeEvent(Event)
 }
 
 func newEventListener() EventListener {
 	return &eventListener{
-		onCacheHit:  make([]EventConsumer, 0),
-		onCacheMiss: make([]EventConsumer, 0),
-		slices:      utils.NewSlicesWithPointer[EventConsumer](),
+		onCacheHit:        make([]HitEventConsumer, 0),
+		onCacheHitSlices:  utils.NewSlicesWithPointer[HitEventConsumer](),
+		onCacheMiss:       make([]MissEventConsumer, 0),
+		onCacheMissSlices: utils.NewSlicesWithPointer[MissEventConsumer](),
 	}
 }
 
 type eventListener struct {
-	mutex       sync.RWMutex
-	onCacheHit  []EventConsumer
-	onCacheMiss []EventConsumer
-	slices      utils.Slices[EventConsumer]
+	sync.RWMutex
+	onCacheHit        []HitEventConsumer
+	onCacheHitSlices  utils.Slices[HitEventConsumer]
+	onCacheMiss       []MissEventConsumer
+	onCacheMissSlices utils.Slices[MissEventConsumer]
 }
 
-func (listener *eventListener) OnCacheHit(consumer EventConsumer) EventListener {
-	listener.mutex.Lock()
-	defer listener.mutex.Unlock()
-	listener.onCacheHit = listener.slices.AppendElementUnique(listener.onCacheHit, consumer)
+func (listener *eventListener) OnCacheHit(consumer HitEventConsumer) EventListener {
+	listener.Lock()
+	defer listener.Unlock()
+	listener.onCacheHit = listener.onCacheHitSlices.AppendElementUnique(listener.onCacheHit, consumer)
 	return listener
 }
 
-func (listener *eventListener) OnCacheMiss(consumer EventConsumer) EventListener {
-	listener.mutex.Lock()
-	defer listener.mutex.Unlock()
-	listener.onCacheMiss = listener.slices.AppendElementUnique(listener.onCacheMiss, consumer)
+func (listener *eventListener) OnCacheMiss(consumer MissEventConsumer) EventListener {
+	listener.Lock()
+	defer listener.Unlock()
+	listener.onCacheMiss = listener.onCacheMissSlices.AppendElementUnique(listener.onCacheMiss, consumer)
 	return listener
 }
 
-func (listener *eventListener) Dismiss(consumer EventConsumer) EventListener {
-	listener.mutex.Lock()
-	defer listener.mutex.Unlock()
-	listener.onCacheHit = listener.slices.RemoveElementByValue(listener.onCacheHit, consumer)
-	listener.onCacheMiss = listener.slices.RemoveElementByValue(listener.onCacheMiss, consumer)
+func (listener *eventListener) Dismiss(consumer any) EventListener {
+	listener.Lock()
+	defer listener.Unlock()
+	if c, ok := consumer.(func(HitEvent)); ok {
+		listener.onCacheHit = listener.onCacheHitSlices.RemoveElementByValue(listener.onCacheHit, c)
+	}
+	if c, ok := consumer.(func(MissEvent)); ok {
+		listener.onCacheMiss = listener.onCacheMissSlices.RemoveElementByValue(listener.onCacheMiss, c)
+	}
 	return listener
-}
-
-func (listener *eventListener) HasConsumer() bool {
-	listener.mutex.RLock()
-	defer listener.mutex.RUnlock()
-	return len(listener.onCacheHit) > 0 || len(listener.onCacheMiss) > 0
 }
 
 func (listener *eventListener) consumeEvent(event Event) {
 	go func() {
-		if !listener.HasConsumer() {
-			return
-		}
-		listener.mutex.RLock()
-		defer listener.mutex.RUnlock()
-		var consumers []EventConsumer
-		switch event.EventType() {
-		case OnHit:
-			consumers = listener.onCacheHit
-		case OnMiss:
-			consumers = listener.onCacheMiss
-		}
-		for _, consumer := range consumers {
-			go consumer(event)
+		listener.RLock()
+		defer listener.RUnlock()
+		switch e := event.(type) {
+		case *hitEvent:
+			for _, consumer := range listener.onCacheHit {
+				go consumer(e)
+			}
+		case *missEvent:
+			for _, consumer := range listener.onCacheMiss {
+				go consumer(e)
+			}
 		}
 	}()
 }

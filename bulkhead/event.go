@@ -20,6 +20,18 @@ type Event interface {
 	EventType() EventType
 }
 
+type PermittedEvent interface {
+	Event
+}
+
+type RejectedEvent interface {
+	Event
+}
+
+type FinishedEvent interface {
+	Event
+}
+
 func newPermittedEvent(bulkheadName string) Event {
 	return &permittedEvent{event{bulkheadName: bulkheadName, creationTime: time.Now()}}
 }

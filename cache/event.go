@@ -20,6 +20,14 @@ type Event interface {
 	EventType() EventType
 }
 
+type HitEvent interface {
+	Event
+}
+
+type MissEvent interface {
+	Event
+}
+
 func newCacheHitEvent(cacheName string, key any) Event {
 	return &hitEvent{event{cacheName: cacheName, creationTime: time.Now(), cacheKey: key}}
 }

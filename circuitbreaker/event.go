@@ -23,9 +23,36 @@ type Event interface {
 	EventType() EventType
 }
 
-type EventWithDuration interface {
+type SuccessEvent interface {
 	Event
 	Duration() time.Duration
+}
+
+type ErrorEvent interface {
+	Event
+	Duration() time.Duration
+	Ret() any
+	Err() error
+}
+
+type NotPermittedEvent interface {
+	Event
+}
+
+type StateTransitionEvent interface {
+	Event
+	FromState() State
+	ToState() State
+}
+
+type FailureRateExceededEvent interface {
+	Event
+	FailureRate() float64
+}
+
+type SlowCallRateExceededEvent interface {
+	Event
+	SlowCallRate() float64
 }
 
 func newSuccessEvent(circuitBreakerName string, duration time.Duration) Event {
@@ -99,6 +126,14 @@ func (e *errorEvent) Duration() time.Duration {
 	return e.duration
 }
 
+func (e *errorEvent) Ret() any {
+	return e.ret
+}
+
+func (e *errorEvent) Err() error {
+	return e.err
+}
+
 func (e *errorEvent) String() string {
 	return fmt.Sprintf(
 		"%v: CircuitBreaker '%s' recorded an error ret '%v' with error: '%s'. Elapsed time: %v",
@@ -128,6 +163,14 @@ func (e *stateTransitionEvent) EventType() EventType {
 	return StateTransition
 }
 
+func (e *stateTransitionEvent) FromState() State {
+	return e.fromState
+}
+
+func (e *stateTransitionEvent) ToState() State {
+	return e.toState
+}
+
 func (e *stateTransitionEvent) String() string {
 	return fmt.Sprintf(
 		"%v: CircuitBreaker '%s' changed state from %s to %s",
@@ -143,6 +186,10 @@ func (e *failureRateExceededEvent) EventType() EventType {
 	return FailureRateExceeded
 }
 
+func (e *failureRateExceededEvent) FailureRate() float64 {
+	return e.failureRate
+}
+
 func (e *failureRateExceededEvent) String() string {
 	return fmt.Sprintf(
 		"%v: CircuitBreaker '%s' exceeded failure rate threshold. Current failure rate: %f",
@@ -156,6 +203,10 @@ type slowCallRateExceededEvent struct {
 
 func (e *slowCallRateExceededEvent) EventType() EventType {
 	return SlowCallRateExceeded
+}
+
+func (e *slowCallRateExceededEvent) SlowCallRate() float64 {
+	return e.slowCallRate
 }
 
 func (e *slowCallRateExceededEvent) String() string {
