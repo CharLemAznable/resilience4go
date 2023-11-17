@@ -109,12 +109,11 @@ import "github.com/CharLemAznable/resilience4go/fallback"
 decoratedFn := fallback.DecorateRunnable(func() error {
 	// do something
 	return nil
-}, func(err error) error {
+}, func(ctx fallback.Context[any, any, error]) error {
 	// fallback if has error
 	return nil
-}, func(err error, panic any) (bool, error) {
-	// ...
-	// 判断调用结果是否需要恢复
+}, func(ctx fallback.Context[any, any, error]) (bool, fallback.Context[any, any, error]) {
+	// 根据调用上下文判断是否需要恢复
 })
 ```
 
