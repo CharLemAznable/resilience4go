@@ -18,31 +18,31 @@ func TestDecorateFunction(t *testing.T) {
 			return "", errors.New("error")
 		}).
 		WithBulkhead(bulkhead.NewBulkhead("test")).
-		WhenFull(func(_, _ string, fullError *bulkhead.FullError) (string, error) {
+		WhenFull(func(_ string) (string, error) {
 			return "", nil
 		}).
 		WithTimeLimiter(timelimiter.NewTimeLimiter("test")).
-		WhenTimeout(func(_, _ string, timeoutError *timelimiter.TimeoutError) (string, error) {
+		WhenTimeout(func(_ string) (string, error) {
 			return "", nil
 		}).
 		WithRateLimiter(ratelimiter.NewRateLimiter("test")).
-		WhenOverRate(func(_, _ string, notPermittedError *ratelimiter.NotPermittedError) (string, error) {
+		WhenOverRate(func(_ string) (string, error) {
 			return "", nil
 		}).
 		WithCircuitBreaker(circuitbreaker.NewCircuitBreaker("test")).
-		WhenOverLoad(func(_, _ string, notPermittedError *circuitbreaker.NotPermittedError) (string, error) {
+		WhenOverLoad(func(_ string) (string, error) {
 			return "", nil
 		}).
 		WithRetry(retry.NewRetry("test")).
-		WhenMaxRetries(func(_, _ string, exceeded *retry.MaxRetriesExceeded) (string, error) {
+		WhenMaxRetries(func(_ string) (string, error) {
 			return "", nil
 		}).
 		WithFallback(
-			func(_, _ string, err error) (string, error) {
+			func(_ string) (string, error) {
 				return "fallback", nil
 			},
-			func(ret string, err error, panic any) (bool, string, error) {
-				return err != nil, ret, err
+			func(_ string, _ string, err error, _ any) bool {
+				return err != nil
 			}).
 		WithCache(cache.NewCache[string, string]("test")).
 		Decorate()

@@ -22,44 +22,49 @@ func (function *DecorateSupplier[T]) WithBulkhead(entry bulkhead.Bulkhead) *Deco
 	return OfSupplier(bulkhead.DecorateSupplier(entry, function.Supplier))
 }
 
-func (function *DecorateSupplier[T]) WhenFull(fn func(T, *bulkhead.FullError) (T, error)) *DecorateSupplier[T] {
-	return OfSupplier(fallback.DecorateSupplierDefault(function.Supplier, fn))
+func (function *DecorateSupplier[T]) WhenFull(fn func() (T, error)) *DecorateSupplier[T] {
+	return OfSupplier(fallback.DecorateSupplierByType[T, *bulkhead.FullError](function.Supplier, fn))
 }
 
 func (function *DecorateSupplier[T]) WithTimeLimiter(entry timelimiter.TimeLimiter) *DecorateSupplier[T] {
 	return OfSupplier(timelimiter.DecorateSupplier(entry, function.Supplier))
 }
 
-func (function *DecorateSupplier[T]) WhenTimeout(fn func(T, *timelimiter.TimeoutError) (T, error)) *DecorateSupplier[T] {
-	return OfSupplier(fallback.DecorateSupplierDefault(function.Supplier, fn))
+func (function *DecorateSupplier[T]) WhenTimeout(fn func() (T, error)) *DecorateSupplier[T] {
+	return OfSupplier(fallback.DecorateSupplierByType[T, *timelimiter.TimeoutError](function.Supplier, fn))
 }
 
 func (function *DecorateSupplier[T]) WithRateLimiter(entry ratelimiter.RateLimiter) *DecorateSupplier[T] {
 	return OfSupplier(ratelimiter.DecorateSupplier(entry, function.Supplier))
 }
 
-func (function *DecorateSupplier[T]) WhenOverRate(fn func(T, *ratelimiter.NotPermittedError) (T, error)) *DecorateSupplier[T] {
-	return OfSupplier(fallback.DecorateSupplierDefault(function.Supplier, fn))
+func (function *DecorateSupplier[T]) WhenOverRate(fn func() (T, error)) *DecorateSupplier[T] {
+	return OfSupplier(fallback.DecorateSupplierByType[T, *ratelimiter.NotPermittedError](function.Supplier, fn))
 }
 
 func (function *DecorateSupplier[T]) WithCircuitBreaker(entry circuitbreaker.CircuitBreaker) *DecorateSupplier[T] {
 	return OfSupplier(circuitbreaker.DecorateSupplier(entry, function.Supplier))
 }
 
-func (function *DecorateSupplier[T]) WhenOverLoad(fn func(T, *circuitbreaker.NotPermittedError) (T, error)) *DecorateSupplier[T] {
-	return OfSupplier(fallback.DecorateSupplierDefault(function.Supplier, fn))
+func (function *DecorateSupplier[T]) WhenOverLoad(fn func() (T, error)) *DecorateSupplier[T] {
+	return OfSupplier(fallback.DecorateSupplierByType[T, *circuitbreaker.NotPermittedError](function.Supplier, fn))
 }
 
 func (function *DecorateSupplier[T]) WithRetry(entry retry.Retry) *DecorateSupplier[T] {
 	return OfSupplier(retry.DecorateSupplier(entry, function.Supplier))
 }
 
-func (function *DecorateSupplier[T]) WhenMaxRetries(fn func(T, *retry.MaxRetriesExceeded) (T, error)) *DecorateSupplier[T] {
-	return OfSupplier(fallback.DecorateSupplierDefault(function.Supplier, fn))
+func (function *DecorateSupplier[T]) WhenMaxRetries(fn func() (T, error)) *DecorateSupplier[T] {
+	return OfSupplier(fallback.DecorateSupplierByType[T, *retry.MaxRetriesExceeded](function.Supplier, fn))
 }
 
-func (function *DecorateSupplier[T]) WithFallback(fn func(T, error) (T, error), predicate fallback.FailureResultPredicate[T, error]) *DecorateSupplier[T] {
-	return OfSupplier(fallback.DecorateSupplier(function.Supplier, fn, predicate))
+func (function *DecorateSupplier[T]) WithFallback(
+	fn func() (T, error), predicate func(T, error, any) bool) *DecorateSupplier[T] {
+	return OfSupplier(fallback.DecorateSupplier(function.Supplier,
+		func(ctx fallback.Context[any, T, error]) (T, error) { return fn() },
+		func(ctx fallback.Context[any, T, error]) (bool, fallback.Context[any, T, error]) {
+			return predicate(ctx.Ret(), ctx.Err(), ctx.Panic()), ctx
+		}))
 }
 
 func (function *DecorateSupplier[T]) Decorate() supplier.Supplier[T] {

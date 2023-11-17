@@ -27,7 +27,7 @@ func TestDecorateRunnable(t *testing.T) {
 	fn1 := func() error {
 		return nil
 	}
-	fallback1 := func(err error) error {
+	fallback1 := func() error {
 		return errors.New("fallback error")
 	}
 	decoratedFn1 := fallback.DecorateRunnableDefault(fn1, fallback1)
@@ -40,7 +40,7 @@ func TestDecorateRunnable(t *testing.T) {
 	fn2 := func() error {
 		return errors.New("original error")
 	}
-	fallback2 := func(err error) error {
+	fallback2 := func() error {
 		return errors.New("fallback error")
 	}
 	decoratedFn2 := fallback.DecorateRunnableDefault(fn2, fallback2)
@@ -53,10 +53,10 @@ func TestDecorateRunnable(t *testing.T) {
 	fn3 := func() error {
 		return &TargetError{msg: "original error"}
 	}
-	fallback3 := func(err *TargetError) error {
+	fallback3 := func() error {
 		return errors.New("fallback error")
 	}
-	decoratedFn3 := fallback.DecorateRunnableDefault(fn3, fallback3)
+	decoratedFn3 := fallback.DecorateRunnableByType[*TargetError](fn3, fallback3)
 	err3 := decoratedFn3()
 	if err3 == nil || err3.Error() != "fallback error" {
 		t.Errorf("Expected error 'fallback error', but got '%v'", err3)
@@ -66,33 +66,20 @@ func TestDecorateRunnable(t *testing.T) {
 	fn4 := func() error {
 		return &NonTargetError{msg: "original error"}
 	}
-	fallback4 := func(err *TargetError) error {
+	fallback4 := func() error {
 		return errors.New("fallback error")
 	}
-	decoratedFn4 := fallback.DecorateRunnableDefault(fn4, fallback4)
+	decoratedFn4 := fallback.DecorateRunnableByType[*TargetError](fn4, fallback4)
 	err4 := decoratedFn4()
 	if err4 == nil || err4.Error() != "original error" {
 		t.Errorf("Expected error 'original error', but got '%v'", err4)
 	}
 
-	// Test case 5: fn panic TargetError
-	fn5 := func() error {
-		panic(&TargetError{msg: "original error"})
-	}
-	fallback5 := func(err *TargetError) error {
-		return errors.New("fallback error")
-	}
-	decoratedFn5 := fallback.DecorateRunnableDefault(fn5, fallback5)
-	err5 := decoratedFn5()
-	if err5 == nil || err5.Error() != "fallback error" {
-		t.Errorf("Expected error 'fallback error', but got '%v'", err5)
-	}
-
-	// Test case 6: fn panic anything else
+	// Test case 5: fn panic
 	fn6 := func() error {
 		panic("original error")
 	}
-	fallback6 := func(err *TargetError) error {
+	fallback6 := func() error {
 		return errors.New("fallback error")
 	}
 	decoratedFn6 := fallback.DecorateRunnableDefault(fn6, fallback6)
@@ -113,7 +100,7 @@ func TestDecorateSupplier(t *testing.T) {
 	fn1 := func() (string, error) {
 		return "ok", nil
 	}
-	fallback1 := func(_ string, err error) (string, error) {
+	fallback1 := func() (string, error) {
 		return "", errors.New("fallback error")
 	}
 	decoratedFn1 := fallback.DecorateSupplierDefault(fn1, fallback1)
@@ -126,7 +113,7 @@ func TestDecorateSupplier(t *testing.T) {
 	fn2 := func() (string, error) {
 		return "", errors.New("original error")
 	}
-	fallback2 := func(_ string, err error) (string, error) {
+	fallback2 := func() (string, error) {
 		return "", errors.New("fallback error")
 	}
 	decoratedFn2 := fallback.DecorateSupplierDefault(fn2, fallback2)
@@ -139,10 +126,10 @@ func TestDecorateSupplier(t *testing.T) {
 	fn3 := func() (string, error) {
 		return "", &TargetError{msg: "original error"}
 	}
-	fallback3 := func(_ string, err *TargetError) (string, error) {
+	fallback3 := func() (string, error) {
 		return "", errors.New("fallback error")
 	}
-	decoratedFn3 := fallback.DecorateSupplierDefault(fn3, fallback3)
+	decoratedFn3 := fallback.DecorateSupplierByType[string, *TargetError](fn3, fallback3)
 	_, err3 := decoratedFn3()
 	if err3 == nil || err3.Error() != "fallback error" {
 		t.Errorf("Expected error 'fallback error', but got '%v'", err3)
@@ -152,33 +139,20 @@ func TestDecorateSupplier(t *testing.T) {
 	fn4 := func() (string, error) {
 		return "", &NonTargetError{msg: "original error"}
 	}
-	fallback4 := func(_ string, err *TargetError) (string, error) {
+	fallback4 := func() (string, error) {
 		return "", errors.New("fallback error")
 	}
-	decoratedFn4 := fallback.DecorateSupplierDefault(fn4, fallback4)
+	decoratedFn4 := fallback.DecorateSupplierByType[string, *TargetError](fn4, fallback4)
 	_, err4 := decoratedFn4()
 	if err4 == nil || err4.Error() != "original error" {
 		t.Errorf("Expected error 'original error', but got '%v'", err4)
 	}
 
-	// Test case 5: fn panic TargetError
-	fn5 := func() (string, error) {
-		panic(&TargetError{msg: "original error"})
-	}
-	fallback5 := func(_ string, err *TargetError) (string, error) {
-		return "", errors.New("fallback error")
-	}
-	decoratedFn5 := fallback.DecorateSupplierDefault(fn5, fallback5)
-	_, err5 := decoratedFn5()
-	if err5 == nil || err5.Error() != "fallback error" {
-		t.Errorf("Expected error 'fallback error', but got '%v'", err5)
-	}
-
-	// Test case 6: fn panic anything else
+	// Test case 5: fn panic
 	fn6 := func() (string, error) {
 		panic("original error")
 	}
-	fallback6 := func(_ string, err *TargetError) (string, error) {
+	fallback6 := func() (string, error) {
 		return "", errors.New("fallback error")
 	}
 	decoratedFn6 := fallback.DecorateSupplierDefault(fn6, fallback6)
@@ -199,7 +173,7 @@ func TestDecorateConsumer(t *testing.T) {
 	fn1 := func(str string) error {
 		return nil
 	}
-	fallback1 := func(_ string, err error) error {
+	fallback1 := func(_ string) error {
 		return errors.New("fallback error")
 	}
 	decoratedFn1 := fallback.DecorateConsumerDefault(fn1, fallback1)
@@ -212,7 +186,7 @@ func TestDecorateConsumer(t *testing.T) {
 	fn2 := func(str string) error {
 		return errors.New("original error")
 	}
-	fallback2 := func(_ string, err error) error {
+	fallback2 := func(_ string) error {
 		return errors.New("fallback error")
 	}
 	decoratedFn2 := fallback.DecorateConsumerDefault(fn2, fallback2)
@@ -225,10 +199,10 @@ func TestDecorateConsumer(t *testing.T) {
 	fn3 := func(str string) error {
 		return &TargetError{msg: "original error"}
 	}
-	fallback3 := func(_ string, err *TargetError) error {
+	fallback3 := func(_ string) error {
 		return errors.New("fallback error")
 	}
-	decoratedFn3 := fallback.DecorateConsumerDefault(fn3, fallback3)
+	decoratedFn3 := fallback.DecorateConsumerByType[string, *TargetError](fn3, fallback3)
 	err3 := decoratedFn3("test")
 	if err3 == nil || err3.Error() != "fallback error" {
 		t.Errorf("Expected error 'fallback error', but got '%v'", err3)
@@ -238,33 +212,20 @@ func TestDecorateConsumer(t *testing.T) {
 	fn4 := func(str string) error {
 		return &NonTargetError{msg: "original error"}
 	}
-	fallback4 := func(_ string, err *TargetError) error {
+	fallback4 := func(_ string) error {
 		return errors.New("fallback error")
 	}
-	decoratedFn4 := fallback.DecorateConsumerDefault(fn4, fallback4)
+	decoratedFn4 := fallback.DecorateConsumerByType[string, *TargetError](fn4, fallback4)
 	err4 := decoratedFn4("test")
 	if err4 == nil || err4.Error() != "original error" {
 		t.Errorf("Expected error 'original error', but got '%v'", err4)
 	}
 
-	// Test case 5: fn panic TargetError
-	fn5 := func(str string) error {
-		panic(&TargetError{msg: "original error"})
-	}
-	fallback5 := func(_ string, err *TargetError) error {
-		return errors.New("fallback error")
-	}
-	decoratedFn5 := fallback.DecorateConsumerDefault(fn5, fallback5)
-	err5 := decoratedFn5("test")
-	if err5 == nil || err5.Error() != "fallback error" {
-		t.Errorf("Expected error 'fallback error', but got '%v'", err5)
-	}
-
-	// Test case 6: fn panic anything else
+	// Test case 5: fn panic
 	fn6 := func(str string) error {
 		panic("original error")
 	}
-	fallback6 := func(_ string, err *TargetError) error {
+	fallback6 := func(_ string) error {
 		return errors.New("fallback error")
 	}
 	decoratedFn6 := fallback.DecorateConsumerDefault(fn6, fallback6)
@@ -285,7 +246,7 @@ func TestDecorateFunction(t *testing.T) {
 	fn1 := func(str string) (string, error) {
 		return "ok", nil
 	}
-	fallback1 := func(_, _ string, err error) (string, error) {
+	fallback1 := func(_ string) (string, error) {
 		return "", errors.New("fallback error")
 	}
 	decoratedFn1 := fallback.DecorateFunctionDefault(fn1, fallback1)
@@ -298,7 +259,7 @@ func TestDecorateFunction(t *testing.T) {
 	fn2 := func(str string) (string, error) {
 		return "", errors.New("original error")
 	}
-	fallback2 := func(_, _ string, err error) (string, error) {
+	fallback2 := func(_ string) (string, error) {
 		return "", errors.New("fallback error")
 	}
 	decoratedFn2 := fallback.DecorateFunctionDefault(fn2, fallback2)
@@ -311,10 +272,10 @@ func TestDecorateFunction(t *testing.T) {
 	fn3 := func(str string) (string, error) {
 		return "", &TargetError{msg: "original error"}
 	}
-	fallback3 := func(_, _ string, err *TargetError) (string, error) {
+	fallback3 := func(_ string) (string, error) {
 		return "", errors.New("fallback error")
 	}
-	decoratedFn3 := fallback.DecorateFunctionDefault(fn3, fallback3)
+	decoratedFn3 := fallback.DecorateFunctionByType[string, string, *TargetError](fn3, fallback3)
 	_, err3 := decoratedFn3("test")
 	if err3 == nil || err3.Error() != "fallback error" {
 		t.Errorf("Expected error 'fallback error', but got '%v'", err3)
@@ -324,33 +285,20 @@ func TestDecorateFunction(t *testing.T) {
 	fn4 := func(str string) (string, error) {
 		return "", &NonTargetError{msg: "original error"}
 	}
-	fallback4 := func(_, _ string, err *TargetError) (string, error) {
+	fallback4 := func(_ string) (string, error) {
 		return "", errors.New("fallback error")
 	}
-	decoratedFn4 := fallback.DecorateFunctionDefault(fn4, fallback4)
+	decoratedFn4 := fallback.DecorateFunctionByType[string, string, *TargetError](fn4, fallback4)
 	_, err4 := decoratedFn4("test")
 	if err4 == nil || err4.Error() != "original error" {
 		t.Errorf("Expected error 'original error', but got '%v'", err4)
 	}
 
-	// Test case 5: fn panic TargetError
-	fn5 := func(str string) (string, error) {
-		panic(&TargetError{msg: "original error"})
-	}
-	fallback5 := func(_, _ string, err *TargetError) (string, error) {
-		return "", errors.New("fallback error")
-	}
-	decoratedFn5 := fallback.DecorateFunctionDefault(fn5, fallback5)
-	_, err5 := decoratedFn5("test")
-	if err5 == nil || err5.Error() != "fallback error" {
-		t.Errorf("Expected error 'fallback error', but got '%v'", err5)
-	}
-
-	// Test case 6: fn panic anything else
+	// Test case 5: fn panic
 	fn6 := func(str string) (string, error) {
 		panic("original error")
 	}
-	fallback6 := func(_, _ string, err *TargetError) (string, error) {
+	fallback6 := func(_ string) (string, error) {
 		return "", errors.New("fallback error")
 	}
 	decoratedFn6 := fallback.DecorateFunctionDefault(fn6, fallback6)

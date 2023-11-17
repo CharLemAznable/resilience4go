@@ -17,31 +17,31 @@ func TestDecorateSupplier(t *testing.T) {
 			return "", errors.New("error")
 		}).
 		WithBulkhead(bulkhead.NewBulkhead("test")).
-		WhenFull(func(_ string, fullError *bulkhead.FullError) (string, error) {
+		WhenFull(func() (string, error) {
 			return "", nil
 		}).
 		WithTimeLimiter(timelimiter.NewTimeLimiter("test")).
-		WhenTimeout(func(_ string, timeoutError *timelimiter.TimeoutError) (string, error) {
+		WhenTimeout(func() (string, error) {
 			return "", nil
 		}).
 		WithRateLimiter(ratelimiter.NewRateLimiter("test")).
-		WhenOverRate(func(_ string, notPermittedError *ratelimiter.NotPermittedError) (string, error) {
+		WhenOverRate(func() (string, error) {
 			return "", nil
 		}).
 		WithCircuitBreaker(circuitbreaker.NewCircuitBreaker("test")).
-		WhenOverLoad(func(_ string, notPermittedError *circuitbreaker.NotPermittedError) (string, error) {
+		WhenOverLoad(func() (string, error) {
 			return "", nil
 		}).
 		WithRetry(retry.NewRetry("test")).
-		WhenMaxRetries(func(_ string, exceeded *retry.MaxRetriesExceeded) (string, error) {
+		WhenMaxRetries(func() (string, error) {
 			return "", nil
 		}).
 		WithFallback(
-			func(_ string, err error) (string, error) {
+			func() (string, error) {
 				return "fallback", nil
 			},
-			func(ret string, err error, panic any) (bool, string, error) {
-				return err != nil, ret, err
+			func(_ string, err error, _ any) bool {
+				return err != nil
 			}).
 		Decorate()
 

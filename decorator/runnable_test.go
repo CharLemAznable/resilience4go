@@ -18,31 +18,31 @@ func TestDecorateRunnable(t *testing.T) {
 			return errors.New("error")
 		}).
 		WithBulkhead(bulkhead.NewBulkhead("test")).
-		WhenFull(func(fullError *bulkhead.FullError) error {
+		WhenFull(func() error {
 			return nil
 		}).
 		WithTimeLimiter(timelimiter.NewTimeLimiter("test")).
-		WhenTimeout(func(timeoutError *timelimiter.TimeoutError) error {
+		WhenTimeout(func() error {
 			return nil
 		}).
 		WithRateLimiter(ratelimiter.NewRateLimiter("test")).
-		WhenOverRate(func(notPermittedError *ratelimiter.NotPermittedError) error {
+		WhenOverRate(func() error {
 			return nil
 		}).
 		WithCircuitBreaker(circuitbreaker.NewCircuitBreaker("test")).
-		WhenOverLoad(func(notPermittedError *circuitbreaker.NotPermittedError) error {
+		WhenOverLoad(func() error {
 			return nil
 		}).
 		WithRetry(retry.NewRetry("test")).
-		WhenMaxRetries(func(exceeded *retry.MaxRetriesExceeded) error {
+		WhenMaxRetries(func() error {
 			return nil
 		}).
 		WithFallback(
-			func(err error) error {
+			func() error {
 				return nil
 			},
-			func(err error, panic any) (bool, error) {
-				return err != nil, err
+			func(err error, _ any) bool {
+				return err != nil
 			}).
 		Decorate()
 

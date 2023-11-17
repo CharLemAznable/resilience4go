@@ -17,31 +17,31 @@ func TestDecorateConsumer(t *testing.T) {
 			return errors.New("error")
 		}).
 		WithBulkhead(bulkhead.NewBulkhead("test")).
-		WhenFull(func(_ string, fullError *bulkhead.FullError) error {
+		WhenFull(func(_ string) error {
 			return nil
 		}).
 		WithTimeLimiter(timelimiter.NewTimeLimiter("test")).
-		WhenTimeout(func(_ string, timeoutError *timelimiter.TimeoutError) error {
+		WhenTimeout(func(_ string) error {
 			return nil
 		}).
 		WithRateLimiter(ratelimiter.NewRateLimiter("test")).
-		WhenOverRate(func(_ string, notPermittedError *ratelimiter.NotPermittedError) error {
+		WhenOverRate(func(_ string) error {
 			return nil
 		}).
 		WithCircuitBreaker(circuitbreaker.NewCircuitBreaker("test")).
-		WhenOverLoad(func(_ string, notPermittedError *circuitbreaker.NotPermittedError) error {
+		WhenOverLoad(func(_ string) error {
 			return nil
 		}).
 		WithRetry(retry.NewRetry("test")).
-		WhenMaxRetries(func(_ string, exceeded *retry.MaxRetriesExceeded) error {
+		WhenMaxRetries(func(_ string) error {
 			return nil
 		}).
 		WithFallback(
-			func(_ string, err error) error {
+			func(_ string) error {
 				return nil
 			},
-			func(err error, panic any) (bool, error) {
-				return err != nil, err
+			func(_ string, err error, _ any) bool {
+				return err != nil
 			}).
 		Decorate()
 
