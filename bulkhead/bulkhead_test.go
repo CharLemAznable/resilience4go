@@ -77,13 +77,13 @@ func TestBulkheadPublishEvents(t *testing.T) {
 	}()
 
 	time.Sleep(time.Second * 5)
-	if permitted.Load() != int64(1) {
+	if permitted.Load() != 1 {
 		t.Errorf("Expected 1 permitted call, but got '%d'", permitted.Load())
 	}
-	if rejected.Load() != int64(1) {
+	if rejected.Load() != 1 {
 		t.Errorf("Expected 1 rejected call, but got '%d'", rejected.Load())
 	}
-	if finished.Load() != int64(1) {
+	if finished.Load() != 1 {
 		t.Errorf("Expected 1 finished call, but got '%d'", finished.Load())
 	}
 	eventListener.Dismiss(onPermitted).Dismiss(onRejected).Dismiss(onFinished)

@@ -79,10 +79,10 @@ func TestCache(t *testing.T) {
 	}
 
 	time.Sleep(time.Second * 2)
-	if hits.Load() != int64(1) {
+	if hits.Load() != 1 {
 		t.Errorf("Expected 1 hit call, but got '%d'", hits.Load())
 	}
-	if misses.Load() != int64(2) {
+	if misses.Load() != 2 {
 		t.Errorf("Expected 2 miss calls, but got '%d'", misses.Load())
 	}
 	eventListener.Dismiss(onCacheHit).Dismiss(onCacheMiss)

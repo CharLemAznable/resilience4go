@@ -3,10 +3,10 @@ package retry
 import "sync/atomic"
 
 type Metrics interface {
-	NumberOfSuccessfulCallsWithoutRetryAttempt() int64
-	NumberOfSuccessfulCallsWithRetryAttempt() int64
-	NumberOfFailedCallsWithoutRetryAttempt() int64
-	NumberOfFailedCallsWithRetryAttempt() int64
+	NumberOfSuccessfulCallsWithoutRetryAttempt() uint64
+	NumberOfSuccessfulCallsWithRetryAttempt() uint64
+	NumberOfFailedCallsWithoutRetryAttempt() uint64
+	NumberOfFailedCallsWithRetryAttempt() uint64
 
 	successfulCallsWithoutRetryAttemptIncrement()
 	successfulCallsWithRetryAttemptIncrement()
@@ -19,25 +19,25 @@ func newMetrics() Metrics {
 }
 
 type metrics struct {
-	succeededWithoutRetryCounter atomic.Int64
-	succeededAfterRetryCounter   atomic.Int64
-	failedWithoutRetryCounter    atomic.Int64
-	failedAfterRetryCounter      atomic.Int64
+	succeededWithoutRetryCounter atomic.Uint64
+	succeededAfterRetryCounter   atomic.Uint64
+	failedWithoutRetryCounter    atomic.Uint64
+	failedAfterRetryCounter      atomic.Uint64
 }
 
-func (m *metrics) NumberOfSuccessfulCallsWithoutRetryAttempt() int64 {
+func (m *metrics) NumberOfSuccessfulCallsWithoutRetryAttempt() uint64 {
 	return m.succeededWithoutRetryCounter.Load()
 }
 
-func (m *metrics) NumberOfSuccessfulCallsWithRetryAttempt() int64 {
+func (m *metrics) NumberOfSuccessfulCallsWithRetryAttempt() uint64 {
 	return m.succeededAfterRetryCounter.Load()
 }
 
-func (m *metrics) NumberOfFailedCallsWithoutRetryAttempt() int64 {
+func (m *metrics) NumberOfFailedCallsWithoutRetryAttempt() uint64 {
 	return m.failedWithoutRetryCounter.Load()
 }
 
-func (m *metrics) NumberOfFailedCallsWithRetryAttempt() int64 {
+func (m *metrics) NumberOfFailedCallsWithRetryAttempt() uint64 {
 	return m.failedAfterRetryCounter.Load()
 }
 

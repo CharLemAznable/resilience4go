@@ -10,13 +10,13 @@ import (
 type Metrics interface {
 	FailureRate() float64
 	SlowCallRate() float64
-	NumberOfCalls() int64
-	NumberOfSuccessfulCalls() int64
-	NumberOfFailedCalls() int64
-	NumberOfSlowCalls() int64
-	NumberOfSlowSuccessfulCalls() int64
-	NumberOfSlowFailedCalls() int64
-	NumberOfNotPermittedCalls() int64
+	NumberOfCalls() uint64
+	NumberOfSuccessfulCalls() uint64
+	NumberOfFailedCalls() uint64
+	NumberOfSlowCalls() uint64
+	NumberOfSlowSuccessfulCalls() uint64
+	NumberOfSlowFailedCalls() uint64
+	NumberOfNotPermittedCalls() uint64
 
 	onCallNotPermitted()
 	onSuccess(time.Duration) metricsResult
@@ -83,7 +83,7 @@ type metrics struct {
 	failureRateThreshold      float64
 	slowCallRateThreshold     float64
 	slowCallDurationThreshold time.Duration
-	numberOfNotPermittedCalls atomic.Int64
+	numberOfNotPermittedCalls atomic.Uint64
 }
 
 func (m *metrics) FailureRate() float64 {
@@ -94,31 +94,31 @@ func (m *metrics) SlowCallRate() float64 {
 	return m.slowCallRate(m.recorder.snapshot())
 }
 
-func (m *metrics) NumberOfCalls() int64 {
+func (m *metrics) NumberOfCalls() uint64 {
 	return m.recorder.snapshot().totalNumberOfCalls
 }
 
-func (m *metrics) NumberOfSuccessfulCalls() int64 {
+func (m *metrics) NumberOfSuccessfulCalls() uint64 {
 	return m.recorder.snapshot().totalNumberOfSuccessfulCalls()
 }
 
-func (m *metrics) NumberOfFailedCalls() int64 {
+func (m *metrics) NumberOfFailedCalls() uint64 {
 	return m.recorder.snapshot().totalNumberOfFailedCalls
 }
 
-func (m *metrics) NumberOfSlowCalls() int64 {
+func (m *metrics) NumberOfSlowCalls() uint64 {
 	return m.recorder.snapshot().totalNumberOfSlowCalls
 }
 
-func (m *metrics) NumberOfSlowSuccessfulCalls() int64 {
+func (m *metrics) NumberOfSlowSuccessfulCalls() uint64 {
 	return m.recorder.snapshot().totalNumberOfSlowSuccessfulCalls()
 }
 
-func (m *metrics) NumberOfSlowFailedCalls() int64 {
+func (m *metrics) NumberOfSlowFailedCalls() uint64 {
 	return m.recorder.snapshot().totalNumberOfSlowFailedCalls
 }
 
-func (m *metrics) NumberOfNotPermittedCalls() int64 {
+func (m *metrics) NumberOfNotPermittedCalls() uint64 {
 	return m.numberOfNotPermittedCalls.Load()
 }
 
@@ -167,7 +167,7 @@ func (m *metrics) checkIfThresholdsExceeded(snap *snapshot) metricsResult {
 
 func (m *metrics) failureRate(snap *snapshot) float64 {
 	bufferedCalls := snap.totalNumberOfCalls
-	if bufferedCalls == 0 || bufferedCalls < m.minimumNumberOfCalls {
+	if bufferedCalls == 0 || bufferedCalls < uint64(m.minimumNumberOfCalls) {
 		return -1.0
 	}
 	return snap.failureRate()
@@ -175,7 +175,7 @@ func (m *metrics) failureRate(snap *snapshot) float64 {
 
 func (m *metrics) slowCallRate(snap *snapshot) float64 {
 	bufferedCalls := snap.totalNumberOfCalls
-	if bufferedCalls == 0 || bufferedCalls < m.minimumNumberOfCalls {
+	if bufferedCalls == 0 || bufferedCalls < uint64(m.minimumNumberOfCalls) {
 		return -1.0
 	}
 	return snap.slowCallRate()
@@ -308,10 +308,10 @@ func (s *slidingTimeWindowRecorder) latestPartialAggregation() *partialAggregati
 
 type snapshot struct {
 	totalDuration                time.Duration
-	totalNumberOfCalls           int64
-	totalNumberOfFailedCalls     int64
-	totalNumberOfSlowCalls       int64
-	totalNumberOfSlowFailedCalls int64
+	totalNumberOfCalls           uint64
+	totalNumberOfFailedCalls     uint64
+	totalNumberOfSlowCalls       uint64
+	totalNumberOfSlowFailedCalls uint64
 }
 
 func newSnapshot(total *totalAggregation) *snapshot {
@@ -324,11 +324,11 @@ func newSnapshot(total *totalAggregation) *snapshot {
 	}
 }
 
-func (s *snapshot) totalNumberOfSuccessfulCalls() int64 {
+func (s *snapshot) totalNumberOfSuccessfulCalls() uint64 {
 	return s.totalNumberOfCalls - s.totalNumberOfFailedCalls
 }
 
-func (s *snapshot) totalNumberOfSlowSuccessfulCalls() int64 {
+func (s *snapshot) totalNumberOfSlowSuccessfulCalls() uint64 {
 	return s.totalNumberOfSlowCalls - s.totalNumberOfSlowFailedCalls
 }
 
@@ -348,10 +348,10 @@ func (s *snapshot) slowCallRate() float64 {
 
 type aggregation struct {
 	totalDuration           time.Duration
-	numberOfCalls           int64
-	numberOfFailedCalls     int64
-	numberOfSlowCalls       int64
-	numberOfSlowFailedCalls int64
+	numberOfCalls           uint64
+	numberOfFailedCalls     uint64
+	numberOfSlowCalls       uint64
+	numberOfSlowFailedCalls uint64
 }
 
 func (agg *aggregation) record(duration time.Duration, outcome outcome) {

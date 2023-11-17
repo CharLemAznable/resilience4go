@@ -91,13 +91,13 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 
 	time.Sleep(time.Second * 1)
 	metrics := tl.Metrics()
-	if metrics.SuccessCount() != int64(1) {
+	if metrics.SuccessCount() != 1 {
 		t.Errorf("Expected 1 success call, but got '%d'", metrics.SuccessCount())
 	}
-	if metrics.TimeoutCount() != int64(1) {
+	if metrics.TimeoutCount() != 1 {
 		t.Errorf("Expected 1 timeout call, but got '%d'", metrics.TimeoutCount())
 	}
-	if metrics.PanicCount() != int64(1) {
+	if metrics.PanicCount() != 1 {
 		t.Errorf("Expected 1 panic call, but got '%d'", metrics.PanicCount())
 	}
 	eventListener.Dismiss(onSuccess).Dismiss(onTimeout).Dismiss(onPanic)

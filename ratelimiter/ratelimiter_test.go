@@ -64,10 +64,10 @@ func TestRateLimiterPublishEvents(t *testing.T) {
 	}
 
 	time.Sleep(time.Second * 5)
-	if success.Load() != int64(4) {
+	if success.Load() != 4 {
 		t.Errorf("Expected 4 successful calls, but got '%d'", success.Load())
 	}
-	if failure.Load() != int64(1) {
+	if failure.Load() != 1 {
 		t.Errorf("Expected 1 failure call, but got '%d'", failure.Load())
 	}
 	eventListener.Dismiss(onSuccess).Dismiss(onFailure)

@@ -3,9 +3,9 @@ package timelimiter
 import "sync/atomic"
 
 type Metrics interface {
-	SuccessCount() int64
-	TimeoutCount() int64
-	PanicCount() int64
+	SuccessCount() uint64
+	TimeoutCount() uint64
+	PanicCount() uint64
 
 	successIncrement()
 	timeoutIncrement()
@@ -17,20 +17,20 @@ func newMetrics() Metrics {
 }
 
 type metrics struct {
-	successCounter atomic.Int64
-	timeoutCounter atomic.Int64
-	panicCounter   atomic.Int64
+	successCounter atomic.Uint64
+	timeoutCounter atomic.Uint64
+	panicCounter   atomic.Uint64
 }
 
-func (m *metrics) SuccessCount() int64 {
+func (m *metrics) SuccessCount() uint64 {
 	return m.successCounter.Load()
 }
 
-func (m *metrics) TimeoutCount() int64 {
+func (m *metrics) TimeoutCount() uint64 {
 	return m.timeoutCounter.Load()
 }
 
-func (m *metrics) PanicCount() int64 {
+func (m *metrics) PanicCount() uint64 {
 	return m.panicCounter.Load()
 }
 
