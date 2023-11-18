@@ -335,7 +335,8 @@ import "github.com/CharLemAznable/resilience4go/cache"
 entry := cache.NewCache[K, V](string,
 	cache.WithCapacity(int64), // 设置缓存容量
 	cache.WithItemTTL(time.Duration), // 设置缓存有效时间
-	cache.WithKeyToHash(func(any) (uint64, uint64)) // 设置缓存key的hash函数
+	cache.WithKeyToHash(func(any) (uint64, uint64)), // 设置缓存key的hash函数
+	cache.WithCacheResultPredicate(func(any, error) bool)) // 设置是否缓存调用结果的判断断言
 
 // 可监测指标
 metrics := entry.Metrics()

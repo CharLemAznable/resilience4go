@@ -12,7 +12,9 @@ import (
 func TestCache(t *testing.T) {
 	ch := cache.NewCache[string, string]("test",
 		cache.WithCapacity(10),
-		cache.WithItemTTL(time.Second))
+		cache.WithItemTTL(time.Second),
+		cache.WithKeyToHash(nil),
+		cache.WithCacheResultPredicate(nil))
 	if ch.Name() != "test" {
 		t.Errorf("Expected cache name 'test', but got '%s'", ch.Name())
 	}

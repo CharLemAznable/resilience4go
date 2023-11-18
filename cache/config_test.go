@@ -15,7 +15,12 @@ func TestConfig_String(t *testing.T) {
 		return 0, 0
 	}
 	cache.WithKeyToHash(keyToHash)(config)
-	expected := fmt.Sprintf("CacheConfig {capacity=10, itemTTL=5s, keyToHash %T[%v]}", keyToHash, any(keyToHash))
+	cacheResultPredicate := func(_ any, _ error) bool {
+		return false
+	}
+	cache.WithCacheResultPredicate(cacheResultPredicate)(config)
+	expected := fmt.Sprintf("CacheConfig {capacity=10, itemTTL=5s, keyToHash %T[%v], cacheResultPredicate %T[%v]}",
+		keyToHash, any(keyToHash), cacheResultPredicate, any(cacheResultPredicate))
 	result := fmt.Sprintf("%v", config)
 	if result != expected {
 		t.Errorf("Expected %s, but got %s", expected, result)

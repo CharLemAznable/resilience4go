@@ -81,9 +81,11 @@ func (c *cache[K, V]) getOrLoad(key K, loader func() (V, error)) (V, error) {
 	}
 	c.eventListener.consumeEvent(newCacheMissEvent(c.name, key))
 	value, err := loader()
-	vv := &valueWithError{value: value, error: err}
-	c.ristrettoCache.SetWithTTL(key, vv, 1, c.config.itemTTL)
-	c.ristrettoCache.Wait()
+	if c.config.cacheResultPredicateFn(value, err) {
+		vv := &valueWithError{value: value, error: err}
+		c.ristrettoCache.SetWithTTL(key, vv, 1, c.config.itemTTL)
+		c.ristrettoCache.Wait()
+	}
 	return value, err
 }
 

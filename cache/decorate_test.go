@@ -1,6 +1,7 @@
 package cache_test
 
 import (
+	"errors"
 	"github.com/CharLemAznable/resilience4go/cache"
 	"sync"
 	"testing"
@@ -19,11 +20,17 @@ func TestDecorateFunction(t *testing.T) {
 	ch := cache.NewCache[*testKey, *testValue]("test",
 		cache.WithCapacity(10),
 		cache.WithItemTTL(time.Second),
-		cache.WithKeyToHash(nil))
+		cache.WithCacheResultPredicate(func(_ any, err error) bool {
+			return err == nil
+		}))
 
 	// fail with no error, max retries exceeded
 	fn := func(key *testKey) (*testValue, error) {
-		return &testValue{key.key + randString(4)}, nil
+		var err error
+		if key.key == "ok" {
+			err = errors.New("error")
+		}
+		return &testValue{key.key + randString(4)}, err
 	}
 	decoratedFn := cache.DecorateFunction(ch, fn)
 
@@ -49,5 +56,11 @@ func TestDecorateFunction(t *testing.T) {
 	ret3, _ := decoratedFn(&testKey{"notOK"})
 	if ret1.value == ret3.value {
 		t.Errorf("Expected return new value, but got '%s'", ret3.value)
+	}
+
+	ret4, _ := decoratedFn(&testKey{"ok"})
+	ret5, _ := decoratedFn(&testKey{"ok"})
+	if ret4.value == ret5.value {
+		t.Errorf("Expected return new value, but got '%s' and '%s'", ret4.value, ret5.value)
 	}
 }
