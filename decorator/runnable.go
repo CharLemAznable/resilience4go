@@ -10,57 +10,57 @@ import (
 	"github.com/CharLemAznable/resilience4go/timelimiter"
 )
 
-func OfRunnable(runnable runnable.Runnable) *DecorateRunnable {
-	return &DecorateRunnable{runnable}
+func OfRunnable(fn func() error) *DecorateRunnable {
+	return &DecorateRunnable{fn}
 }
 
 type DecorateRunnable struct {
-	runnable.Runnable
+	fn func() error
 }
 
 func (runnable *DecorateRunnable) WithBulkhead(entry bulkhead.Bulkhead) *DecorateRunnable {
-	return OfRunnable(bulkhead.DecorateRunnable(entry, runnable.Runnable))
+	return runnable.setFn(bulkhead.DecorateRunnable(entry, runnable.fn))
 }
 
 func (runnable *DecorateRunnable) WhenFull(fn func() error) *DecorateRunnable {
-	return OfRunnable(fallback.DecorateRunnableByType[*bulkhead.FullError](runnable.Runnable, fn))
+	return runnable.setFn(fallback.DecorateRunnableByType[*bulkhead.FullError](runnable.fn, fn))
 }
 
 func (runnable *DecorateRunnable) WithTimeLimiter(entry timelimiter.TimeLimiter) *DecorateRunnable {
-	return OfRunnable(timelimiter.DecorateRunnable(entry, runnable.Runnable))
+	return runnable.setFn(timelimiter.DecorateRunnable(entry, runnable.fn))
 }
 
 func (runnable *DecorateRunnable) WhenTimeout(fn func() error) *DecorateRunnable {
-	return OfRunnable(fallback.DecorateRunnableByType[*timelimiter.TimeoutError](runnable.Runnable, fn))
+	return runnable.setFn(fallback.DecorateRunnableByType[*timelimiter.TimeoutError](runnable.fn, fn))
 }
 
 func (runnable *DecorateRunnable) WithRateLimiter(entry ratelimiter.RateLimiter) *DecorateRunnable {
-	return OfRunnable(ratelimiter.DecorateRunnable(entry, runnable.Runnable))
+	return runnable.setFn(ratelimiter.DecorateRunnable(entry, runnable.fn))
 }
 
 func (runnable *DecorateRunnable) WhenOverRate(fn func() error) *DecorateRunnable {
-	return OfRunnable(fallback.DecorateRunnableByType[*ratelimiter.NotPermittedError](runnable.Runnable, fn))
+	return runnable.setFn(fallback.DecorateRunnableByType[*ratelimiter.NotPermittedError](runnable.fn, fn))
 }
 
 func (runnable *DecorateRunnable) WithCircuitBreaker(entry circuitbreaker.CircuitBreaker) *DecorateRunnable {
-	return OfRunnable(circuitbreaker.DecorateRunnable(entry, runnable.Runnable))
+	return runnable.setFn(circuitbreaker.DecorateRunnable(entry, runnable.fn))
 }
 
 func (runnable *DecorateRunnable) WhenOverLoad(fn func() error) *DecorateRunnable {
-	return OfRunnable(fallback.DecorateRunnableByType[*circuitbreaker.NotPermittedError](runnable.Runnable, fn))
+	return runnable.setFn(fallback.DecorateRunnableByType[*circuitbreaker.NotPermittedError](runnable.fn, fn))
 }
 
 func (runnable *DecorateRunnable) WithRetry(entry retry.Retry) *DecorateRunnable {
-	return OfRunnable(retry.DecorateRunnable(entry, runnable.Runnable))
+	return runnable.setFn(retry.DecorateRunnable(entry, runnable.fn))
 }
 
 func (runnable *DecorateRunnable) WhenMaxRetries(fn func() error) *DecorateRunnable {
-	return OfRunnable(fallback.DecorateRunnableByType[*retry.MaxRetriesExceeded](runnable.Runnable, fn))
+	return runnable.setFn(fallback.DecorateRunnableByType[*retry.MaxRetriesExceeded](runnable.fn, fn))
 }
 
 func (runnable *DecorateRunnable) WithFallback(
 	fn func() error, predicate func(error, any) bool) *DecorateRunnable {
-	return OfRunnable(fallback.DecorateRunnable(runnable.Runnable,
+	return runnable.setFn(fallback.DecorateRunnable(runnable.fn,
 		func(ctx fallback.Context[any, any, error]) error { return fn() },
 		func(ctx fallback.Context[any, any, error]) (bool, fallback.Context[any, any, error]) {
 			return predicate(ctx.Err(), ctx.Panic()), ctx
@@ -68,5 +68,10 @@ func (runnable *DecorateRunnable) WithFallback(
 }
 
 func (runnable *DecorateRunnable) Decorate() runnable.Runnable {
-	return runnable.Runnable
+	return runnable.fn
+}
+
+func (runnable *DecorateRunnable) setFn(fn func() error) *DecorateRunnable {
+	runnable.fn = fn
+	return runnable
 }

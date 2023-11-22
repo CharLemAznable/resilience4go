@@ -42,10 +42,10 @@ func (listener *eventListener) OnCacheMiss(consumer func(MissEvent)) EventListen
 func (listener *eventListener) Dismiss(consumer any) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	if c, ok := consumer.(func(HitEvent)); ok {
+	switch c := consumer.(type) {
+	case func(HitEvent):
 		listener.onCacheHit = utils.RemoveElementByValue(listener.onCacheHit, c)
-	}
-	if c, ok := consumer.(func(MissEvent)); ok {
+	case func(MissEvent):
 		listener.onCacheMiss = utils.RemoveElementByValue(listener.onCacheMiss, c)
 	}
 	return listener

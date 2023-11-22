@@ -10,57 +10,57 @@ import (
 	"github.com/CharLemAznable/resilience4go/timelimiter"
 )
 
-func OfConsumer[T any](consumer consumer.Consumer[T]) *DecorateConsumer[T] {
-	return &DecorateConsumer[T]{consumer}
+func OfConsumer[T any](fn func(T) error) *DecorateConsumer[T] {
+	return &DecorateConsumer[T]{fn}
 }
 
 type DecorateConsumer[T any] struct {
-	consumer.Consumer[T]
+	fn func(T) error
 }
 
 func (consumer *DecorateConsumer[T]) WithBulkhead(entry bulkhead.Bulkhead) *DecorateConsumer[T] {
-	return OfConsumer(bulkhead.DecorateConsumer(entry, consumer.Consumer))
+	return consumer.setFn(bulkhead.DecorateConsumer(entry, consumer.fn))
 }
 
 func (consumer *DecorateConsumer[T]) WhenFull(fn func(T) error) *DecorateConsumer[T] {
-	return OfConsumer(fallback.DecorateConsumerByType[T, *bulkhead.FullError](consumer.Consumer, fn))
+	return consumer.setFn(fallback.DecorateConsumerByType[T, *bulkhead.FullError](consumer.fn, fn))
 }
 
 func (consumer *DecorateConsumer[T]) WithTimeLimiter(entry timelimiter.TimeLimiter) *DecorateConsumer[T] {
-	return OfConsumer(timelimiter.DecorateConsumer(entry, consumer.Consumer))
+	return consumer.setFn(timelimiter.DecorateConsumer(entry, consumer.fn))
 }
 
 func (consumer *DecorateConsumer[T]) WhenTimeout(fn func(T) error) *DecorateConsumer[T] {
-	return OfConsumer(fallback.DecorateConsumerByType[T, *timelimiter.TimeoutError](consumer.Consumer, fn))
+	return consumer.setFn(fallback.DecorateConsumerByType[T, *timelimiter.TimeoutError](consumer.fn, fn))
 }
 
 func (consumer *DecorateConsumer[T]) WithRateLimiter(entry ratelimiter.RateLimiter) *DecorateConsumer[T] {
-	return OfConsumer(ratelimiter.DecorateConsumer(entry, consumer.Consumer))
+	return consumer.setFn(ratelimiter.DecorateConsumer(entry, consumer.fn))
 }
 
 func (consumer *DecorateConsumer[T]) WhenOverRate(fn func(T) error) *DecorateConsumer[T] {
-	return OfConsumer(fallback.DecorateConsumerByType[T, *ratelimiter.NotPermittedError](consumer.Consumer, fn))
+	return consumer.setFn(fallback.DecorateConsumerByType[T, *ratelimiter.NotPermittedError](consumer.fn, fn))
 }
 
 func (consumer *DecorateConsumer[T]) WithCircuitBreaker(entry circuitbreaker.CircuitBreaker) *DecorateConsumer[T] {
-	return OfConsumer(circuitbreaker.DecorateConsumer(entry, consumer.Consumer))
+	return consumer.setFn(circuitbreaker.DecorateConsumer(entry, consumer.fn))
 }
 
 func (consumer *DecorateConsumer[T]) WhenOverLoad(fn func(T) error) *DecorateConsumer[T] {
-	return OfConsumer(fallback.DecorateConsumerByType[T, *circuitbreaker.NotPermittedError](consumer.Consumer, fn))
+	return consumer.setFn(fallback.DecorateConsumerByType[T, *circuitbreaker.NotPermittedError](consumer.fn, fn))
 }
 
 func (consumer *DecorateConsumer[T]) WithRetry(entry retry.Retry) *DecorateConsumer[T] {
-	return OfConsumer(retry.DecorateConsumer(entry, consumer.Consumer))
+	return consumer.setFn(retry.DecorateConsumer(entry, consumer.fn))
 }
 
 func (consumer *DecorateConsumer[T]) WhenMaxRetries(fn func(T) error) *DecorateConsumer[T] {
-	return OfConsumer(fallback.DecorateConsumerByType[T, *retry.MaxRetriesExceeded](consumer.Consumer, fn))
+	return consumer.setFn(fallback.DecorateConsumerByType[T, *retry.MaxRetriesExceeded](consumer.fn, fn))
 }
 
 func (consumer *DecorateConsumer[T]) WithFallback(
 	fn func(T) error, predicate func(T, error, any) bool) *DecorateConsumer[T] {
-	return OfConsumer(fallback.DecorateConsumer(consumer.Consumer,
+	return consumer.setFn(fallback.DecorateConsumer(consumer.fn,
 		func(ctx fallback.Context[T, any, error]) error { return fn(ctx.Param()) },
 		func(ctx fallback.Context[T, any, error]) (bool, fallback.Context[T, any, error]) {
 			return predicate(ctx.Param(), ctx.Err(), ctx.Panic()), ctx
@@ -68,5 +68,10 @@ func (consumer *DecorateConsumer[T]) WithFallback(
 }
 
 func (consumer *DecorateConsumer[T]) Decorate() consumer.Consumer[T] {
-	return consumer.Consumer
+	return consumer.fn
+}
+
+func (consumer *DecorateConsumer[T]) setFn(fn func(T) error) *DecorateConsumer[T] {
+	consumer.fn = fn
+	return consumer
 }

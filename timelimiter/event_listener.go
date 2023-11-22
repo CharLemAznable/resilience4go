@@ -52,13 +52,12 @@ func (listener *eventListener) OnPanic(consumer func(PanicEvent)) EventListener 
 func (listener *eventListener) Dismiss(consumer any) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	if c, ok := consumer.(func(SuccessEvent)); ok {
+	switch c := consumer.(type) {
+	case func(SuccessEvent):
 		listener.onSuccess = utils.RemoveElementByValue(listener.onSuccess, c)
-	}
-	if c, ok := consumer.(func(TimeoutEvent)); ok {
+	case func(TimeoutEvent):
 		listener.onTimeout = utils.RemoveElementByValue(listener.onTimeout, c)
-	}
-	if c, ok := consumer.(func(PanicEvent)); ok {
+	case func(PanicEvent):
 		listener.onPanic = utils.RemoveElementByValue(listener.onPanic, c)
 	}
 	return listener

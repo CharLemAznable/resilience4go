@@ -8,7 +8,7 @@ import (
 	"github.com/CharLemAznable/gofn/supplier"
 )
 
-func DecorateRunnable(limiter RateLimiter, fn runnable.Runnable) runnable.Runnable {
+func DecorateRunnable(limiter RateLimiter, fn func() error) runnable.Runnable {
 	return func() error {
 		if err := limiter.acquirePermission(); err != nil {
 			return err
@@ -17,7 +17,7 @@ func DecorateRunnable(limiter RateLimiter, fn runnable.Runnable) runnable.Runnab
 	}
 }
 
-func DecorateSupplier[T any](limiter RateLimiter, fn supplier.Supplier[T]) supplier.Supplier[T] {
+func DecorateSupplier[T any](limiter RateLimiter, fn func() (T, error)) supplier.Supplier[T] {
 	return func() (T, error) {
 		if err := limiter.acquirePermission(); err != nil {
 			return common.Zero[T](), err
@@ -26,7 +26,7 @@ func DecorateSupplier[T any](limiter RateLimiter, fn supplier.Supplier[T]) suppl
 	}
 }
 
-func DecorateConsumer[T any](limiter RateLimiter, fn consumer.Consumer[T]) consumer.Consumer[T] {
+func DecorateConsumer[T any](limiter RateLimiter, fn func(T) error) consumer.Consumer[T] {
 	return func(t T) error {
 		if err := limiter.acquirePermission(); err != nil {
 			return err
@@ -35,7 +35,7 @@ func DecorateConsumer[T any](limiter RateLimiter, fn consumer.Consumer[T]) consu
 	}
 }
 
-func DecorateFunction[T any, R any](limiter RateLimiter, fn function.Function[T, R]) function.Function[T, R] {
+func DecorateFunction[T any, R any](limiter RateLimiter, fn func(T) (R, error)) function.Function[T, R] {
 	return func(t T) (R, error) {
 		if err := limiter.acquirePermission(); err != nil {
 			return common.Zero[R](), err

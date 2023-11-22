@@ -42,10 +42,10 @@ func (listener *eventListener) OnFailure(consumer func(FailureEvent)) EventListe
 func (listener *eventListener) Dismiss(consumer any) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	if c, ok := consumer.(func(SuccessEvent)); ok {
+	switch c := consumer.(type) {
+	case func(SuccessEvent):
 		listener.onSuccess = utils.RemoveElementByValue(listener.onSuccess, c)
-	}
-	if c, ok := consumer.(func(FailureEvent)); ok {
+	case func(FailureEvent):
 		listener.onFailure = utils.RemoveElementByValue(listener.onFailure, c)
 	}
 	return listener

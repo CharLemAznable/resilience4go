@@ -52,13 +52,12 @@ func (listener *eventListener) OnFinished(consumer func(FinishedEvent)) EventLis
 func (listener *eventListener) Dismiss(consumer any) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	if c, ok := consumer.(func(PermittedEvent)); ok {
+	switch c := consumer.(type) {
+	case func(PermittedEvent):
 		listener.onPermitted = utils.RemoveElementByValue(listener.onPermitted, c)
-	}
-	if c, ok := consumer.(func(RejectedEvent)); ok {
+	case func(RejectedEvent):
 		listener.onRejected = utils.RemoveElementByValue(listener.onRejected, c)
-	}
-	if c, ok := consumer.(func(FinishedEvent)); ok {
+	case func(FinishedEvent):
 		listener.onFinished = utils.RemoveElementByValue(listener.onFinished, c)
 	}
 	return listener

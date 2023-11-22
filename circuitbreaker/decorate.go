@@ -8,7 +8,7 @@ import (
 	"github.com/CharLemAznable/gofn/supplier"
 )
 
-func DecorateRunnable(breaker CircuitBreaker, fn runnable.Runnable) runnable.Runnable {
+func DecorateRunnable(breaker CircuitBreaker, fn func() error) runnable.Runnable {
 	return func() error {
 		_, err := breaker.execute(func() (any, error) {
 			return nil, fn()
@@ -17,7 +17,7 @@ func DecorateRunnable(breaker CircuitBreaker, fn runnable.Runnable) runnable.Run
 	}
 }
 
-func DecorateSupplier[T any](breaker CircuitBreaker, fn supplier.Supplier[T]) supplier.Supplier[T] {
+func DecorateSupplier[T any](breaker CircuitBreaker, fn func() (T, error)) supplier.Supplier[T] {
 	return func() (T, error) {
 		ret, err := breaker.execute(func() (any, error) {
 			return fn()
@@ -26,7 +26,7 @@ func DecorateSupplier[T any](breaker CircuitBreaker, fn supplier.Supplier[T]) su
 	}
 }
 
-func DecorateConsumer[T any](breaker CircuitBreaker, fn consumer.Consumer[T]) consumer.Consumer[T] {
+func DecorateConsumer[T any](breaker CircuitBreaker, fn func(T) error) consumer.Consumer[T] {
 	return func(t T) error {
 		_, err := breaker.execute(func() (any, error) {
 			return nil, fn(t)
@@ -35,7 +35,7 @@ func DecorateConsumer[T any](breaker CircuitBreaker, fn consumer.Consumer[T]) co
 	}
 }
 
-func DecorateFunction[T any, R any](breaker CircuitBreaker, fn function.Function[T, R]) function.Function[T, R] {
+func DecorateFunction[T any, R any](breaker CircuitBreaker, fn func(T) (R, error)) function.Function[T, R] {
 	return func(t T) (R, error) {
 		ret, err := breaker.execute(func() (any, error) {
 			return fn(t)

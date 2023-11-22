@@ -8,7 +8,7 @@ import (
 	"github.com/CharLemAznable/gofn/supplier"
 )
 
-func DecorateRunnable(limiter TimeLimiter, fn runnable.Runnable) runnable.Runnable {
+func DecorateRunnable(limiter TimeLimiter, fn func() error) runnable.Runnable {
 	return func() error {
 		_, err := limiter.execute(func() (any, error) {
 			return nil, fn()
@@ -17,7 +17,7 @@ func DecorateRunnable(limiter TimeLimiter, fn runnable.Runnable) runnable.Runnab
 	}
 }
 
-func DecorateSupplier[T any](limiter TimeLimiter, fn supplier.Supplier[T]) supplier.Supplier[T] {
+func DecorateSupplier[T any](limiter TimeLimiter, fn func() (T, error)) supplier.Supplier[T] {
 	return func() (T, error) {
 		ret, err := limiter.execute(func() (any, error) {
 			return fn()
@@ -26,7 +26,7 @@ func DecorateSupplier[T any](limiter TimeLimiter, fn supplier.Supplier[T]) suppl
 	}
 }
 
-func DecorateConsumer[T any](limiter TimeLimiter, fn consumer.Consumer[T]) consumer.Consumer[T] {
+func DecorateConsumer[T any](limiter TimeLimiter, fn func(T) error) consumer.Consumer[T] {
 	return func(t T) error {
 		_, err := limiter.execute(func() (any, error) {
 			return nil, fn(t)
@@ -35,7 +35,7 @@ func DecorateConsumer[T any](limiter TimeLimiter, fn consumer.Consumer[T]) consu
 	}
 }
 
-func DecorateFunction[T any, R any](limiter TimeLimiter, fn function.Function[T, R]) function.Function[T, R] {
+func DecorateFunction[T any, R any](limiter TimeLimiter, fn func(T) (R, error)) function.Function[T, R] {
 	return func(t T) (R, error) {
 		ret, err := limiter.execute(func() (any, error) {
 			return fn(t)

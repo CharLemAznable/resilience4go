@@ -82,22 +82,18 @@ func (listener *eventListener) OnSlowCallRateExceeded(consumer func(SlowCallRate
 func (listener *eventListener) Dismiss(consumer any) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	if c, ok := consumer.(func(SuccessEvent)); ok {
+	switch c := consumer.(type) {
+	case func(SuccessEvent):
 		listener.onSuccess = utils.RemoveElementByValue(listener.onSuccess, c)
-	}
-	if c, ok := consumer.(func(ErrorEvent)); ok {
+	case func(ErrorEvent):
 		listener.onError = utils.RemoveElementByValue(listener.onError, c)
-	}
-	if c, ok := consumer.(func(NotPermittedEvent)); ok {
+	case func(NotPermittedEvent):
 		listener.onNotPermitted = utils.RemoveElementByValue(listener.onNotPermitted, c)
-	}
-	if c, ok := consumer.(func(StateTransitionEvent)); ok {
+	case func(StateTransitionEvent):
 		listener.onStateTransition = utils.RemoveElementByValue(listener.onStateTransition, c)
-	}
-	if c, ok := consumer.(func(FailureRateExceededEvent)); ok {
+	case func(FailureRateExceededEvent):
 		listener.onFailureRateExceeded = utils.RemoveElementByValue(listener.onFailureRateExceeded, c)
-	}
-	if c, ok := consumer.(func(SlowCallRateExceededEvent)); ok {
+	case func(SlowCallRateExceededEvent):
 		listener.onSlowCallRateExceeded = utils.RemoveElementByValue(listener.onSlowCallRateExceeded, c)
 	}
 	return listener

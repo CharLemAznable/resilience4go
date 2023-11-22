@@ -153,7 +153,7 @@ func callHistograms(entry circuitbreaker.CircuitBreaker, histogramBuckets ...flo
 	return []prometheus.Collector{successfulCallsHistogram, failedCallsHistogram}, onSuccess, onError
 }
 
-func notPermittedCallsCounter(entry circuitbreaker.CircuitBreaker) prometheus.CounterFunc {
+func notPermittedCallsCounter(entry circuitbreaker.CircuitBreaker) prometheus.Collector {
 	return prometheus.NewCounterFunc(
 		prometheus.CounterOpts{
 			Name:        "resilience4go_circuitbreaker_not_permitted_calls",

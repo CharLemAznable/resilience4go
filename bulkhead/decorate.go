@@ -8,7 +8,7 @@ import (
 	"github.com/CharLemAznable/gofn/supplier"
 )
 
-func DecorateRunnable(bulkhead Bulkhead, fn runnable.Runnable) runnable.Runnable {
+func DecorateRunnable(bulkhead Bulkhead, fn func() error) runnable.Runnable {
 	return func() error {
 		if err := bulkhead.acquire(); err != nil {
 			return err
@@ -18,7 +18,7 @@ func DecorateRunnable(bulkhead Bulkhead, fn runnable.Runnable) runnable.Runnable
 	}
 }
 
-func DecorateSupplier[T any](bulkhead Bulkhead, fn supplier.Supplier[T]) supplier.Supplier[T] {
+func DecorateSupplier[T any](bulkhead Bulkhead, fn func() (T, error)) supplier.Supplier[T] {
 	return func() (T, error) {
 		if err := bulkhead.acquire(); err != nil {
 			return common.Zero[T](), err
@@ -28,7 +28,7 @@ func DecorateSupplier[T any](bulkhead Bulkhead, fn supplier.Supplier[T]) supplie
 	}
 }
 
-func DecorateConsumer[T any](bulkhead Bulkhead, fn consumer.Consumer[T]) consumer.Consumer[T] {
+func DecorateConsumer[T any](bulkhead Bulkhead, fn func(T) error) consumer.Consumer[T] {
 	return func(t T) error {
 		if err := bulkhead.acquire(); err != nil {
 			return err
@@ -38,7 +38,7 @@ func DecorateConsumer[T any](bulkhead Bulkhead, fn consumer.Consumer[T]) consume
 	}
 }
 
-func DecorateFunction[T any, R any](bulkhead Bulkhead, fn function.Function[T, R]) function.Function[T, R] {
+func DecorateFunction[T any, R any](bulkhead Bulkhead, fn func(T) (R, error)) function.Function[T, R] {
 	return func(t T) (R, error) {
 		if err := bulkhead.acquire(); err != nil {
 			return common.Zero[R](), err
