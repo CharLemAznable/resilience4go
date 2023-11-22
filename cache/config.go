@@ -2,7 +2,6 @@ package cache
 
 import (
 	"fmt"
-	"github.com/cespare/xxhash/v2"
 	"github.com/dgraph-io/ristretto/z"
 	"time"
 )
@@ -69,8 +68,7 @@ const DefaultCapacity int64 = 10000
 const DefaultItemTTL = time.Minute * 5
 
 func DefaultKeyToHash(key any) (uint64, uint64) {
-	fmtKey := fmt.Sprintf("%v", key)
-	return z.MemHashString(fmtKey), xxhash.Sum64String(fmtKey)
+	return z.KeyToHash(fmt.Sprintf("%v", key))
 }
 
 func DefaultCacheResultPredicate(_ any, _ error) bool {

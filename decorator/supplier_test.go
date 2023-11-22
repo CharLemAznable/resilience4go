@@ -12,7 +12,7 @@ import (
 )
 
 func TestDecorateSupplier(t *testing.T) {
-	decoratedSupplier := decorator.
+	decorateSupplier := decorator.
 		OfSupplier(func() (string, error) {
 			return "", errors.New("error")
 		}).
@@ -42,13 +42,23 @@ func TestDecorateSupplier(t *testing.T) {
 			},
 			func(_ string, err error, _ any) bool {
 				return err != nil
-			}).
-		Decorate()
+			})
+	if decorateSupplier == nil {
+		t.Error("Expected non-nil decoratedSupplier")
+	}
+	ret, err := decorateSupplier()
+	if ret != "fallback" {
+		t.Errorf("Expected ret is 'fallback', but got '%v'", ret)
+	}
+	if err != nil {
+		t.Errorf("Expected error is nil, but got '%v'", err)
+	}
 
+	decoratedSupplier := decorateSupplier.Decorate()
 	if decoratedSupplier == nil {
 		t.Error("Expected non-nil decoratedSupplier")
 	}
-	ret, err := decoratedSupplier()
+	ret, err = decoratedSupplier()
 	if ret != "fallback" {
 		t.Errorf("Expected ret is 'fallback', but got '%v'", ret)
 	}

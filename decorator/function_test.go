@@ -13,7 +13,7 @@ import (
 )
 
 func TestDecorateFunction(t *testing.T) {
-	decoratedFunction := decorator.
+	decorateFunction := decorator.
 		OfFunction(func(str string) (string, error) {
 			return "", errors.New("error")
 		}).
@@ -44,13 +44,23 @@ func TestDecorateFunction(t *testing.T) {
 			func(_ string, _ string, err error, _ any) bool {
 				return err != nil
 			}).
-		WithCache(cache.NewCache[string, string]("test")).
-		Decorate()
+		WithCache(cache.NewCache[string, string]("test"))
+	if decorateFunction == nil {
+		t.Error("Expected non-nil decoratedFunction")
+	}
+	ret, err := decorateFunction("test")
+	if ret != "fallback" {
+		t.Errorf("Expected ret is 'fallback', but got '%v'", ret)
+	}
+	if err != nil {
+		t.Errorf("Expected error is nil, but got '%v'", err)
+	}
 
+	decoratedFunction := decorateFunction.Decorate()
 	if decoratedFunction == nil {
 		t.Error("Expected non-nil decoratedFunction")
 	}
-	ret, err := decoratedFunction("test")
+	ret, err = decoratedFunction("test")
 	if ret != "fallback" {
 		t.Errorf("Expected ret is 'fallback', but got '%v'", ret)
 	}

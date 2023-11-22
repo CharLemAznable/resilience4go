@@ -1,14 +1,8 @@
 package circuitbreaker
 
-import (
-	"github.com/CharLemAznable/gofn/common"
-	"github.com/CharLemAznable/gofn/consumer"
-	"github.com/CharLemAznable/gofn/function"
-	"github.com/CharLemAznable/gofn/runnable"
-	"github.com/CharLemAznable/gofn/supplier"
-)
+import "github.com/CharLemAznable/gofn/common"
 
-func DecorateRunnable(breaker CircuitBreaker, fn func() error) runnable.Runnable {
+func DecorateRunnable(breaker CircuitBreaker, fn func() error) func() error {
 	return func() error {
 		_, err := breaker.execute(func() (any, error) {
 			return nil, fn()
@@ -17,7 +11,7 @@ func DecorateRunnable(breaker CircuitBreaker, fn func() error) runnable.Runnable
 	}
 }
 
-func DecorateSupplier[T any](breaker CircuitBreaker, fn func() (T, error)) supplier.Supplier[T] {
+func DecorateSupplier[T any](breaker CircuitBreaker, fn func() (T, error)) func() (T, error) {
 	return func() (T, error) {
 		ret, err := breaker.execute(func() (any, error) {
 			return fn()
@@ -26,7 +20,7 @@ func DecorateSupplier[T any](breaker CircuitBreaker, fn func() (T, error)) suppl
 	}
 }
 
-func DecorateConsumer[T any](breaker CircuitBreaker, fn func(T) error) consumer.Consumer[T] {
+func DecorateConsumer[T any](breaker CircuitBreaker, fn func(T) error) func(T) error {
 	return func(t T) error {
 		_, err := breaker.execute(func() (any, error) {
 			return nil, fn(t)
@@ -35,7 +29,7 @@ func DecorateConsumer[T any](breaker CircuitBreaker, fn func(T) error) consumer.
 	}
 }
 
-func DecorateFunction[T any, R any](breaker CircuitBreaker, fn func(T) (R, error)) function.Function[T, R] {
+func DecorateFunction[T any, R any](breaker CircuitBreaker, fn func(T) (R, error)) func(T) (R, error) {
 	return func(t T) (R, error) {
 		ret, err := breaker.execute(func() (any, error) {
 			return fn(t)

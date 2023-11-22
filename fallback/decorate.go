@@ -1,16 +1,9 @@
 package fallback
 
-import (
-	"github.com/CharLemAznable/gofn/consumer"
-	"github.com/CharLemAznable/gofn/function"
-	"github.com/CharLemAznable/gofn/runnable"
-	"github.com/CharLemAznable/gofn/supplier"
-)
-
 func DecorateRunnable[E error](
 	fn func() error,
 	fallback func(Context[any, any, E]) error,
-	predicate FailurePredicate[any, any, E]) runnable.Runnable {
+	predicate FailurePredicate[any, any, E]) func() error {
 	return func() error {
 		ctx := execute[any, any](nil, func() (any, error) {
 			return nil, fn()
@@ -23,26 +16,26 @@ func DecorateRunnable[E error](
 }
 
 func DecorateRunnableWithFailure[E error](
-	fn func() error, fallback func(E) error) runnable.Runnable {
+	fn func() error, fallback func(E) error) func() error {
 	return DecorateRunnable(fn, func(ctx Context[any, any, E]) error {
 		return fallback(ctx.Err())
 	}, DefaultFailurePredicate[any, any, E]())
 }
 
 func DecorateRunnableByType[E error](
-	fn func() error, fallback func() error) runnable.Runnable {
+	fn func() error, fallback func() error) func() error {
 	return DecorateRunnableWithFailure(fn, func(_ E) error { return fallback() })
 }
 
 func DecorateRunnableDefault(
-	fn func() error, fallback func() error) runnable.Runnable {
+	fn func() error, fallback func() error) func() error {
 	return DecorateRunnableByType[error](fn, fallback)
 }
 
 func DecorateSupplier[R any, E error](
 	fn func() (R, error),
 	fallback func(Context[any, R, E]) (R, error),
-	predicate FailurePredicate[any, R, E]) supplier.Supplier[R] {
+	predicate FailurePredicate[any, R, E]) func() (R, error) {
 	return func() (R, error) {
 		ctx := execute[any, R](nil, func() (R, error) {
 			return fn()
@@ -55,26 +48,26 @@ func DecorateSupplier[R any, E error](
 }
 
 func DecorateSupplierWithFailure[R any, E error](
-	fn func() (R, error), fallback func(R, E) (R, error)) supplier.Supplier[R] {
+	fn func() (R, error), fallback func(R, E) (R, error)) func() (R, error) {
 	return DecorateSupplier(fn, func(ctx Context[any, R, E]) (R, error) {
 		return fallback(ctx.Ret(), ctx.Err())
 	}, DefaultFailurePredicate[any, R, E]())
 }
 
 func DecorateSupplierByType[R any, E error](
-	fn func() (R, error), fallback func() (R, error)) supplier.Supplier[R] {
+	fn func() (R, error), fallback func() (R, error)) func() (R, error) {
 	return DecorateSupplierWithFailure(fn, func(_ R, _ E) (R, error) { return fallback() })
 }
 
 func DecorateSupplierDefault[R any](
-	fn func() (R, error), fallback func() (R, error)) supplier.Supplier[R] {
+	fn func() (R, error), fallback func() (R, error)) func() (R, error) {
 	return DecorateSupplierByType[R, error](fn, fallback)
 }
 
 func DecorateConsumer[T any, E error](
 	fn func(T) error,
 	fallback func(Context[T, any, E]) error,
-	predicate FailurePredicate[T, any, E]) consumer.Consumer[T] {
+	predicate FailurePredicate[T, any, E]) func(T) error {
 	return func(t T) error {
 		ctx := execute[T, any](t, func() (any, error) {
 			return nil, fn(t)
@@ -87,26 +80,26 @@ func DecorateConsumer[T any, E error](
 }
 
 func DecorateConsumerWithFailure[T any, E error](
-	fn func(T) error, fallback func(T, E) error) consumer.Consumer[T] {
+	fn func(T) error, fallback func(T, E) error) func(T) error {
 	return DecorateConsumer(fn, func(ctx Context[T, any, E]) error {
 		return fallback(ctx.Param(), ctx.Err())
 	}, DefaultFailurePredicate[T, any, E]())
 }
 
 func DecorateConsumerByType[T any, E error](
-	fn func(T) error, fallback func(T) error) consumer.Consumer[T] {
+	fn func(T) error, fallback func(T) error) func(T) error {
 	return DecorateConsumerWithFailure(fn, func(t T, _ E) error { return fallback(t) })
 }
 
 func DecorateConsumerDefault[T any](
-	fn func(T) error, fallback func(T) error) consumer.Consumer[T] {
+	fn func(T) error, fallback func(T) error) func(T) error {
 	return DecorateConsumerByType[T, error](fn, fallback)
 }
 
 func DecorateFunction[T any, R any, E error](
 	fn func(T) (R, error),
 	fallback func(Context[T, R, E]) (R, error),
-	predicate FailurePredicate[T, R, E]) function.Function[T, R] {
+	predicate FailurePredicate[T, R, E]) func(T) (R, error) {
 	return func(t T) (R, error) {
 		ctx := execute[T, R](t, func() (R, error) {
 			return fn(t)
@@ -119,18 +112,18 @@ func DecorateFunction[T any, R any, E error](
 }
 
 func DecorateFunctionWithFailure[T any, R any, E error](
-	fn func(T) (R, error), fallback func(T, R, E) (R, error)) function.Function[T, R] {
+	fn func(T) (R, error), fallback func(T, R, E) (R, error)) func(T) (R, error) {
 	return DecorateFunction(fn, func(ctx Context[T, R, E]) (R, error) {
 		return fallback(ctx.Param(), ctx.Ret(), ctx.Err())
 	}, DefaultFailurePredicate[T, R, E]())
 }
 
 func DecorateFunctionByType[T any, R any, E error](
-	fn func(T) (R, error), fallback func(T) (R, error)) function.Function[T, R] {
+	fn func(T) (R, error), fallback func(T) (R, error)) func(T) (R, error) {
 	return DecorateFunctionWithFailure(fn, func(t T, _ R, _ E) (R, error) { return fallback(t) })
 }
 
 func DecorateFunctionDefault[T any, R any](
-	fn func(T) (R, error), fallback func(T) (R, error)) function.Function[T, R] {
+	fn func(T) (R, error), fallback func(T) (R, error)) func(T) (R, error) {
 	return DecorateFunctionByType[T, R, error](fn, fallback)
 }

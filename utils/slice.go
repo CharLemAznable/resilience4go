@@ -1,8 +1,6 @@
 package utils
 
-import (
-	"reflect"
-)
+import "reflect"
 
 func AppendElementUnique[T any](slice []T, value T) []T {
 	var removed []T = RemoveElementByValue(slice, value)

@@ -1,8 +1,6 @@
 package cache
 
-import (
-	"github.com/dgraph-io/ristretto"
-)
+import "github.com/dgraph-io/ristretto"
 
 type Metrics interface {
 	NumberOfCacheHits() uint64

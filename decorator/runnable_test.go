@@ -13,7 +13,7 @@ import (
 )
 
 func TestDecorateRunnable(t *testing.T) {
-	decoratedRunnable := decorator.
+	decorateRunnable := decorator.
 		OfRunnable(func() error {
 			return errors.New("error")
 		}).
@@ -43,13 +43,20 @@ func TestDecorateRunnable(t *testing.T) {
 			},
 			func(err error, _ any) bool {
 				return err != nil
-			}).
-		Decorate()
+			})
+	if decorateRunnable == nil {
+		t.Error("Expected non-nil decoratedRunnable")
+	}
+	err := decorateRunnable()
+	if err != nil {
+		t.Errorf("Expected error is nil, but got '%v'", err)
+	}
 
+	decoratedRunnable := decorateRunnable.Decorate()
 	if decoratedRunnable == nil {
 		t.Error("Expected non-nil decoratedRunnable")
 	}
-	err := decoratedRunnable()
+	err = decoratedRunnable()
 	if err != nil {
 		t.Errorf("Expected error is nil, but got '%v'", err)
 	}

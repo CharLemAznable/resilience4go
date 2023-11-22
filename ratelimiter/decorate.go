@@ -1,14 +1,8 @@
 package ratelimiter
 
-import (
-	"github.com/CharLemAznable/gofn/common"
-	"github.com/CharLemAznable/gofn/consumer"
-	"github.com/CharLemAznable/gofn/function"
-	"github.com/CharLemAznable/gofn/runnable"
-	"github.com/CharLemAznable/gofn/supplier"
-)
+import "github.com/CharLemAznable/gofn/common"
 
-func DecorateRunnable(limiter RateLimiter, fn func() error) runnable.Runnable {
+func DecorateRunnable(limiter RateLimiter, fn func() error) func() error {
 	return func() error {
 		if err := limiter.acquirePermission(); err != nil {
 			return err
@@ -17,7 +11,7 @@ func DecorateRunnable(limiter RateLimiter, fn func() error) runnable.Runnable {
 	}
 }
 
-func DecorateSupplier[T any](limiter RateLimiter, fn func() (T, error)) supplier.Supplier[T] {
+func DecorateSupplier[T any](limiter RateLimiter, fn func() (T, error)) func() (T, error) {
 	return func() (T, error) {
 		if err := limiter.acquirePermission(); err != nil {
 			return common.Zero[T](), err
@@ -26,7 +20,7 @@ func DecorateSupplier[T any](limiter RateLimiter, fn func() (T, error)) supplier
 	}
 }
 
-func DecorateConsumer[T any](limiter RateLimiter, fn func(T) error) consumer.Consumer[T] {
+func DecorateConsumer[T any](limiter RateLimiter, fn func(T) error) func(T) error {
 	return func(t T) error {
 		if err := limiter.acquirePermission(); err != nil {
 			return err
@@ -35,7 +29,7 @@ func DecorateConsumer[T any](limiter RateLimiter, fn func(T) error) consumer.Con
 	}
 }
 
-func DecorateFunction[T any, R any](limiter RateLimiter, fn func(T) (R, error)) function.Function[T, R] {
+func DecorateFunction[T any, R any](limiter RateLimiter, fn func(T) (R, error)) func(T) (R, error) {
 	return func(t T) (R, error) {
 		if err := limiter.acquirePermission(); err != nil {
 			return common.Zero[R](), err

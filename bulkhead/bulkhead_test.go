@@ -69,11 +69,11 @@ func TestBulkheadPublishEvents(t *testing.T) {
 	decoratedFn := bulkhead.DecorateRunnable(bh, fn)
 
 	go func() {
-		decoratedFn.Run()
+		_ = decoratedFn()
 	}()
 	time.Sleep(time.Second * 1)
 	go func() {
-		decoratedFn.Run()
+		_ = decoratedFn()
 	}()
 
 	time.Sleep(time.Second * 5)

@@ -12,7 +12,7 @@ import (
 )
 
 func TestDecorateConsumer(t *testing.T) {
-	decoratedConsumer := decorator.
+	decorateConsumer := decorator.
 		OfConsumer(func(str string) error {
 			return errors.New("error")
 		}).
@@ -42,13 +42,20 @@ func TestDecorateConsumer(t *testing.T) {
 			},
 			func(_ string, err error, _ any) bool {
 				return err != nil
-			}).
-		Decorate()
+			})
+	if decorateConsumer == nil {
+		t.Error("Expected non-nil decoratedConsumer")
+	}
+	err := decorateConsumer("test")
+	if err != nil {
+		t.Errorf("Expected error is nil, but got '%v'", err)
+	}
 
+	decoratedConsumer := decorateConsumer.Decorate()
 	if decoratedConsumer == nil {
 		t.Error("Expected non-nil decoratedConsumer")
 	}
-	err := decoratedConsumer("test")
+	err = decoratedConsumer("test")
 	if err != nil {
 		t.Errorf("Expected error is nil, but got '%v'", err)
 	}
