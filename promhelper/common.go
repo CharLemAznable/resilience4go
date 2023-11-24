@@ -8,9 +8,9 @@ const (
 	labelKeyState = "state"
 )
 
-type RegisterFn func(prometheus.Registerer) error
+type RegisterFn = func(prometheus.Registerer) error
 
-type UnregisterFn func(prometheus.Registerer) bool
+type UnregisterFn = func(prometheus.Registerer) bool
 
 func buildRegisterFn(collectors ...prometheus.Collector) RegisterFn {
 	return func(registerer prometheus.Registerer) error {
