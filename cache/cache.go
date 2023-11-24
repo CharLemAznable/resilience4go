@@ -11,7 +11,9 @@ type Cache[K any, V any] interface {
 	Metrics() Metrics
 	EventListener() EventListener
 
-	getOrLoad(key K, loader func() (V, error)) (V, error)
+	WithMarshalFn(func(V) any, func(any) V) Cache[K, V]
+
+	GetOrLoad(key K, loader func(K) (V, error)) (V, error)
 }
 
 func NewCache[K any, V any](name string, configs ...ConfigBuilder) Cache[K, V] {
@@ -51,6 +53,9 @@ type cache[K any, V any] struct {
 	ristrettoCache *ristretto.Cache
 	metrics        Metrics
 	eventListener  EventListener
+
+	marshalFn   func(V) any
+	unmarshalFn func(any) V
 }
 
 func (c *cache[K, V]) Name() string {
@@ -65,7 +70,12 @@ func (c *cache[K, V]) EventListener() EventListener {
 	return c.eventListener
 }
 
-func (c *cache[K, V]) getOrLoad(key K, loader func() (V, error)) (V, error) {
+func (c *cache[K, V]) WithMarshalFn(marshalFn func(V) any, unmarshalFn func(any) V) Cache[K, V] {
+	c.marshalFn, c.unmarshalFn = marshalFn, unmarshalFn
+	return c
+}
+
+func (c *cache[K, V]) GetOrLoad(key K, loader func(K) (V, error)) (V, error) {
 	keyHash, _ := c.config.keyToHashFn(key)
 	lockIdx := keyHash % numShards
 	c.locks[lockIdx].Lock()
@@ -75,14 +85,22 @@ func (c *cache[K, V]) getOrLoad(key K, loader func() (V, error)) (V, error) {
 		c.eventListener.consumeEvent(newCacheHitEvent(c.name, key))
 		vv, err := common.Cast[*valueWithError](v)
 		common.PanicIfError(err)
-		vvv, err := common.Cast[V](vv.value)
+		vvv := vv.value
+		if c.unmarshalFn != nil {
+			vvv = c.unmarshalFn(vv.value)
+		}
+		value, err := common.CastOrZero[V](vvv)
 		common.PanicIfError(err)
-		return vvv, vv.error
+		return value, vv.error
 	}
 	c.eventListener.consumeEvent(newCacheMissEvent(c.name, key))
-	value, err := loader()
+	value, err := loader(key)
 	if c.config.cacheResultPredicateFn(value, err) {
-		vv := &valueWithError{value: value, error: err}
+		var vvv any = value
+		if c.marshalFn != nil {
+			vvv = c.marshalFn(value)
+		}
+		vv := &valueWithError{value: vvv, error: err}
 		c.ristrettoCache.SetWithTTL(key, vv, 1, c.config.itemTTL)
 		c.ristrettoCache.Wait()
 	}

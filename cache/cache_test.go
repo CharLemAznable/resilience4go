@@ -14,7 +14,12 @@ func TestCache(t *testing.T) {
 		cache.WithCapacity(10),
 		cache.WithItemTTL(time.Second),
 		cache.WithKeyToHash(nil),
-		cache.WithCacheResultPredicate(nil))
+		cache.WithCacheResultPredicate(nil)).
+		WithMarshalFn(func(s string) any {
+			return []byte(s)
+		}, func(v any) string {
+			return string(v.([]byte))
+		})
 	if ch.Name() != "test" {
 		t.Errorf("Expected cache name 'test', but got '%s'", ch.Name())
 	}

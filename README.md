@@ -338,6 +338,9 @@ entry := cache.NewCache[K, V](string,
 	cache.WithKeyToHash(func(any) (uint64, uint64)), // 设置缓存key的hash函数
 	cache.WithCacheResultPredicate(func(any, error) bool)) // 设置是否缓存调用结果的判断断言
 
+// 可选设置缓存值的编解码器
+entry = entry.WithMarshalFn(func(V) any, func(any) V)
+
 // 可监测指标
 metrics := entry.Metrics()
 metrics.NumberOfCacheHits() // 缓存命中计数

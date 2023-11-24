@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/CharLemAznable/resilience4go/cache"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -16,6 +17,10 @@ type testValue struct {
 	value string
 }
 
+func (v *testValue) String() string {
+	return "testValue: [" + v.value + "]"
+}
+
 func TestDecorateFunction(t *testing.T) {
 	ch := cache.NewCache[*testKey, *testValue]("test",
 		cache.WithCapacity(10),
@@ -24,9 +29,14 @@ func TestDecorateFunction(t *testing.T) {
 			return err == nil
 		}))
 
+	var count atomic.Int64
 	// fail with no error, max retries exceeded
 	fn := func(key *testKey) (*testValue, error) {
 		var err error
+		if key.key == "nil" {
+			count.Add(1)
+			return nil, nil
+		}
 		if key.key == "ok" {
 			err = errors.New("error")
 		}
@@ -62,5 +72,14 @@ func TestDecorateFunction(t *testing.T) {
 	ret5, _ := decoratedFn(&testKey{"ok"})
 	if ret4.value == ret5.value {
 		t.Errorf("Expected return new value, but got '%s' and '%s'", ret4.value, ret5.value)
+	}
+
+	ret6, _ := decoratedFn(&testKey{"nil"})
+	ret7, _ := decoratedFn(&testKey{"nil"})
+	if ret6 != nil || ret7 != nil {
+		t.Errorf("Expected return nil, but got '%v' and '%v'", ret6, ret6)
+	}
+	if count.Load() != 1 {
+		t.Errorf("Expected count 1, but got %d", count.Load())
 	}
 }
