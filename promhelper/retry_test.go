@@ -15,7 +15,7 @@ func TestRetryRegistry(t *testing.T) {
 		testCases: []*metricTestCase{
 			{
 				name: "TestNumberOfSuccessfulCallsWithoutRetryAttempt",
-				desc: `Desc{fqName: "resilience4go_retry_calls", help: "The number of successful calls without a retry attempt", constLabels: {kind="successful_without_retry",name="test"}, variableLabels: {}}`,
+				desc: `Desc{fqName: "resilience4go_retry_calls_successful_without_retry", help: "The number of successful calls without a retry attempt", constLabels: {kind="successful_without_retry",name="test"}, variableLabels: {}}`,
 				metric: &dto.Metric{
 					Label: []*dto.LabelPair{
 						{Name: proto.String("kind"), Value: proto.String("successful_without_retry")},
@@ -28,7 +28,7 @@ func TestRetryRegistry(t *testing.T) {
 			},
 			{
 				name: "TestNumberOfSuccessfulCallsWithRetryAttempt",
-				desc: `Desc{fqName: "resilience4go_retry_calls", help: "The number of successful calls after a retry attempt", constLabels: {kind="successful_with_retry",name="test"}, variableLabels: {}}`,
+				desc: `Desc{fqName: "resilience4go_retry_calls_successful_with_retry", help: "The number of successful calls after a retry attempt", constLabels: {kind="successful_with_retry",name="test"}, variableLabels: {}}`,
 				metric: &dto.Metric{
 					Label: []*dto.LabelPair{
 						{Name: proto.String("kind"), Value: proto.String("successful_with_retry")},
@@ -41,7 +41,7 @@ func TestRetryRegistry(t *testing.T) {
 			},
 			{
 				name: "TestNumberOfFailedCallsWithoutRetryAttempt",
-				desc: `Desc{fqName: "resilience4go_retry_calls", help: "The number of failed calls without a retry attempt", constLabels: {kind="failed_without_retry",name="test"}, variableLabels: {}}`,
+				desc: `Desc{fqName: "resilience4go_retry_calls_failed_without_retry", help: "The number of failed calls without a retry attempt", constLabels: {kind="failed_without_retry",name="test"}, variableLabels: {}}`,
 				metric: &dto.Metric{
 					Label: []*dto.LabelPair{
 						{Name: proto.String("kind"), Value: proto.String("failed_without_retry")},
@@ -54,7 +54,7 @@ func TestRetryRegistry(t *testing.T) {
 			},
 			{
 				name: "TestNumberOfFailedCallsWithRetryAttempt",
-				desc: `Desc{fqName: "resilience4go_retry_calls", help: "The number of failed calls after a retry attempt", constLabels: {kind="failed_with_retry",name="test"}, variableLabels: {}}`,
+				desc: `Desc{fqName: "resilience4go_retry_calls_failed_with_retry", help: "The number of failed calls after a retry attempt", constLabels: {kind="failed_with_retry",name="test"}, variableLabels: {}}`,
 				metric: &dto.Metric{
 					Label: []*dto.LabelPair{
 						{Name: proto.String("kind"), Value: proto.String("failed_with_retry")},
