@@ -9,10 +9,9 @@ type EventListener interface {
 	OnCacheHit(func(HitEvent)) EventListener
 	OnCacheMiss(func(MissEvent)) EventListener
 	Dismiss(any) EventListener
-	consumeEvent(Event)
 }
 
-func newEventListener() EventListener {
+func newEventListener() *eventListener {
 	return &eventListener{
 		onCacheHit:  make([]func(HitEvent), 0),
 		onCacheMiss: make([]func(MissEvent), 0),

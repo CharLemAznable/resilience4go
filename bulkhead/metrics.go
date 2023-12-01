@@ -5,12 +5,9 @@ import "sync/atomic"
 type Metrics interface {
 	MaxAllowedConcurrentCalls() int64
 	AvailableConcurrentCalls() int64
-
-	acquire(n int64)
-	release(n int64)
 }
 
-func newMetrics(maxConcurrentCalls int64) Metrics {
+func newMetrics(maxConcurrentCalls int64) *metrics {
 	m := &metrics{
 		maxConcurrentCalls: maxConcurrentCalls,
 	}

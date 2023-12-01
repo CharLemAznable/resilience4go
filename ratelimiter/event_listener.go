@@ -9,10 +9,9 @@ type EventListener interface {
 	OnSuccess(func(SuccessEvent)) EventListener
 	OnFailure(func(FailureEvent)) EventListener
 	Dismiss(any) EventListener
-	consumeEvent(Event)
 }
 
-func newEventListener() EventListener {
+func newEventListener() *eventListener {
 	return &eventListener{
 		onSuccess: make([]func(SuccessEvent), 0),
 		onFailure: make([]func(FailureEvent), 0),

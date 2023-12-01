@@ -22,7 +22,7 @@ type state struct {
 	name         State
 	allowPublish bool
 	attempts     int64
-	metrics      Metrics
+	metrics      *metrics
 
 	acquirePermission func() error
 	onError           func(time.Duration)
@@ -54,7 +54,7 @@ func closed(breaker CircuitBreaker) *state {
 	return s
 }
 
-func open(attempts int64, metrics Metrics, breaker CircuitBreaker) *state {
+func open(attempts int64, metrics *metrics, breaker CircuitBreaker) *state {
 	config := breaker.config()
 	s := &state{
 		name:         Open,

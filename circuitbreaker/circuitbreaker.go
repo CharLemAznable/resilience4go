@@ -42,7 +42,7 @@ type stateMachine struct {
 	name          string
 	conf          *Config
 	state         atomic.Pointer[state]
-	eventListener EventListener
+	eventListener *eventListener
 }
 
 func (machine *stateMachine) Name() string {

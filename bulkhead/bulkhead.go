@@ -35,8 +35,8 @@ type semaphoreBulkhead struct {
 	config        *Config
 	rootContext   context.Context
 	semaphore     *semaphore.Weighted
-	metrics       Metrics
-	eventListener EventListener
+	metrics       *metrics
+	eventListener *eventListener
 }
 
 func (bulkhead *semaphoreBulkhead) Name() string {

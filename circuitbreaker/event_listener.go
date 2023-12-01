@@ -13,10 +13,9 @@ type EventListener interface {
 	OnFailureRateExceeded(func(FailureRateExceededEvent)) EventListener
 	OnSlowCallRateExceeded(func(SlowCallRateExceededEvent)) EventListener
 	Dismiss(any) EventListener
-	consumeEvent(Event)
 }
 
-func newEventListener() EventListener {
+func newEventListener() *eventListener {
 	return &eventListener{
 		onSuccess:              make([]func(SuccessEvent), 0),
 		onError:                make([]func(ErrorEvent), 0),

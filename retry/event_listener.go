@@ -10,10 +10,9 @@ type EventListener interface {
 	OnRetry(func(RetryEvent)) EventListener
 	OnError(func(ErrorEvent)) EventListener
 	Dismiss(any) EventListener
-	consumeEvent(Event)
 }
 
-func newEventListener() EventListener {
+func newEventListener() *eventListener {
 	return &eventListener{
 		onSuccess: make([]func(SuccessEvent), 0),
 		onRetry:   make([]func(RetryEvent), 0),

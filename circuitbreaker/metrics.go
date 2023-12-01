@@ -17,13 +17,9 @@ type Metrics interface {
 	NumberOfSlowSuccessfulCalls() uint64
 	NumberOfSlowFailedCalls() uint64
 	NumberOfNotPermittedCalls() uint64
-
-	onCallNotPermitted()
-	onSuccess(time.Duration) metricsResult
-	onError(time.Duration) metricsResult
 }
 
-func newMetrics(slidingWindowSize int64, slidingWindowType SlidingWindowType, config *Config) Metrics {
+func newMetrics(slidingWindowSize int64, slidingWindowType SlidingWindowType, config *Config) *metrics {
 	m := &metrics{
 		failureRateThreshold:      config.failureRateThreshold,
 		slowCallRateThreshold:     config.slowCallRateThreshold,
@@ -39,19 +35,19 @@ func newMetrics(slidingWindowSize int64, slidingWindowType SlidingWindowType, co
 	return m
 }
 
-func forClosed(config *Config) Metrics {
+func forClosed(config *Config) *metrics {
 	return newMetrics(config.slidingWindowSize, config.slidingWindowType, config)
 }
 
-func forHalfOpen(permittedNumberOfCallsInHalfOpenState int64, config *Config) Metrics {
+func forHalfOpen(permittedNumberOfCallsInHalfOpenState int64, config *Config) *metrics {
 	return newMetrics(permittedNumberOfCallsInHalfOpenState, CountBased, config)
 }
 
-func forDisabled(config *Config) Metrics {
+func forDisabled(config *Config) *metrics {
 	return newMetrics(0, CountBased, config)
 }
 
-func forForcedOpen(config *Config) Metrics {
+func forForcedOpen(config *Config) *metrics {
 	return newMetrics(0, CountBased, config)
 }
 

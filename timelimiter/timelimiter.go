@@ -32,8 +32,8 @@ type timeLimiter struct {
 	name          string
 	config        *Config
 	rootContext   context.Context
-	metrics       Metrics
-	eventListener EventListener
+	metrics       *metrics
+	eventListener *eventListener
 }
 
 func (limiter *timeLimiter) Name() string {

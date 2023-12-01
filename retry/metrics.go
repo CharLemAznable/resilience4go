@@ -7,14 +7,9 @@ type Metrics interface {
 	NumberOfSuccessfulCallsWithRetryAttempt() uint64
 	NumberOfFailedCallsWithoutRetryAttempt() uint64
 	NumberOfFailedCallsWithRetryAttempt() uint64
-
-	successfulCallsWithoutRetryAttemptIncrement()
-	successfulCallsWithRetryAttemptIncrement()
-	failedCallsWithoutRetryAttemptIncrement()
-	failedCallsWithRetryAttemptIncrement()
 }
 
-func newMetrics() Metrics {
+func newMetrics() *metrics {
 	return &metrics{}
 }
 

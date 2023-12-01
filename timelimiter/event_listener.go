@@ -10,10 +10,9 @@ type EventListener interface {
 	OnTimeout(func(TimeoutEvent)) EventListener
 	OnPanic(func(PanicEvent)) EventListener
 	Dismiss(any) EventListener
-	consumeEvent(Event)
 }
 
-func newEventListener() EventListener {
+func newEventListener() *eventListener {
 	return &eventListener{
 		onSuccess: make([]func(SuccessEvent), 0),
 		onTimeout: make([]func(TimeoutEvent), 0),

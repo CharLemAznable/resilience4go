@@ -51,8 +51,8 @@ type cache[K any, V any] struct {
 	config         *Config
 	locks          []*sync.Mutex
 	ristrettoCache *ristretto.Cache
-	metrics        Metrics
-	eventListener  EventListener
+	metrics        *metrics
+	eventListener  *eventListener
 
 	marshalFn   func(V) any
 	unmarshalFn func(any) V

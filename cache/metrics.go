@@ -7,7 +7,7 @@ type Metrics interface {
 	NumberOfCacheMisses() uint64
 }
 
-func newMetrics(ristrettoMetrics *ristretto.Metrics) Metrics {
+func newMetrics(ristrettoMetrics *ristretto.Metrics) *metrics {
 	return &metrics{
 		ristrettoMetrics: ristrettoMetrics,
 	}

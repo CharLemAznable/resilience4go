@@ -30,8 +30,8 @@ func NewRetry(name string, configs ...ConfigBuilder) Retry {
 type retry struct {
 	name          string
 	config        *Config
-	metrics       Metrics
-	eventListener EventListener
+	metrics       *metrics
+	eventListener *eventListener
 }
 
 func (r *retry) Name() string {

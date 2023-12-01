@@ -6,13 +6,9 @@ type Metrics interface {
 	SuccessCount() uint64
 	TimeoutCount() uint64
 	PanicCount() uint64
-
-	successIncrement()
-	timeoutIncrement()
-	panicIncrement()
 }
 
-func newMetrics() Metrics {
+func newMetrics() *metrics {
 	return &metrics{}
 }
 

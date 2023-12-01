@@ -49,8 +49,8 @@ type atomicRateLimiter struct {
 	nanoTimeStart  int64
 	state          atomic.Pointer[state]
 	waitingThreads atomic.Int64
-	metrics        Metrics
-	eventListener  EventListener
+	metrics        *metrics
+	eventListener  *eventListener
 }
 
 func (limiter *atomicRateLimiter) Name() string {

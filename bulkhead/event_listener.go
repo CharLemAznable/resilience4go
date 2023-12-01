@@ -10,10 +10,9 @@ type EventListener interface {
 	OnRejected(func(RejectedEvent)) EventListener
 	OnFinished(func(FinishedEvent)) EventListener
 	Dismiss(any) EventListener
-	consumeEvent(Event)
 }
 
-func newEventListener() EventListener {
+func newEventListener() *eventListener {
 	return &eventListener{
 		onPermitted: make([]func(PermittedEvent), 0),
 		onRejected:  make([]func(RejectedEvent), 0),
