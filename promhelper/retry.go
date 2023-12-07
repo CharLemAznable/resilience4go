@@ -10,13 +10,16 @@ const (
 	rtKindSuccessfulWithRetry    = "successful_with_retry"
 	rtKindFailedWithoutRetry     = "failed_without_retry"
 	rtKindFailedWithRetry        = "failed_with_retry"
+
+	retryCallsName = "resilience4go_retry_calls"
+	retryCallsHelp = "The number of successful/failed calls with/without retry"
 )
 
 func RetryRegistry(entry retry.Retry) (RegisterFn, UnregisterFn) {
 	numberOfSuccessfulCallsWithoutRetryAttemptCounter := prometheus.NewCounterFunc(
 		prometheus.CounterOpts{
-			Name:        "resilience4go_retry_calls",
-			Help:        "The number of calls with/without retry",
+			Name:        retryCallsName,
+			Help:        retryCallsHelp,
 			ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: rtKindSuccessfulWithoutRetry},
 		},
 		func() float64 {
@@ -25,8 +28,8 @@ func RetryRegistry(entry retry.Retry) (RegisterFn, UnregisterFn) {
 	)
 	numberOfSuccessfulCallsWithRetryAttemptCounter := prometheus.NewCounterFunc(
 		prometheus.CounterOpts{
-			Name:        "resilience4go_retry_calls",
-			Help:        "The number of calls with/without retry",
+			Name:        retryCallsName,
+			Help:        retryCallsHelp,
 			ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: rtKindSuccessfulWithRetry},
 		},
 		func() float64 {
@@ -35,8 +38,8 @@ func RetryRegistry(entry retry.Retry) (RegisterFn, UnregisterFn) {
 	)
 	numberOfFailedCallsWithoutRetryAttemptCounter := prometheus.NewCounterFunc(
 		prometheus.CounterOpts{
-			Name:        "resilience4go_retry_calls",
-			Help:        "The number of calls with/without retry",
+			Name:        retryCallsName,
+			Help:        retryCallsHelp,
 			ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: rtKindFailedWithoutRetry},
 		},
 		func() float64 {
@@ -45,8 +48,8 @@ func RetryRegistry(entry retry.Retry) (RegisterFn, UnregisterFn) {
 	)
 	numberOfFailedCallsWithRetryAttempt := prometheus.NewCounterFunc(
 		prometheus.CounterOpts{
-			Name:        "resilience4go_retry_calls",
-			Help:        "The number of calls with/without retry",
+			Name:        retryCallsName,
+			Help:        retryCallsHelp,
 			ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: rtKindFailedWithRetry},
 		},
 		func() float64 {

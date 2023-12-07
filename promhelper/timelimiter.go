@@ -9,13 +9,16 @@ const (
 	tlKinkSuccessful = "successful"
 	tlKinkTimeout    = "timeout"
 	tlKinkPanicked   = "panicked"
+
+	timelimiterCallsName = "resilience4go_timelimiter_calls"
+	timelimiterCallsHelp = "The number of successful/timeout/panicked calls"
 )
 
 func TimeLimiterRegistry(entry timelimiter.TimeLimiter) (RegisterFn, UnregisterFn) {
 	successCounter := prometheus.NewCounterFunc(
 		prometheus.CounterOpts{
-			Name:        "resilience4go_timelimiter_calls",
-			Help:        "The number of timelimiter calls",
+			Name:        timelimiterCallsName,
+			Help:        timelimiterCallsHelp,
 			ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: tlKinkSuccessful},
 		},
 		func() float64 {
@@ -24,8 +27,8 @@ func TimeLimiterRegistry(entry timelimiter.TimeLimiter) (RegisterFn, UnregisterF
 	)
 	timeoutCounter := prometheus.NewCounterFunc(
 		prometheus.CounterOpts{
-			Name:        "resilience4go_timelimiter_calls",
-			Help:        "The number of timelimiter calls",
+			Name:        timelimiterCallsName,
+			Help:        timelimiterCallsHelp,
 			ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: tlKinkTimeout},
 		},
 		func() float64 {
@@ -34,8 +37,8 @@ func TimeLimiterRegistry(entry timelimiter.TimeLimiter) (RegisterFn, UnregisterF
 	)
 	panicCounter := prometheus.NewCounterFunc(
 		prometheus.CounterOpts{
-			Name:        "resilience4go_timelimiter_calls",
-			Help:        "The number of timelimiter calls",
+			Name:        timelimiterCallsName,
+			Help:        timelimiterCallsHelp,
 			ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: tlKinkPanicked},
 		},
 		func() float64 {

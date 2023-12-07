@@ -159,7 +159,7 @@ func TestCircuitBreakerRegistry(t *testing.T) {
 			},
 			{
 				name: "TestSuccessfulCallsHistogram",
-				desc: `Desc{fqName: "resilience4go_circuitbreaker_calls", help: "Total number of calls", constLabels: {kind="successful",name="test"}, variableLabels: {}}`,
+				desc: `Desc{fqName: "resilience4go_circuitbreaker_calls", help: "Total number of successful/failed calls", constLabels: {kind="successful",name="test"}, variableLabels: {}}`,
 				metric: &dto.Metric{
 					Label: []*dto.LabelPair{
 						{Name: proto.String("kind"), Value: proto.String("successful")},
@@ -177,7 +177,7 @@ func TestCircuitBreakerRegistry(t *testing.T) {
 			},
 			{
 				name: "TestFailedCallsHistogram",
-				desc: `Desc{fqName: "resilience4go_circuitbreaker_calls", help: "Total number of calls", constLabels: {kind="failed",name="test"}, variableLabels: {}}`,
+				desc: `Desc{fqName: "resilience4go_circuitbreaker_calls", help: "Total number of successful/failed calls", constLabels: {kind="failed",name="test"}, variableLabels: {}}`,
 				metric: &dto.Metric{
 					Label: []*dto.LabelPair{
 						{Name: proto.String("kind"), Value: proto.String("failed")},

@@ -59,12 +59,19 @@ func isStateGaugeVal(current, target circuitbreaker.State) float64 {
 	return 0
 }
 
+const (
+	bufferedCallsName = "resilience4go_circuitbreaker_buffered_calls"
+	bufferedCallsHelp = "The number of buffered calls stored in the ring buffer"
+	slowCallsName     = "resilience4go_circuitbreaker_slow_calls"
+	slowCallsHelp     = "The number of slow calls which were slower than a certain threshold"
+)
+
 func callGauges(entry circuitbreaker.CircuitBreaker) []prometheus.Collector {
 	return []prometheus.Collector{
 		prometheus.NewGaugeFunc(
 			prometheus.GaugeOpts{
-				Name:        "resilience4go_circuitbreaker_buffered_calls",
-				Help:        "The number of buffered calls stored in the ring buffer",
+				Name:        bufferedCallsName,
+				Help:        bufferedCallsHelp,
 				ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: cbKindSuccessful},
 			},
 			func() float64 {
@@ -73,8 +80,8 @@ func callGauges(entry circuitbreaker.CircuitBreaker) []prometheus.Collector {
 		),
 		prometheus.NewGaugeFunc(
 			prometheus.GaugeOpts{
-				Name:        "resilience4go_circuitbreaker_buffered_calls",
-				Help:        "The number of buffered calls stored in the ring buffer",
+				Name:        bufferedCallsName,
+				Help:        bufferedCallsHelp,
 				ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: cbKindFailed},
 			},
 			func() float64 {
@@ -83,8 +90,8 @@ func callGauges(entry circuitbreaker.CircuitBreaker) []prometheus.Collector {
 		),
 		prometheus.NewGaugeFunc(
 			prometheus.GaugeOpts{
-				Name:        "resilience4go_circuitbreaker_slow_calls",
-				Help:        "The number of slow calls which were slower than a certain threshold",
+				Name:        slowCallsName,
+				Help:        slowCallsHelp,
 				ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: cbKindSuccessful},
 			},
 			func() float64 {
@@ -93,8 +100,8 @@ func callGauges(entry circuitbreaker.CircuitBreaker) []prometheus.Collector {
 		),
 		prometheus.NewGaugeFunc(
 			prometheus.GaugeOpts{
-				Name:        "resilience4go_circuitbreaker_slow_calls",
-				Help:        "The number of slow calls which were slower than a certain threshold",
+				Name:        slowCallsName,
+				Help:        slowCallsHelp,
 				ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: cbKindFailed},
 			},
 			func() float64 {
@@ -124,6 +131,11 @@ func callGauges(entry circuitbreaker.CircuitBreaker) []prometheus.Collector {
 	}
 }
 
+const (
+	callsHistogramName = "resilience4go_circuitbreaker_calls"
+	callsHistogramHelp = "Total number of successful/failed calls"
+)
+
 func callHistograms(entry circuitbreaker.CircuitBreaker, histogramBuckets ...float64) (
 	[]prometheus.Collector, func(circuitbreaker.SuccessEvent), func(circuitbreaker.ErrorEvent)) {
 	buckets := prometheus.DefBuckets
@@ -132,8 +144,8 @@ func callHistograms(entry circuitbreaker.CircuitBreaker, histogramBuckets ...flo
 	}
 	successfulCallsHistogram := prometheus.NewHistogram(
 		prometheus.HistogramOpts{
-			Name:        "resilience4go_circuitbreaker_calls",
-			Help:        "Total number of calls",
+			Name:        callsHistogramName,
+			Help:        callsHistogramHelp,
 			ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: cbKindSuccessful},
 			Buckets:     buckets,
 		})
@@ -142,8 +154,8 @@ func callHistograms(entry circuitbreaker.CircuitBreaker, histogramBuckets ...flo
 	}
 	failedCallsHistogram := prometheus.NewHistogram(
 		prometheus.HistogramOpts{
-			Name:        "resilience4go_circuitbreaker_calls",
-			Help:        "Total number of calls",
+			Name:        callsHistogramName,
+			Help:        callsHistogramHelp,
 			ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: cbKindFailed},
 			Buckets:     buckets,
 		})
