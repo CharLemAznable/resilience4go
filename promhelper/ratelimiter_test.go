@@ -3,6 +3,7 @@ package promhelper_test
 import (
 	"github.com/CharLemAznable/resilience4go/promhelper"
 	"github.com/CharLemAznable/resilience4go/ratelimiter"
+	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"google.golang.org/protobuf/proto"
 	"testing"
@@ -42,4 +43,10 @@ func TestRateLimiterRegistry(t *testing.T) {
 	registerFn, unregisterFn := promhelper.RateLimiterRegistry(entry)
 	_ = registerFn(registerer)
 	unregisterFn(registerer)
+
+	reg := prometheus.NewRegistry()
+	if err := registerFn(reg); err != nil {
+		t.Errorf("expected none error, but got %v", err)
+	}
+	unregisterFn(reg)
 }

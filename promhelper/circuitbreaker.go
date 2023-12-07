@@ -63,8 +63,8 @@ func callGauges(entry circuitbreaker.CircuitBreaker) []prometheus.Collector {
 	return []prometheus.Collector{
 		prometheus.NewGaugeFunc(
 			prometheus.GaugeOpts{
-				Name:        "resilience4go_circuitbreaker_buffered_calls_" + cbKindSuccessful,
-				Help:        "The number of buffered successful calls stored in the ring buffer",
+				Name:        "resilience4go_circuitbreaker_buffered_calls",
+				Help:        "The number of buffered calls stored in the ring buffer",
 				ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: cbKindSuccessful},
 			},
 			func() float64 {
@@ -73,8 +73,8 @@ func callGauges(entry circuitbreaker.CircuitBreaker) []prometheus.Collector {
 		),
 		prometheus.NewGaugeFunc(
 			prometheus.GaugeOpts{
-				Name:        "resilience4go_circuitbreaker_buffered_calls_" + cbKindFailed,
-				Help:        "The number of buffered failed calls stored in the ring buffer",
+				Name:        "resilience4go_circuitbreaker_buffered_calls",
+				Help:        "The number of buffered calls stored in the ring buffer",
 				ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: cbKindFailed},
 			},
 			func() float64 {
@@ -83,8 +83,8 @@ func callGauges(entry circuitbreaker.CircuitBreaker) []prometheus.Collector {
 		),
 		prometheus.NewGaugeFunc(
 			prometheus.GaugeOpts{
-				Name:        "resilience4go_circuitbreaker_slow_calls_" + cbKindSuccessful,
-				Help:        "The number of slow successful which were slower than a certain threshold",
+				Name:        "resilience4go_circuitbreaker_slow_calls",
+				Help:        "The number of slow calls which were slower than a certain threshold",
 				ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: cbKindSuccessful},
 			},
 			func() float64 {
@@ -93,8 +93,8 @@ func callGauges(entry circuitbreaker.CircuitBreaker) []prometheus.Collector {
 		),
 		prometheus.NewGaugeFunc(
 			prometheus.GaugeOpts{
-				Name:        "resilience4go_circuitbreaker_slow_calls_" + cbKindFailed,
-				Help:        "The number of slow failed calls which were slower than a certain threshold",
+				Name:        "resilience4go_circuitbreaker_slow_calls",
+				Help:        "The number of slow calls which were slower than a certain threshold",
 				ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: cbKindFailed},
 			},
 			func() float64 {
@@ -132,8 +132,8 @@ func callHistograms(entry circuitbreaker.CircuitBreaker, histogramBuckets ...flo
 	}
 	successfulCallsHistogram := prometheus.NewHistogram(
 		prometheus.HistogramOpts{
-			Name:        "resilience4go_circuitbreaker_calls_" + cbKindSuccessful,
-			Help:        "Total number of successful calls",
+			Name:        "resilience4go_circuitbreaker_calls",
+			Help:        "Total number of calls",
 			ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: cbKindSuccessful},
 			Buckets:     buckets,
 		})
@@ -142,8 +142,8 @@ func callHistograms(entry circuitbreaker.CircuitBreaker, histogramBuckets ...flo
 	}
 	failedCallsHistogram := prometheus.NewHistogram(
 		prometheus.HistogramOpts{
-			Name:        "resilience4go_circuitbreaker_calls_" + cbKindFailed,
-			Help:        "Total number of failed calls",
+			Name:        "resilience4go_circuitbreaker_calls",
+			Help:        "Total number of calls",
 			ConstLabels: prometheus.Labels{labelKeyName: entry.Name(), labelKeyKind: cbKindFailed},
 			Buckets:     buckets,
 		})

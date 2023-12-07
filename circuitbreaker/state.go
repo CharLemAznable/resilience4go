@@ -2,7 +2,6 @@ package circuitbreaker
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync/atomic"
 	"time"
@@ -197,9 +196,8 @@ func forcedOpen(attempts int64, breaker CircuitBreaker) *state {
 
 func checkStateTransition(name string, fromState, toState State) error {
 	if fromState == Closed && toState == HalfOpen {
-		return errors.New(fmt.Sprintf(
-			"CircuitBreaker '%s' tried an illegal state transition from %s to %s",
-			name, fromState, toState))
+		return fmt.Errorf("CircuitBreaker '%s' tried an illegal state transition from %s to %s",
+			name, fromState, toState)
 	}
 	return nil
 }

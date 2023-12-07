@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/CharLemAznable/resilience4go/circuitbreaker"
 	"github.com/CharLemAznable/resilience4go/promhelper"
+	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"google.golang.org/protobuf/proto"
 	"testing"
@@ -82,7 +83,7 @@ func TestCircuitBreakerRegistry(t *testing.T) {
 			},
 			{
 				name: "TestNumberOfSuccessfulCalls",
-				desc: `Desc{fqName: "resilience4go_circuitbreaker_buffered_calls_successful", help: "The number of buffered successful calls stored in the ring buffer", constLabels: {kind="successful",name="test"}, variableLabels: {}}`,
+				desc: `Desc{fqName: "resilience4go_circuitbreaker_buffered_calls", help: "The number of buffered calls stored in the ring buffer", constLabels: {kind="successful",name="test"}, variableLabels: {}}`,
 				metric: &dto.Metric{
 					Label: []*dto.LabelPair{
 						{Name: proto.String("kind"), Value: proto.String("successful")},
@@ -95,7 +96,7 @@ func TestCircuitBreakerRegistry(t *testing.T) {
 			},
 			{
 				name: "TestNumberOfFailedCalls",
-				desc: `Desc{fqName: "resilience4go_circuitbreaker_buffered_calls_failed", help: "The number of buffered failed calls stored in the ring buffer", constLabels: {kind="failed",name="test"}, variableLabels: {}}`,
+				desc: `Desc{fqName: "resilience4go_circuitbreaker_buffered_calls", help: "The number of buffered calls stored in the ring buffer", constLabels: {kind="failed",name="test"}, variableLabels: {}}`,
 				metric: &dto.Metric{
 					Label: []*dto.LabelPair{
 						{Name: proto.String("kind"), Value: proto.String("failed")},
@@ -108,7 +109,7 @@ func TestCircuitBreakerRegistry(t *testing.T) {
 			},
 			{
 				name: "TestNumberOfSlowSuccessfulCalls",
-				desc: `Desc{fqName: "resilience4go_circuitbreaker_slow_calls_successful", help: "The number of slow successful which were slower than a certain threshold", constLabels: {kind="successful",name="test"}, variableLabels: {}}`,
+				desc: `Desc{fqName: "resilience4go_circuitbreaker_slow_calls", help: "The number of slow calls which were slower than a certain threshold", constLabels: {kind="successful",name="test"}, variableLabels: {}}`,
 				metric: &dto.Metric{
 					Label: []*dto.LabelPair{
 						{Name: proto.String("kind"), Value: proto.String("successful")},
@@ -121,7 +122,7 @@ func TestCircuitBreakerRegistry(t *testing.T) {
 			},
 			{
 				name: "TestNumberOfSlowFailedCalls",
-				desc: `Desc{fqName: "resilience4go_circuitbreaker_slow_calls_failed", help: "The number of slow failed calls which were slower than a certain threshold", constLabels: {kind="failed",name="test"}, variableLabels: {}}`,
+				desc: `Desc{fqName: "resilience4go_circuitbreaker_slow_calls", help: "The number of slow calls which were slower than a certain threshold", constLabels: {kind="failed",name="test"}, variableLabels: {}}`,
 				metric: &dto.Metric{
 					Label: []*dto.LabelPair{
 						{Name: proto.String("kind"), Value: proto.String("failed")},
@@ -158,7 +159,7 @@ func TestCircuitBreakerRegistry(t *testing.T) {
 			},
 			{
 				name: "TestSuccessfulCallsHistogram",
-				desc: `Desc{fqName: "resilience4go_circuitbreaker_calls_successful", help: "Total number of successful calls", constLabels: {kind="successful",name="test"}, variableLabels: {}}`,
+				desc: `Desc{fqName: "resilience4go_circuitbreaker_calls", help: "Total number of calls", constLabels: {kind="successful",name="test"}, variableLabels: {}}`,
 				metric: &dto.Metric{
 					Label: []*dto.LabelPair{
 						{Name: proto.String("kind"), Value: proto.String("successful")},
@@ -176,7 +177,7 @@ func TestCircuitBreakerRegistry(t *testing.T) {
 			},
 			{
 				name: "TestFailedCallsHistogram",
-				desc: `Desc{fqName: "resilience4go_circuitbreaker_calls_failed", help: "Total number of failed calls", constLabels: {kind="failed",name="test"}, variableLabels: {}}`,
+				desc: `Desc{fqName: "resilience4go_circuitbreaker_calls", help: "Total number of calls", constLabels: {kind="failed",name="test"}, variableLabels: {}}`,
 				metric: &dto.Metric{
 					Label: []*dto.LabelPair{
 						{Name: proto.String("kind"), Value: proto.String("failed")},
@@ -244,6 +245,11 @@ func TestCircuitBreakerRegistry(t *testing.T) {
 		},
 	}
 	_ = registerFn(registerer)
-
 	unregisterFn(registerer)
+
+	reg := prometheus.NewRegistry()
+	if err := registerFn(reg); err != nil {
+		t.Errorf("expected none error, but got %v", err)
+	}
+	unregisterFn(reg)
 }

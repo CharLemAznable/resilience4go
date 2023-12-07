@@ -1,6 +1,7 @@
 package promhelper_test
 
 import (
+	"github.com/prometheus/client_golang/prometheus"
 	"testing"
 
 	"github.com/CharLemAznable/resilience4go/bulkhead"
@@ -43,4 +44,10 @@ func TestBulkheadRegistry(t *testing.T) {
 	registerFn, unregisterFn := promhelper.BulkheadRegistry(entry)
 	_ = registerFn(registerer)
 	unregisterFn(registerer)
+
+	reg := prometheus.NewRegistry()
+	if err := registerFn(reg); err != nil {
+		t.Errorf("expected none error, but got %v", err)
+	}
+	unregisterFn(reg)
 }
