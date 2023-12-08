@@ -2,7 +2,7 @@ package circuitbreaker
 
 import (
 	"fmt"
-	"github.com/CharLemAznable/resilience4go/utils"
+	"github.com/CharLemAznable/ge"
 	"time"
 )
 
@@ -71,7 +71,7 @@ func WithSlidingWindow(slidingWindowType SlidingWindowType, slidingWindowSize in
 		config.slidingWindowType = slidingWindowType
 		config.slidingWindowSize = slidingWindowSize
 		if CountBased == slidingWindowType {
-			config.minimumNumberOfCalls = utils.Min(minimumNumberOfCalls, slidingWindowSize)
+			config.minimumNumberOfCalls = ge.Min(minimumNumberOfCalls, slidingWindowSize)
 		} else {
 			config.minimumNumberOfCalls = minimumNumberOfCalls
 		}

@@ -1,7 +1,7 @@
 package cache
 
 import (
-	"github.com/CharLemAznable/resilience4go/utils"
+	"github.com/CharLemAznable/ge"
 	"sync"
 )
 
@@ -27,14 +27,14 @@ type eventListener struct {
 func (listener *eventListener) OnCacheHit(consumer func(HitEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onCacheHit = utils.AppendElementUnique(listener.onCacheHit, consumer)
+	listener.onCacheHit = ge.AppendElementUnique(listener.onCacheHit, consumer)
 	return listener
 }
 
 func (listener *eventListener) OnCacheMiss(consumer func(MissEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onCacheMiss = utils.AppendElementUnique(listener.onCacheMiss, consumer)
+	listener.onCacheMiss = ge.AppendElementUnique(listener.onCacheMiss, consumer)
 	return listener
 }
 
@@ -43,9 +43,9 @@ func (listener *eventListener) Dismiss(consumer any) EventListener {
 	defer listener.Unlock()
 	switch c := consumer.(type) {
 	case func(HitEvent):
-		listener.onCacheHit = utils.RemoveElementByValue(listener.onCacheHit, c)
+		listener.onCacheHit = ge.RemoveElementByValue(listener.onCacheHit, c)
 	case func(MissEvent):
-		listener.onCacheMiss = utils.RemoveElementByValue(listener.onCacheMiss, c)
+		listener.onCacheMiss = ge.RemoveElementByValue(listener.onCacheMiss, c)
 	}
 	return listener
 }
@@ -56,9 +56,9 @@ func (listener *eventListener) consumeEvent(event Event) {
 		defer listener.RUnlock()
 		switch e := event.(type) {
 		case *hitEvent:
-			utils.ConsumeEvent(listener.onCacheHit, HitEvent(e))
+			ge.ConsumeEach(listener.onCacheHit, HitEvent(e))
 		case *missEvent:
-			utils.ConsumeEvent(listener.onCacheMiss, MissEvent(e))
+			ge.ConsumeEach(listener.onCacheMiss, MissEvent(e))
 		}
 	}()
 }

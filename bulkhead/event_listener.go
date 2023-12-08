@@ -1,7 +1,7 @@
 package bulkhead
 
 import (
-	"github.com/CharLemAznable/resilience4go/utils"
+	"github.com/CharLemAznable/ge"
 	"sync"
 )
 
@@ -30,21 +30,21 @@ type eventListener struct {
 func (listener *eventListener) OnPermitted(consumer func(PermittedEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onPermitted = utils.AppendElementUnique(listener.onPermitted, consumer)
+	listener.onPermitted = ge.AppendElementUnique(listener.onPermitted, consumer)
 	return listener
 }
 
 func (listener *eventListener) OnRejected(consumer func(RejectedEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onRejected = utils.AppendElementUnique(listener.onRejected, consumer)
+	listener.onRejected = ge.AppendElementUnique(listener.onRejected, consumer)
 	return listener
 }
 
 func (listener *eventListener) OnFinished(consumer func(FinishedEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onFinished = utils.AppendElementUnique(listener.onFinished, consumer)
+	listener.onFinished = ge.AppendElementUnique(listener.onFinished, consumer)
 	return listener
 }
 
@@ -53,11 +53,11 @@ func (listener *eventListener) Dismiss(consumer any) EventListener {
 	defer listener.Unlock()
 	switch c := consumer.(type) {
 	case func(PermittedEvent):
-		listener.onPermitted = utils.RemoveElementByValue(listener.onPermitted, c)
+		listener.onPermitted = ge.RemoveElementByValue(listener.onPermitted, c)
 	case func(RejectedEvent):
-		listener.onRejected = utils.RemoveElementByValue(listener.onRejected, c)
+		listener.onRejected = ge.RemoveElementByValue(listener.onRejected, c)
 	case func(FinishedEvent):
-		listener.onFinished = utils.RemoveElementByValue(listener.onFinished, c)
+		listener.onFinished = ge.RemoveElementByValue(listener.onFinished, c)
 	}
 	return listener
 }
@@ -68,11 +68,11 @@ func (listener *eventListener) consumeEvent(event Event) {
 		defer listener.RUnlock()
 		switch e := event.(type) {
 		case *permittedEvent:
-			utils.ConsumeEvent(listener.onPermitted, PermittedEvent(e))
+			ge.ConsumeEach(listener.onPermitted, PermittedEvent(e))
 		case *rejectedEvent:
-			utils.ConsumeEvent(listener.onRejected, RejectedEvent(e))
+			ge.ConsumeEach(listener.onRejected, RejectedEvent(e))
 		case *finishedEvent:
-			utils.ConsumeEvent(listener.onFinished, FinishedEvent(e))
+			ge.ConsumeEach(listener.onFinished, FinishedEvent(e))
 		}
 	}()
 }

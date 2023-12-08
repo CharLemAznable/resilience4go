@@ -3,7 +3,7 @@ module github.com/CharLemAznable/resilience4go
 go 1.20
 
 require (
-	github.com/CharLemAznable/gofn v0.2.2
+	github.com/CharLemAznable/ge v0.1.0
 	github.com/dgraph-io/ristretto v0.1.1
 	github.com/prometheus/client_golang v1.17.0
 	github.com/prometheus/client_model v0.4.1-0.20230718164431-9a2bf3000d16

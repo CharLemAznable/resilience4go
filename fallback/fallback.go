@@ -1,11 +1,11 @@
 package fallback
 
-import "github.com/CharLemAznable/gofn/common"
+import "github.com/CharLemAznable/ge"
 
 func execute[T any, R any](param T, fn func() (R, error)) Context[T, R, error] {
 	ctx := &context[T, R, error]{param: param}
 	finished := make(chan *context[T, R, error])
-	panicked := make(common.Panicked)
+	panicked := make(ge.Panicked)
 	go func() {
 		defer panicked.Recover()
 		ctx.ret, ctx.err = fn()

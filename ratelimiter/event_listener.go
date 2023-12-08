@@ -1,7 +1,7 @@
 package ratelimiter
 
 import (
-	"github.com/CharLemAznable/resilience4go/utils"
+	"github.com/CharLemAznable/ge"
 	"sync"
 )
 
@@ -27,14 +27,14 @@ type eventListener struct {
 func (listener *eventListener) OnSuccess(consumer func(SuccessEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onSuccess = utils.AppendElementUnique(listener.onSuccess, consumer)
+	listener.onSuccess = ge.AppendElementUnique(listener.onSuccess, consumer)
 	return listener
 }
 
 func (listener *eventListener) OnFailure(consumer func(FailureEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onFailure = utils.AppendElementUnique(listener.onFailure, consumer)
+	listener.onFailure = ge.AppendElementUnique(listener.onFailure, consumer)
 	return listener
 }
 
@@ -43,9 +43,9 @@ func (listener *eventListener) Dismiss(consumer any) EventListener {
 	defer listener.Unlock()
 	switch c := consumer.(type) {
 	case func(SuccessEvent):
-		listener.onSuccess = utils.RemoveElementByValue(listener.onSuccess, c)
+		listener.onSuccess = ge.RemoveElementByValue(listener.onSuccess, c)
 	case func(FailureEvent):
-		listener.onFailure = utils.RemoveElementByValue(listener.onFailure, c)
+		listener.onFailure = ge.RemoveElementByValue(listener.onFailure, c)
 	}
 	return listener
 }
@@ -56,9 +56,9 @@ func (listener *eventListener) consumeEvent(event Event) {
 		defer listener.RUnlock()
 		switch e := event.(type) {
 		case *successEvent:
-			utils.ConsumeEvent(listener.onSuccess, SuccessEvent(e))
+			ge.ConsumeEach(listener.onSuccess, SuccessEvent(e))
 		case *failureEvent:
-			utils.ConsumeEvent(listener.onFailure, FailureEvent(e))
+			ge.ConsumeEach(listener.onFailure, FailureEvent(e))
 		}
 	}()
 }

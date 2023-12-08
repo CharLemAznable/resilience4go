@@ -1,7 +1,7 @@
 package retry
 
 import (
-	"github.com/CharLemAznable/resilience4go/utils"
+	"github.com/CharLemAznable/ge"
 	"sync"
 )
 
@@ -30,21 +30,21 @@ type eventListener struct {
 func (listener *eventListener) OnSuccess(consumer func(SuccessEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onSuccess = utils.AppendElementUnique(listener.onSuccess, consumer)
+	listener.onSuccess = ge.AppendElementUnique(listener.onSuccess, consumer)
 	return listener
 }
 
 func (listener *eventListener) OnRetry(consumer func(RetryEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onRetry = utils.AppendElementUnique(listener.onRetry, consumer)
+	listener.onRetry = ge.AppendElementUnique(listener.onRetry, consumer)
 	return listener
 }
 
 func (listener *eventListener) OnError(consumer func(ErrorEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onError = utils.AppendElementUnique(listener.onError, consumer)
+	listener.onError = ge.AppendElementUnique(listener.onError, consumer)
 	return listener
 }
 
@@ -53,11 +53,11 @@ func (listener *eventListener) Dismiss(consumer any) EventListener {
 	defer listener.Unlock()
 	switch c := consumer.(type) {
 	case func(SuccessEvent):
-		listener.onSuccess = utils.RemoveElementByValue(listener.onSuccess, c)
+		listener.onSuccess = ge.RemoveElementByValue(listener.onSuccess, c)
 	case func(RetryEvent):
-		listener.onRetry = utils.RemoveElementByValue(listener.onRetry, c)
+		listener.onRetry = ge.RemoveElementByValue(listener.onRetry, c)
 	case func(ErrorEvent):
-		listener.onError = utils.RemoveElementByValue(listener.onError, c)
+		listener.onError = ge.RemoveElementByValue(listener.onError, c)
 	}
 	return listener
 }
@@ -68,11 +68,11 @@ func (listener *eventListener) consumeEvent(event Event) {
 		defer listener.RUnlock()
 		switch e := event.(type) {
 		case *successEvent:
-			utils.ConsumeEvent(listener.onSuccess, SuccessEvent(e))
+			ge.ConsumeEach(listener.onSuccess, SuccessEvent(e))
 		case *retryEvent:
-			utils.ConsumeEvent(listener.onRetry, RetryEvent(e))
+			ge.ConsumeEach(listener.onRetry, RetryEvent(e))
 		case *errorEvent:
-			utils.ConsumeEvent(listener.onError, ErrorEvent(e))
+			ge.ConsumeEach(listener.onError, ErrorEvent(e))
 		}
 	}()
 }

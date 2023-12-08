@@ -1,6 +1,6 @@
 ### resilience4go
 
-[![Build](https://github.com/CharLemAznable/gofn/actions/workflows/go.yml/badge.svg)](https://github.com/CharLemAznable/resilience4go/actions/workflows/go.yml)
+[![Build](https://github.com/CharLemAznable/resilience4go/actions/workflows/go.yml/badge.svg)](https://github.com/CharLemAznable/resilience4go/actions/workflows/go.yml)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/CharLemAznable/resilience4go)
 
 [![MIT Licence](https://badges.frapsoft.com/os/mit/mit.svg?v=103)](https://opensource.org/licenses/mit-license.php)

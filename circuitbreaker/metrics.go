@@ -1,7 +1,7 @@
 package circuitbreaker
 
 import (
-	"github.com/CharLemAznable/resilience4go/utils"
+	"github.com/CharLemAznable/ge"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -27,7 +27,7 @@ func newMetrics(slidingWindowSize int64, slidingWindowType SlidingWindowType, co
 	}
 	if CountBased == slidingWindowType {
 		m.recorder = newFixedSizeSlidingWindowRecorder(slidingWindowSize)
-		m.minimumNumberOfCalls = utils.Min(config.minimumNumberOfCalls, slidingWindowSize)
+		m.minimumNumberOfCalls = ge.Min(config.minimumNumberOfCalls, slidingWindowSize)
 	} else {
 		m.recorder = newSlidingTimeWindowRecorder(slidingWindowSize)
 		m.minimumNumberOfCalls = config.minimumNumberOfCalls
@@ -282,7 +282,7 @@ func (s *slidingTimeWindowRecorder) moveWindowToCurrentEpochSecond(latestPartial
 	if differenceInSeconds == 0 {
 		return latestPartialAggregation
 	}
-	secondsToMoveTheWindow := utils.Min(differenceInSeconds, s.timeWindowSizeInSeconds)
+	secondsToMoveTheWindow := ge.Min(differenceInSeconds, s.timeWindowSizeInSeconds)
 	var currentPartialAggregation *partialAggregation
 	for secondsToMoveTheWindow > 0 {
 		secondsToMoveTheWindow--

@@ -2,7 +2,7 @@ package circuitbreaker
 
 import (
 	"fmt"
-	"github.com/CharLemAznable/gofn/common"
+	"github.com/CharLemAznable/ge"
 	"sync/atomic"
 	"time"
 )
@@ -119,7 +119,7 @@ func (machine *stateMachine) execute(fn func() (any, error)) (any, error) {
 	}
 	start := time.Now()
 	finished := make(chan *channelValue)
-	panicked := make(common.Panicked)
+	panicked := make(ge.Panicked)
 	go func() {
 		defer panicked.Recover()
 		ret, err := fn()
@@ -130,7 +130,7 @@ func (machine *stateMachine) execute(fn func() (any, error)) (any, error) {
 		machine.onResult(start, result.ret, result.err)
 		return result.ret, result.err
 	case err := <-panicked.Caught():
-		machine.onResult(start, nil, common.WrapPanic(err))
+		machine.onResult(start, nil, ge.WrapPanic(err))
 		panic(err)
 	}
 }

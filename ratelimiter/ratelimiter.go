@@ -2,7 +2,7 @@ package ratelimiter
 
 import (
 	"fmt"
-	"github.com/CharLemAznable/resilience4go/utils"
+	"github.com/CharLemAznable/ge"
 	"sync/atomic"
 	"time"
 )
@@ -105,7 +105,7 @@ func (limiter *atomicRateLimiter) calculateNextState(timeoutInNanos int64, activ
 		elapsedCycles := currentCycle - nextCycle
 		accumulatedPermissions := elapsedCycles * permissionsPerCycle
 		nextCycle = currentCycle
-		nextPermissions = utils.Min(nextPermissions+accumulatedPermissions, permissionsPerCycle)
+		nextPermissions = ge.Min(nextPermissions+accumulatedPermissions, permissionsPerCycle)
 	}
 	nextNanosToWait := nanosToWaitForPermission(cyclePeriodInNanos,
 		permissionsPerCycle, nextPermissions, currentNanos, currentCycle)

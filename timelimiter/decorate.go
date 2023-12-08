@@ -1,6 +1,6 @@
 package timelimiter
 
-import "github.com/CharLemAznable/gofn/common"
+import "github.com/CharLemAznable/ge"
 
 func DecorateRunnable(limiter TimeLimiter, fn func() error) func() error {
 	return func() error {
@@ -16,7 +16,7 @@ func DecorateSupplier[T any](limiter TimeLimiter, fn func() (T, error)) func() (
 		ret, err := limiter.execute(func() (any, error) {
 			return fn()
 		})
-		return common.CastQuietly[T](ret), err
+		return ge.CastQuietly[T](ret), err
 	}
 }
 
@@ -34,6 +34,6 @@ func DecorateFunction[T any, R any](limiter TimeLimiter, fn func(T) (R, error)) 
 		ret, err := limiter.execute(func() (any, error) {
 			return fn(t)
 		})
-		return common.CastQuietly[R](ret), err
+		return ge.CastQuietly[R](ret), err
 	}
 }

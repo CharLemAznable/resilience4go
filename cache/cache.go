@@ -1,7 +1,7 @@
 package cache
 
 import (
-	"github.com/CharLemAznable/gofn/common"
+	"github.com/CharLemAznable/ge"
 	"github.com/dgraph-io/ristretto"
 	"sync"
 )
@@ -29,7 +29,7 @@ func NewCache[K any, V any](name string, configs ...ConfigBuilder) Cache[K, V] {
 		KeyToHash:          config.keyToHashFn,
 		IgnoreInternalCost: true,
 	})
-	common.PanicIfError(err)
+	ge.PanicIfError(err)
 	c := &cache[K, V]{
 		name:           name,
 		config:         config,
@@ -83,14 +83,14 @@ func (c *cache[K, V]) GetOrLoad(key K, loader func(K) (V, error)) (V, error) {
 
 	if v, found := c.ristrettoCache.Get(key); found {
 		c.eventListener.consumeEvent(newCacheHitEvent(c.name, key))
-		vv, err := common.Cast[*valueWithError](v)
-		common.PanicIfError(err)
+		vv, err := ge.Cast[*valueWithError](v)
+		ge.PanicIfError(err)
 		vvv := vv.value
 		if c.unmarshalFn != nil {
 			vvv = c.unmarshalFn(vv.value)
 		}
-		value, err := common.CastOrZero[V](vvv)
-		common.PanicIfError(err)
+		value, err := ge.CastOrZero[V](vvv)
+		ge.PanicIfError(err)
 		return value, vv.error
 	}
 	c.eventListener.consumeEvent(newCacheMissEvent(c.name, key))

@@ -1,7 +1,7 @@
 package circuitbreaker
 
 import (
-	"github.com/CharLemAznable/resilience4go/utils"
+	"github.com/CharLemAznable/ge"
 	"sync"
 )
 
@@ -39,42 +39,42 @@ type eventListener struct {
 func (listener *eventListener) OnSuccess(consumer func(SuccessEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onSuccess = utils.AppendElementUnique(listener.onSuccess, consumer)
+	listener.onSuccess = ge.AppendElementUnique(listener.onSuccess, consumer)
 	return listener
 }
 
 func (listener *eventListener) OnError(consumer func(ErrorEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onError = utils.AppendElementUnique(listener.onError, consumer)
+	listener.onError = ge.AppendElementUnique(listener.onError, consumer)
 	return listener
 }
 
 func (listener *eventListener) OnNotPermitted(consumer func(NotPermittedEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onNotPermitted = utils.AppendElementUnique(listener.onNotPermitted, consumer)
+	listener.onNotPermitted = ge.AppendElementUnique(listener.onNotPermitted, consumer)
 	return listener
 }
 
 func (listener *eventListener) OnStateTransition(consumer func(StateTransitionEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onStateTransition = utils.AppendElementUnique(listener.onStateTransition, consumer)
+	listener.onStateTransition = ge.AppendElementUnique(listener.onStateTransition, consumer)
 	return listener
 }
 
 func (listener *eventListener) OnFailureRateExceeded(consumer func(FailureRateExceededEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onFailureRateExceeded = utils.AppendElementUnique(listener.onFailureRateExceeded, consumer)
+	listener.onFailureRateExceeded = ge.AppendElementUnique(listener.onFailureRateExceeded, consumer)
 	return listener
 }
 
 func (listener *eventListener) OnSlowCallRateExceeded(consumer func(SlowCallRateExceededEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onSlowCallRateExceeded = utils.AppendElementUnique(listener.onSlowCallRateExceeded, consumer)
+	listener.onSlowCallRateExceeded = ge.AppendElementUnique(listener.onSlowCallRateExceeded, consumer)
 	return listener
 }
 
@@ -83,17 +83,17 @@ func (listener *eventListener) Dismiss(consumer any) EventListener {
 	defer listener.Unlock()
 	switch c := consumer.(type) {
 	case func(SuccessEvent):
-		listener.onSuccess = utils.RemoveElementByValue(listener.onSuccess, c)
+		listener.onSuccess = ge.RemoveElementByValue(listener.onSuccess, c)
 	case func(ErrorEvent):
-		listener.onError = utils.RemoveElementByValue(listener.onError, c)
+		listener.onError = ge.RemoveElementByValue(listener.onError, c)
 	case func(NotPermittedEvent):
-		listener.onNotPermitted = utils.RemoveElementByValue(listener.onNotPermitted, c)
+		listener.onNotPermitted = ge.RemoveElementByValue(listener.onNotPermitted, c)
 	case func(StateTransitionEvent):
-		listener.onStateTransition = utils.RemoveElementByValue(listener.onStateTransition, c)
+		listener.onStateTransition = ge.RemoveElementByValue(listener.onStateTransition, c)
 	case func(FailureRateExceededEvent):
-		listener.onFailureRateExceeded = utils.RemoveElementByValue(listener.onFailureRateExceeded, c)
+		listener.onFailureRateExceeded = ge.RemoveElementByValue(listener.onFailureRateExceeded, c)
 	case func(SlowCallRateExceededEvent):
-		listener.onSlowCallRateExceeded = utils.RemoveElementByValue(listener.onSlowCallRateExceeded, c)
+		listener.onSlowCallRateExceeded = ge.RemoveElementByValue(listener.onSlowCallRateExceeded, c)
 	}
 	return listener
 }
@@ -104,17 +104,17 @@ func (listener *eventListener) consumeEvent(event Event) {
 		defer listener.RUnlock()
 		switch e := event.(type) {
 		case *successEvent:
-			utils.ConsumeEvent(listener.onSuccess, SuccessEvent(e))
+			ge.ConsumeEach(listener.onSuccess, SuccessEvent(e))
 		case *errorEvent:
-			utils.ConsumeEvent(listener.onError, ErrorEvent(e))
+			ge.ConsumeEach(listener.onError, ErrorEvent(e))
 		case *notPermittedEvent:
-			utils.ConsumeEvent(listener.onNotPermitted, NotPermittedEvent(e))
+			ge.ConsumeEach(listener.onNotPermitted, NotPermittedEvent(e))
 		case *stateTransitionEvent:
-			utils.ConsumeEvent(listener.onStateTransition, StateTransitionEvent(e))
+			ge.ConsumeEach(listener.onStateTransition, StateTransitionEvent(e))
 		case *failureRateExceededEvent:
-			utils.ConsumeEvent(listener.onFailureRateExceeded, FailureRateExceededEvent(e))
+			ge.ConsumeEach(listener.onFailureRateExceeded, FailureRateExceededEvent(e))
 		case *slowCallRateExceededEvent:
-			utils.ConsumeEvent(listener.onSlowCallRateExceeded, SlowCallRateExceededEvent(e))
+			ge.ConsumeEach(listener.onSlowCallRateExceeded, SlowCallRateExceededEvent(e))
 		}
 	}()
 }

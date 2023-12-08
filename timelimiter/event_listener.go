@@ -1,7 +1,7 @@
 package timelimiter
 
 import (
-	"github.com/CharLemAznable/resilience4go/utils"
+	"github.com/CharLemAznable/ge"
 	"sync"
 )
 
@@ -30,21 +30,21 @@ type eventListener struct {
 func (listener *eventListener) OnSuccess(consumer func(SuccessEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onSuccess = utils.AppendElementUnique(listener.onSuccess, consumer)
+	listener.onSuccess = ge.AppendElementUnique(listener.onSuccess, consumer)
 	return listener
 }
 
 func (listener *eventListener) OnTimeout(consumer func(TimeoutEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onTimeout = utils.AppendElementUnique(listener.onTimeout, consumer)
+	listener.onTimeout = ge.AppendElementUnique(listener.onTimeout, consumer)
 	return listener
 }
 
 func (listener *eventListener) OnPanic(consumer func(PanicEvent)) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onPanic = utils.AppendElementUnique(listener.onPanic, consumer)
+	listener.onPanic = ge.AppendElementUnique(listener.onPanic, consumer)
 	return listener
 }
 
@@ -53,11 +53,11 @@ func (listener *eventListener) Dismiss(consumer any) EventListener {
 	defer listener.Unlock()
 	switch c := consumer.(type) {
 	case func(SuccessEvent):
-		listener.onSuccess = utils.RemoveElementByValue(listener.onSuccess, c)
+		listener.onSuccess = ge.RemoveElementByValue(listener.onSuccess, c)
 	case func(TimeoutEvent):
-		listener.onTimeout = utils.RemoveElementByValue(listener.onTimeout, c)
+		listener.onTimeout = ge.RemoveElementByValue(listener.onTimeout, c)
 	case func(PanicEvent):
-		listener.onPanic = utils.RemoveElementByValue(listener.onPanic, c)
+		listener.onPanic = ge.RemoveElementByValue(listener.onPanic, c)
 	}
 	return listener
 }
@@ -68,11 +68,11 @@ func (listener *eventListener) consumeEvent(event Event) {
 		defer listener.RUnlock()
 		switch e := event.(type) {
 		case *successEvent:
-			utils.ConsumeEvent(listener.onSuccess, SuccessEvent(e))
+			ge.ConsumeEach(listener.onSuccess, SuccessEvent(e))
 		case *timeoutEvent:
-			utils.ConsumeEvent(listener.onTimeout, TimeoutEvent(e))
+			ge.ConsumeEach(listener.onTimeout, TimeoutEvent(e))
 		case *panicEvent:
-			utils.ConsumeEvent(listener.onPanic, PanicEvent(e))
+			ge.ConsumeEach(listener.onPanic, PanicEvent(e))
 		}
 	}()
 }
