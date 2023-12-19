@@ -4,7 +4,7 @@ import "github.com/CharLemAznable/ge"
 
 func DecorateRunnable(limiter RateLimiter, fn func() error) func() error {
 	return func() error {
-		if err := limiter.acquirePermission(); err != nil {
+		if err := limiter.AcquirePermission(); err != nil {
 			return err
 		}
 		return fn()
@@ -13,7 +13,7 @@ func DecorateRunnable(limiter RateLimiter, fn func() error) func() error {
 
 func DecorateSupplier[T any](limiter RateLimiter, fn func() (T, error)) func() (T, error) {
 	return func() (T, error) {
-		if err := limiter.acquirePermission(); err != nil {
+		if err := limiter.AcquirePermission(); err != nil {
 			return ge.Zero[T](), err
 		}
 		return fn()
@@ -22,7 +22,7 @@ func DecorateSupplier[T any](limiter RateLimiter, fn func() (T, error)) func() (
 
 func DecorateConsumer[T any](limiter RateLimiter, fn func(T) error) func(T) error {
 	return func(t T) error {
-		if err := limiter.acquirePermission(); err != nil {
+		if err := limiter.AcquirePermission(); err != nil {
 			return err
 		}
 		return fn(t)
@@ -31,7 +31,7 @@ func DecorateConsumer[T any](limiter RateLimiter, fn func(T) error) func(T) erro
 
 func DecorateFunction[T any, R any](limiter RateLimiter, fn func(T) (R, error)) func(T) (R, error) {
 	return func(t T) (R, error) {
-		if err := limiter.acquirePermission(); err != nil {
+		if err := limiter.AcquirePermission(); err != nil {
 			return ge.Zero[R](), err
 		}
 		return fn(t)

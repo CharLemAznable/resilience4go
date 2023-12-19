@@ -10,8 +10,7 @@ type TimeLimiter interface {
 	Name() string
 	Metrics() Metrics
 	EventListener() EventListener
-
-	execute(func() (any, error)) (any, error)
+	Execute(func() (any, error)) (any, error)
 }
 
 func NewTimeLimiter(name string, configs ...ConfigBuilder) TimeLimiter {
@@ -48,7 +47,7 @@ func (limiter *timeLimiter) EventListener() EventListener {
 	return limiter.eventListener
 }
 
-func (limiter *timeLimiter) execute(fn func() (any, error)) (any, error) {
+func (limiter *timeLimiter) Execute(fn func() (any, error)) (any, error) {
 	timeout, cancelFunc := context.WithTimeout(limiter.rootContext, limiter.config.timeoutDuration)
 	defer cancelFunc()
 	finished := make(chan *channelValue)

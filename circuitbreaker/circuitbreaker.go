@@ -17,11 +17,11 @@ type CircuitBreaker interface {
 	TransitionToClosedState() error
 	TransitionToOpenState() error
 	TransitionToHalfOpenState() error
+	Execute(func() (any, error)) (any, error)
 
-	config() *Config
-	execute(func() (any, error)) (any, error)
 	acquirePermission() error
 	publishThresholdsExceededEvent(metricsResult, Metrics)
+	config() *Config
 }
 
 func NewCircuitBreaker(name string, configs ...ConfigBuilder) CircuitBreaker {
@@ -108,11 +108,7 @@ func (machine *stateMachine) stateTransition(newStateName State, generator func(
 	return err
 }
 
-func (machine *stateMachine) config() *Config {
-	return machine.conf
-}
-
-func (machine *stateMachine) execute(fn func() (any, error)) (any, error) {
+func (machine *stateMachine) Execute(fn func() (any, error)) (any, error) {
 	if err := machine.acquirePermission(); err != nil {
 		machine.publishEvent(newNotPermittedEvent(machine.name))
 		return nil, err
@@ -164,6 +160,10 @@ func (machine *stateMachine) publishThresholdsExceededEvent(result metricsResult
 	if slowCallRateExceededThreshold(result) {
 		machine.publishEvent(newSlowCallRateExceededEvent(machine.name, metrics.SlowCallRate()))
 	}
+}
+
+func (machine *stateMachine) config() *Config {
+	return machine.conf
 }
 
 func (machine *stateMachine) loadState() *state {

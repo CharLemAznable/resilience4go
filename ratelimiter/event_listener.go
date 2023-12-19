@@ -6,47 +6,71 @@ import (
 )
 
 type EventListener interface {
-	OnSuccess(func(SuccessEvent)) EventListener
-	OnFailure(func(FailureEvent)) EventListener
-	Dismiss(any) EventListener
+	OnSuccessFunc(func(SuccessEvent)) EventListener
+	OnFailureFunc(func(FailureEvent)) EventListener
+	DismissSuccessFunc(func(SuccessEvent)) EventListener
+	DismissFailureFunc(func(FailureEvent)) EventListener
+
+	OnSuccess(ge.Action[SuccessEvent]) EventListener
+	OnFailure(ge.Action[FailureEvent]) EventListener
+	DismissSuccess(ge.Action[SuccessEvent]) EventListener
+	DismissFailure(ge.Action[FailureEvent]) EventListener
 }
 
 func newEventListener() *eventListener {
 	return &eventListener{
-		onSuccess: make([]func(SuccessEvent), 0),
-		onFailure: make([]func(FailureEvent), 0),
+		onSuccess: make([]ge.Action[SuccessEvent], 0),
+		onFailure: make([]ge.Action[FailureEvent], 0),
 	}
 }
 
 type eventListener struct {
 	sync.RWMutex
-	onSuccess []func(SuccessEvent)
-	onFailure []func(FailureEvent)
+	onSuccess []ge.Action[SuccessEvent]
+	onFailure []ge.Action[FailureEvent]
 }
 
-func (listener *eventListener) OnSuccess(consumer func(SuccessEvent)) EventListener {
+func (listener *eventListener) OnSuccessFunc(consumer func(SuccessEvent)) EventListener {
+	return listener.OnSuccess(ge.ActionFunc[SuccessEvent](consumer))
+}
+
+func (listener *eventListener) OnFailureFunc(consumer func(FailureEvent)) EventListener {
+	return listener.OnFailure(ge.ActionFunc[FailureEvent](consumer))
+}
+
+func (listener *eventListener) DismissSuccessFunc(consumer func(SuccessEvent)) EventListener {
+	return listener.DismissSuccess(ge.ActionFunc[SuccessEvent](consumer))
+}
+
+func (listener *eventListener) DismissFailureFunc(consumer func(FailureEvent)) EventListener {
+	return listener.DismissFailure(ge.ActionFunc[FailureEvent](consumer))
+}
+
+func (listener *eventListener) OnSuccess(action ge.Action[SuccessEvent]) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onSuccess = ge.AppendElementUnique(listener.onSuccess, consumer)
+	listener.onSuccess = ge.AppendElementUnique(listener.onSuccess, action)
 	return listener
 }
 
-func (listener *eventListener) OnFailure(consumer func(FailureEvent)) EventListener {
+func (listener *eventListener) OnFailure(action ge.Action[FailureEvent]) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onFailure = ge.AppendElementUnique(listener.onFailure, consumer)
+	listener.onFailure = ge.AppendElementUnique(listener.onFailure, action)
 	return listener
 }
 
-func (listener *eventListener) Dismiss(consumer any) EventListener {
+func (listener *eventListener) DismissSuccess(action ge.Action[SuccessEvent]) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	switch c := consumer.(type) {
-	case func(SuccessEvent):
-		listener.onSuccess = ge.RemoveElementByValue(listener.onSuccess, c)
-	case func(FailureEvent):
-		listener.onFailure = ge.RemoveElementByValue(listener.onFailure, c)
-	}
+	listener.onSuccess = ge.RemoveElementByValue(listener.onSuccess, action)
+	return listener
+}
+
+func (listener *eventListener) DismissFailure(action ge.Action[FailureEvent]) EventListener {
+	listener.Lock()
+	defer listener.Unlock()
+	listener.onFailure = ge.RemoveElementByValue(listener.onFailure, action)
 	return listener
 }
 
@@ -56,9 +80,9 @@ func (listener *eventListener) consumeEvent(event Event) {
 		defer listener.RUnlock()
 		switch e := event.(type) {
 		case *successEvent:
-			ge.ConsumeEach(listener.onSuccess, SuccessEvent(e))
+			ge.ForEach(listener.onSuccess, SuccessEvent(e))
 		case *failureEvent:
-			ge.ConsumeEach(listener.onFailure, FailureEvent(e))
+			ge.ForEach(listener.onFailure, FailureEvent(e))
 		}
 	}()
 }

@@ -11,8 +11,7 @@ type RateLimiter interface {
 	Name() string
 	Metrics() Metrics
 	EventListener() EventListener
-
-	acquirePermission() error
+	AcquirePermission() error
 }
 
 func NewRateLimiter(name string, configs ...ConfigBuilder) RateLimiter {
@@ -65,7 +64,7 @@ func (limiter *atomicRateLimiter) EventListener() EventListener {
 	return limiter.eventListener
 }
 
-func (limiter *atomicRateLimiter) acquirePermission() error {
+func (limiter *atomicRateLimiter) AcquirePermission() error {
 	timeoutInNanos := limiter.config.timeoutDuration.Nanoseconds()
 	modifiedState := limiter.updateStateWithBackOff(timeoutInNanos)
 	if limiter.waitForPermissionIfNecessary(timeoutInNanos, modifiedState.nanosToWait) {

@@ -43,7 +43,7 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, event)
 		}
 	}
-	eventListener.OnSuccess(onSuccess).OnTimeout(onTimeout).OnPanic(onPanic)
+	eventListener.OnSuccessFunc(onSuccess).OnTimeoutFunc(onTimeout).OnPanicFunc(onPanic)
 
 	// 创建一个可运行的函数
 	fn := func() error {
@@ -100,5 +100,5 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 	if metrics.PanicCount() != 1 {
 		t.Errorf("Expected 1 panic call, but got '%d'", metrics.PanicCount())
 	}
-	eventListener.Dismiss(onSuccess).Dismiss(onTimeout).Dismiss(onPanic)
+	eventListener.DismissSuccessFunc(onSuccess).DismissTimeoutFunc(onTimeout).DismissPanicFunc(onPanic)
 }

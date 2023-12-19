@@ -46,7 +46,7 @@ func TestSuccess(t *testing.T) {
 	onError := func(event retry.ErrorEvent) {
 		t.Error("Should not listen error event")
 	}
-	listener.OnSuccess(onSuccess).OnRetry(onRetry).OnError(onError)
+	listener.OnSuccessFunc(onSuccess).OnRetryFunc(onRetry).OnErrorFunc(onError)
 
 	var count atomic.Int64
 	fn := func() error {
@@ -80,7 +80,7 @@ func TestSuccess(t *testing.T) {
 		t.Errorf("Expected failed calls with retry attempt '0', but got '%d'",
 			metrics.NumberOfFailedCallsWithRetryAttempt())
 	}
-	listener.Dismiss(onSuccess).Dismiss(onRetry).Dismiss(onError)
+	listener.DismissSuccessFunc(onSuccess).DismissRetryFunc(onRetry).DismissErrorFunc(onError)
 }
 
 func TestError(t *testing.T) {
@@ -120,7 +120,7 @@ func TestError(t *testing.T) {
 			t.Errorf("Expected event string '%s', but got '%s'", expected, event)
 		}
 	}
-	listener.OnSuccess(onSuccess).OnRetry(onRetry).OnError(onError)
+	listener.OnSuccessFunc(onSuccess).OnRetryFunc(onRetry).OnErrorFunc(onError)
 
 	var count atomic.Int64
 	fn := func() error {
@@ -154,5 +154,5 @@ func TestError(t *testing.T) {
 		t.Errorf("Expected failed calls with retry attempt '1', but got '%d'",
 			metrics.NumberOfFailedCallsWithRetryAttempt())
 	}
-	listener.Dismiss(onSuccess).Dismiss(onRetry).Dismiss(onError)
+	listener.DismissSuccessFunc(onSuccess).DismissRetryFunc(onRetry).DismissErrorFunc(onError)
 }

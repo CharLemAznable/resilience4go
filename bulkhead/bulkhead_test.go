@@ -51,7 +51,7 @@ func TestBulkheadPublishEvents(t *testing.T) {
 		}
 		finished.Add(1)
 	}
-	eventListener.OnPermitted(onPermitted).OnRejected(onRejected).OnFinished(onFinished)
+	eventListener.OnPermittedFunc(onPermitted).OnRejectedFunc(onRejected).OnFinishedFunc(onFinished)
 
 	// 创建一个可运行的函数
 	fn := func() error {
@@ -86,5 +86,5 @@ func TestBulkheadPublishEvents(t *testing.T) {
 	if finished.Load() != 1 {
 		t.Errorf("Expected 1 finished call, but got '%d'", finished.Load())
 	}
-	eventListener.Dismiss(onPermitted).Dismiss(onRejected).Dismiss(onFinished)
+	eventListener.DismissPermittedFunc(onPermitted).DismissRejectedFunc(onRejected).DismissFinishedFunc(onFinished)
 }

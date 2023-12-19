@@ -77,9 +77,9 @@ func TestCircuitBreaker(t *testing.T) {
 	onSlowCallRateExceeded := func(event circuitbreaker.SlowCallRateExceededEvent) {
 		t.Error("should not listen slow call rate exceeded event")
 	}
-	listener.OnSuccess(onSuccess).OnError(onError).
-		OnNotPermitted(onNotPermitted).OnStateTransition(onStateTransition).
-		OnFailureRateExceeded(onFailureRateExceeded).OnSlowCallRateExceeded(onSlowCallRateExceeded)
+	listener.OnSuccessFunc(onSuccess).OnErrorFunc(onError).
+		OnNotPermittedFunc(onNotPermitted).OnStateTransitionFunc(onStateTransition).
+		OnFailureRateExceededFunc(onFailureRateExceeded).OnSlowCallRateExceededFunc(onSlowCallRateExceeded)
 
 	// 创建一个可运行的函数
 	var count atomic.Int64
@@ -207,9 +207,9 @@ func TestCircuitBreaker(t *testing.T) {
 	}
 
 	time.Sleep(time.Second)
-	listener.Dismiss(onSuccess).Dismiss(onError).
-		Dismiss(onNotPermitted).Dismiss(onStateTransition).
-		Dismiss(onFailureRateExceeded).Dismiss(onSlowCallRateExceeded)
+	listener.DismissSuccessFunc(onSuccess).DismissErrorFunc(onError).
+		DismissNotPermittedFunc(onNotPermitted).DismissStateTransitionFunc(onStateTransition).
+		DismissFailureRateExceededFunc(onFailureRateExceeded).DismissSlowCallRateExceededFunc(onSlowCallRateExceeded)
 }
 
 func TestCircuitBreakerSlow(t *testing.T) {
@@ -266,9 +266,9 @@ func TestCircuitBreakerSlow(t *testing.T) {
 			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, event)
 		}
 	}
-	listener.OnSuccess(onSuccess).OnError(onError).
-		OnNotPermitted(onNotPermitted).OnStateTransition(onStateTransition).
-		OnFailureRateExceeded(onFailureRateExceeded).OnSlowCallRateExceeded(onSlowCallRateExceeded)
+	listener.OnSuccessFunc(onSuccess).OnErrorFunc(onError).
+		OnNotPermittedFunc(onNotPermitted).OnStateTransitionFunc(onStateTransition).
+		OnFailureRateExceededFunc(onFailureRateExceeded).OnSlowCallRateExceededFunc(onSlowCallRateExceeded)
 
 	// 创建一个可运行的函数
 	fn := func(str string) (string, error) {
@@ -371,9 +371,9 @@ func TestCircuitBreakerSlow(t *testing.T) {
 	}
 
 	time.Sleep(time.Second)
-	listener.Dismiss(onSuccess).Dismiss(onError).
-		Dismiss(onNotPermitted).Dismiss(onStateTransition).
-		Dismiss(onFailureRateExceeded).Dismiss(onSlowCallRateExceeded)
+	listener.DismissSuccessFunc(onSuccess).DismissErrorFunc(onError).
+		DismissNotPermittedFunc(onNotPermitted).DismissStateTransitionFunc(onStateTransition).
+		DismissFailureRateExceededFunc(onFailureRateExceeded).DismissSlowCallRateExceededFunc(onSlowCallRateExceeded)
 }
 
 func TestCircuitBreakerHalfOpenError(t *testing.T) {

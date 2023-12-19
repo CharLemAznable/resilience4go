@@ -10,9 +10,7 @@ type Cache[K any, V any] interface {
 	Name() string
 	Metrics() Metrics
 	EventListener() EventListener
-
 	WithMarshalFn(func(V) any, func(any) V) Cache[K, V]
-
 	GetOrLoad(key K, loader func(K) (V, error)) (V, error)
 }
 

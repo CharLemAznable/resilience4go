@@ -10,8 +10,7 @@ type Retry interface {
 	Name() string
 	Metrics() Metrics
 	EventListener() EventListener
-
-	execute(func() (any, error)) (any, error)
+	Execute(func() (any, error)) (any, error)
 }
 
 func NewRetry(name string, configs ...ConfigBuilder) Retry {
@@ -46,7 +45,7 @@ func (r *retry) EventListener() EventListener {
 	return r.eventListener
 }
 
-func (r *retry) execute(fn func() (any, error)) (any, error) {
+func (r *retry) Execute(fn func() (any, error)) (any, error) {
 	context := r.executeOnce(fn)
 	if r.testResult(context) {
 		r.metrics.successfulCallsWithoutRetryAttemptIncrement()

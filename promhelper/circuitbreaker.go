@@ -21,10 +21,10 @@ func CircuitBreakerRegistry(entry circuitbreaker.CircuitBreaker, histogramBucket
 	collectors = append(collectors, notPermittedCallsCounter(entry))
 	registerFn, unregisterFn := buildRegisterFn(collectors...), buildUnregisterFn(collectors...)
 	return func(registerer prometheus.Registerer) error {
-			entry.EventListener().OnSuccess(onSuccess).OnError(onError)
+			entry.EventListener().OnSuccessFunc(onSuccess).OnErrorFunc(onError)
 			return registerFn(registerer)
 		}, func(registerer prometheus.Registerer) bool {
-			entry.EventListener().Dismiss(onSuccess).Dismiss(onError)
+			entry.EventListener().DismissSuccessFunc(onSuccess).DismissErrorFunc(onError)
 			return unregisterFn(registerer)
 		}
 }

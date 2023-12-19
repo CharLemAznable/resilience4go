@@ -6,95 +6,183 @@ import (
 )
 
 type EventListener interface {
-	OnSuccess(func(SuccessEvent)) EventListener
-	OnError(func(ErrorEvent)) EventListener
-	OnNotPermitted(func(NotPermittedEvent)) EventListener
-	OnStateTransition(func(StateTransitionEvent)) EventListener
-	OnFailureRateExceeded(func(FailureRateExceededEvent)) EventListener
-	OnSlowCallRateExceeded(func(SlowCallRateExceededEvent)) EventListener
-	Dismiss(any) EventListener
+	OnSuccessFunc(func(SuccessEvent)) EventListener
+	OnErrorFunc(func(ErrorEvent)) EventListener
+	OnNotPermittedFunc(func(NotPermittedEvent)) EventListener
+	OnStateTransitionFunc(func(StateTransitionEvent)) EventListener
+	OnFailureRateExceededFunc(func(FailureRateExceededEvent)) EventListener
+	OnSlowCallRateExceededFunc(func(SlowCallRateExceededEvent)) EventListener
+	DismissSuccessFunc(func(SuccessEvent)) EventListener
+	DismissErrorFunc(func(ErrorEvent)) EventListener
+	DismissNotPermittedFunc(func(NotPermittedEvent)) EventListener
+	DismissStateTransitionFunc(func(StateTransitionEvent)) EventListener
+	DismissFailureRateExceededFunc(func(FailureRateExceededEvent)) EventListener
+	DismissSlowCallRateExceededFunc(func(SlowCallRateExceededEvent)) EventListener
+
+	OnSuccess(ge.Action[SuccessEvent]) EventListener
+	OnError(ge.Action[ErrorEvent]) EventListener
+	OnNotPermitted(ge.Action[NotPermittedEvent]) EventListener
+	OnStateTransition(ge.Action[StateTransitionEvent]) EventListener
+	OnFailureRateExceeded(ge.Action[FailureRateExceededEvent]) EventListener
+	OnSlowCallRateExceeded(ge.Action[SlowCallRateExceededEvent]) EventListener
+	DismissSuccess(ge.Action[SuccessEvent]) EventListener
+	DismissError(ge.Action[ErrorEvent]) EventListener
+	DismissNotPermitted(ge.Action[NotPermittedEvent]) EventListener
+	DismissStateTransition(ge.Action[StateTransitionEvent]) EventListener
+	DismissFailureRateExceeded(ge.Action[FailureRateExceededEvent]) EventListener
+	DismissSlowCallRateExceeded(ge.Action[SlowCallRateExceededEvent]) EventListener
 }
 
 func newEventListener() *eventListener {
 	return &eventListener{
-		onSuccess:              make([]func(SuccessEvent), 0),
-		onError:                make([]func(ErrorEvent), 0),
-		onNotPermitted:         make([]func(NotPermittedEvent), 0),
-		onStateTransition:      make([]func(StateTransitionEvent), 0),
-		onFailureRateExceeded:  make([]func(FailureRateExceededEvent), 0),
-		onSlowCallRateExceeded: make([]func(SlowCallRateExceededEvent), 0),
+		onSuccess:              make([]ge.Action[SuccessEvent], 0),
+		onError:                make([]ge.Action[ErrorEvent], 0),
+		onNotPermitted:         make([]ge.Action[NotPermittedEvent], 0),
+		onStateTransition:      make([]ge.Action[StateTransitionEvent], 0),
+		onFailureRateExceeded:  make([]ge.Action[FailureRateExceededEvent], 0),
+		onSlowCallRateExceeded: make([]ge.Action[SlowCallRateExceededEvent], 0),
 	}
 }
 
 type eventListener struct {
 	sync.RWMutex
-	onSuccess              []func(SuccessEvent)
-	onError                []func(ErrorEvent)
-	onNotPermitted         []func(NotPermittedEvent)
-	onStateTransition      []func(StateTransitionEvent)
-	onFailureRateExceeded  []func(FailureRateExceededEvent)
-	onSlowCallRateExceeded []func(SlowCallRateExceededEvent)
+	onSuccess              []ge.Action[SuccessEvent]
+	onError                []ge.Action[ErrorEvent]
+	onNotPermitted         []ge.Action[NotPermittedEvent]
+	onStateTransition      []ge.Action[StateTransitionEvent]
+	onFailureRateExceeded  []ge.Action[FailureRateExceededEvent]
+	onSlowCallRateExceeded []ge.Action[SlowCallRateExceededEvent]
 }
 
-func (listener *eventListener) OnSuccess(consumer func(SuccessEvent)) EventListener {
+func (listener *eventListener) OnSuccessFunc(consumer func(SuccessEvent)) EventListener {
+	return listener.OnSuccess(ge.ActionFunc[SuccessEvent](consumer))
+}
+
+func (listener *eventListener) OnErrorFunc(consumer func(ErrorEvent)) EventListener {
+	return listener.OnError(ge.ActionFunc[ErrorEvent](consumer))
+}
+
+func (listener *eventListener) OnNotPermittedFunc(consumer func(NotPermittedEvent)) EventListener {
+	return listener.OnNotPermitted(ge.ActionFunc[NotPermittedEvent](consumer))
+}
+
+func (listener *eventListener) OnStateTransitionFunc(consumer func(StateTransitionEvent)) EventListener {
+	return listener.OnStateTransition(ge.ActionFunc[StateTransitionEvent](consumer))
+}
+
+func (listener *eventListener) OnFailureRateExceededFunc(consumer func(FailureRateExceededEvent)) EventListener {
+	return listener.OnFailureRateExceeded(ge.ActionFunc[FailureRateExceededEvent](consumer))
+}
+
+func (listener *eventListener) OnSlowCallRateExceededFunc(consumer func(SlowCallRateExceededEvent)) EventListener {
+	return listener.OnSlowCallRateExceeded(ge.ActionFunc[SlowCallRateExceededEvent](consumer))
+}
+
+func (listener *eventListener) DismissSuccessFunc(consumer func(SuccessEvent)) EventListener {
+	return listener.DismissSuccess(ge.ActionFunc[SuccessEvent](consumer))
+}
+
+func (listener *eventListener) DismissErrorFunc(consumer func(ErrorEvent)) EventListener {
+	return listener.DismissError(ge.ActionFunc[ErrorEvent](consumer))
+}
+
+func (listener *eventListener) DismissNotPermittedFunc(consumer func(NotPermittedEvent)) EventListener {
+	return listener.DismissNotPermitted(ge.ActionFunc[NotPermittedEvent](consumer))
+}
+
+func (listener *eventListener) DismissStateTransitionFunc(consumer func(StateTransitionEvent)) EventListener {
+	return listener.DismissStateTransition(ge.ActionFunc[StateTransitionEvent](consumer))
+}
+
+func (listener *eventListener) DismissFailureRateExceededFunc(consumer func(FailureRateExceededEvent)) EventListener {
+	return listener.DismissFailureRateExceeded(ge.ActionFunc[FailureRateExceededEvent](consumer))
+}
+
+func (listener *eventListener) DismissSlowCallRateExceededFunc(consumer func(SlowCallRateExceededEvent)) EventListener {
+	return listener.DismissSlowCallRateExceeded(ge.ActionFunc[SlowCallRateExceededEvent](consumer))
+}
+
+func (listener *eventListener) OnSuccess(action ge.Action[SuccessEvent]) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onSuccess = ge.AppendElementUnique(listener.onSuccess, consumer)
+	listener.onSuccess = ge.AppendElementUnique(listener.onSuccess, action)
 	return listener
 }
 
-func (listener *eventListener) OnError(consumer func(ErrorEvent)) EventListener {
+func (listener *eventListener) OnError(action ge.Action[ErrorEvent]) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onError = ge.AppendElementUnique(listener.onError, consumer)
+	listener.onError = ge.AppendElementUnique(listener.onError, action)
 	return listener
 }
 
-func (listener *eventListener) OnNotPermitted(consumer func(NotPermittedEvent)) EventListener {
+func (listener *eventListener) OnNotPermitted(action ge.Action[NotPermittedEvent]) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onNotPermitted = ge.AppendElementUnique(listener.onNotPermitted, consumer)
+	listener.onNotPermitted = ge.AppendElementUnique(listener.onNotPermitted, action)
 	return listener
 }
 
-func (listener *eventListener) OnStateTransition(consumer func(StateTransitionEvent)) EventListener {
+func (listener *eventListener) OnStateTransition(action ge.Action[StateTransitionEvent]) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onStateTransition = ge.AppendElementUnique(listener.onStateTransition, consumer)
+	listener.onStateTransition = ge.AppendElementUnique(listener.onStateTransition, action)
 	return listener
 }
 
-func (listener *eventListener) OnFailureRateExceeded(consumer func(FailureRateExceededEvent)) EventListener {
+func (listener *eventListener) OnFailureRateExceeded(action ge.Action[FailureRateExceededEvent]) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onFailureRateExceeded = ge.AppendElementUnique(listener.onFailureRateExceeded, consumer)
+	listener.onFailureRateExceeded = ge.AppendElementUnique(listener.onFailureRateExceeded, action)
 	return listener
 }
 
-func (listener *eventListener) OnSlowCallRateExceeded(consumer func(SlowCallRateExceededEvent)) EventListener {
+func (listener *eventListener) OnSlowCallRateExceeded(action ge.Action[SlowCallRateExceededEvent]) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	listener.onSlowCallRateExceeded = ge.AppendElementUnique(listener.onSlowCallRateExceeded, consumer)
+	listener.onSlowCallRateExceeded = ge.AppendElementUnique(listener.onSlowCallRateExceeded, action)
 	return listener
 }
 
-func (listener *eventListener) Dismiss(consumer any) EventListener {
+func (listener *eventListener) DismissSuccess(action ge.Action[SuccessEvent]) EventListener {
 	listener.Lock()
 	defer listener.Unlock()
-	switch c := consumer.(type) {
-	case func(SuccessEvent):
-		listener.onSuccess = ge.RemoveElementByValue(listener.onSuccess, c)
-	case func(ErrorEvent):
-		listener.onError = ge.RemoveElementByValue(listener.onError, c)
-	case func(NotPermittedEvent):
-		listener.onNotPermitted = ge.RemoveElementByValue(listener.onNotPermitted, c)
-	case func(StateTransitionEvent):
-		listener.onStateTransition = ge.RemoveElementByValue(listener.onStateTransition, c)
-	case func(FailureRateExceededEvent):
-		listener.onFailureRateExceeded = ge.RemoveElementByValue(listener.onFailureRateExceeded, c)
-	case func(SlowCallRateExceededEvent):
-		listener.onSlowCallRateExceeded = ge.RemoveElementByValue(listener.onSlowCallRateExceeded, c)
-	}
+	listener.onSuccess = ge.RemoveElementByValue(listener.onSuccess, action)
+	return listener
+}
+
+func (listener *eventListener) DismissError(action ge.Action[ErrorEvent]) EventListener {
+	listener.Lock()
+	defer listener.Unlock()
+	listener.onError = ge.RemoveElementByValue(listener.onError, action)
+	return listener
+}
+
+func (listener *eventListener) DismissNotPermitted(action ge.Action[NotPermittedEvent]) EventListener {
+	listener.Lock()
+	defer listener.Unlock()
+	listener.onNotPermitted = ge.RemoveElementByValue(listener.onNotPermitted, action)
+	return listener
+}
+
+func (listener *eventListener) DismissStateTransition(action ge.Action[StateTransitionEvent]) EventListener {
+	listener.Lock()
+	defer listener.Unlock()
+	listener.onStateTransition = ge.RemoveElementByValue(listener.onStateTransition, action)
+	return listener
+}
+
+func (listener *eventListener) DismissFailureRateExceeded(action ge.Action[FailureRateExceededEvent]) EventListener {
+	listener.Lock()
+	defer listener.Unlock()
+	listener.onFailureRateExceeded = ge.RemoveElementByValue(listener.onFailureRateExceeded, action)
+	return listener
+}
+
+func (listener *eventListener) DismissSlowCallRateExceeded(action ge.Action[SlowCallRateExceededEvent]) EventListener {
+	listener.Lock()
+	defer listener.Unlock()
+	listener.onSlowCallRateExceeded = ge.RemoveElementByValue(listener.onSlowCallRateExceeded, action)
 	return listener
 }
 
@@ -104,17 +192,17 @@ func (listener *eventListener) consumeEvent(event Event) {
 		defer listener.RUnlock()
 		switch e := event.(type) {
 		case *successEvent:
-			ge.ConsumeEach(listener.onSuccess, SuccessEvent(e))
+			ge.ForEach(listener.onSuccess, SuccessEvent(e))
 		case *errorEvent:
-			ge.ConsumeEach(listener.onError, ErrorEvent(e))
+			ge.ForEach(listener.onError, ErrorEvent(e))
 		case *notPermittedEvent:
-			ge.ConsumeEach(listener.onNotPermitted, NotPermittedEvent(e))
+			ge.ForEach(listener.onNotPermitted, NotPermittedEvent(e))
 		case *stateTransitionEvent:
-			ge.ConsumeEach(listener.onStateTransition, StateTransitionEvent(e))
+			ge.ForEach(listener.onStateTransition, StateTransitionEvent(e))
 		case *failureRateExceededEvent:
-			ge.ConsumeEach(listener.onFailureRateExceeded, FailureRateExceededEvent(e))
+			ge.ForEach(listener.onFailureRateExceeded, FailureRateExceededEvent(e))
 		case *slowCallRateExceededEvent:
-			ge.ConsumeEach(listener.onSlowCallRateExceeded, SlowCallRateExceededEvent(e))
+			ge.ForEach(listener.onSlowCallRateExceeded, SlowCallRateExceededEvent(e))
 		}
 	}()
 }

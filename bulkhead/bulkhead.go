@@ -10,9 +10,8 @@ type Bulkhead interface {
 	Name() string
 	Metrics() Metrics
 	EventListener() EventListener
-
-	acquire() error
-	release()
+	Acquire() error
+	Release()
 }
 
 func NewBulkhead(name string, configs ...ConfigBuilder) Bulkhead {
@@ -51,7 +50,7 @@ func (bulkhead *semaphoreBulkhead) EventListener() EventListener {
 	return bulkhead.eventListener
 }
 
-func (bulkhead *semaphoreBulkhead) acquire() error {
+func (bulkhead *semaphoreBulkhead) Acquire() error {
 	permitted := func() bool {
 		timeout, cancelFn := context.WithTimeout(
 			bulkhead.rootContext,
@@ -75,7 +74,7 @@ func (bulkhead *semaphoreBulkhead) acquire() error {
 	return &FullError{name: bulkhead.name}
 }
 
-func (bulkhead *semaphoreBulkhead) release() {
+func (bulkhead *semaphoreBulkhead) Release() {
 	bulkhead.semaphore.Release(1)
 	bulkhead.metrics.release(1)
 	bulkhead.eventListener.consumeEvent(newFinishedEvent(bulkhead.name))

@@ -46,7 +46,7 @@ func TestCache(t *testing.T) {
 		}
 		misses.Add(1)
 	}
-	eventListener.OnCacheHit(onCacheHit).OnCacheMiss(onCacheMiss)
+	eventListener.OnCacheHitFunc(onCacheHit).OnCacheMissFunc(onCacheMiss)
 
 	// fail with no error, max retries exceeded
 	fn := func(key string) (string, error) {
@@ -92,5 +92,5 @@ func TestCache(t *testing.T) {
 	if misses.Load() != 2 {
 		t.Errorf("Expected 2 miss calls, but got '%d'", misses.Load())
 	}
-	eventListener.Dismiss(onCacheHit).Dismiss(onCacheMiss)
+	eventListener.DismissCacheHitFunc(onCacheHit).DismissCacheMissFunc(onCacheMiss)
 }

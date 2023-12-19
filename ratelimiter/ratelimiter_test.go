@@ -47,7 +47,7 @@ func TestRateLimiterPublishEvents(t *testing.T) {
 		}
 		failure.Add(1)
 	}
-	eventListener.OnSuccess(onSuccess).OnFailure(onFailure)
+	eventListener.OnSuccessFunc(onSuccess).OnFailureFunc(onFailure)
 
 	// 创建一个可运行的函数
 	fn := func() error {
@@ -70,5 +70,5 @@ func TestRateLimiterPublishEvents(t *testing.T) {
 	if failure.Load() != 1 {
 		t.Errorf("Expected 1 failure call, but got '%d'", failure.Load())
 	}
-	eventListener.Dismiss(onSuccess).Dismiss(onFailure)
+	eventListener.DismissSuccessFunc(onSuccess).DismissFailureFunc(onFailure)
 }
