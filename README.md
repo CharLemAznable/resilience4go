@@ -44,13 +44,13 @@ metrics.AvailableConcurrentCalls() // 当前可用的并发余量
 
 // 事件监听
 listener := entry.EventListener()
-listener.OnPermitted(func(PermittedEvent) {
+listener.OnPermittedFunc(func(PermittedEvent) {
 	// goroutine被允许进入并发
 })
-listener.OnRejected(func(RejectedEvent) {
+listener.OnRejectedFunc(func(RejectedEvent) {
 	// goroutine被拒绝进入并发
 })
-listener.OnFinished(func(FinishedEvent) {
+listener.OnFinishedFunc(func(FinishedEvent) {
 	// goroutine执行完成
 })
 
@@ -85,13 +85,13 @@ metrics.PanicCount() // 执行发生panic计数
 
 // 事件监听
 listener := entry.EventListener()
-listener.OnSuccess(func(SuccessEvent) {
+listener.OnSuccessFunc(func(SuccessEvent) {
 	// 执行完成
 })
-listener.OnTimeout(func(TimeoutEvent) {
+listener.OnTimeoutFunc(func(TimeoutEvent) {
 	// 执行超时
 })
-listener.OnPanic(func(PanicEvent) {
+listener.OnPanicFunc(func(PanicEvent) {
 	// 执行发生panic
 })
 
@@ -127,10 +127,10 @@ metrics.AvailablePermissions() // 剩余可用的并发数量
 
 // 事件监听
 listener := entry.EventListener()
-listener.OnSuccess(func(SuccessEvent) {
+listener.OnSuccessFunc(func(SuccessEvent) {
 	// goroutine被允许并发
 })
-listener.OnFailure(func(FailureEvent) {
+listener.OnFailureFunc(func(FailureEvent) {
 	// goroutine被限制并发
 })
 
@@ -179,22 +179,22 @@ metrics.NumberOfNotPermittedCalls() // 断路调用量计数
 
 // 事件监听
 listener := entry.EventListener()
-listener.OnSuccess(func(SuccessEvent) {
+listener.OnSuccessFunc(func(SuccessEvent) {
 	// 成功调用
 })
-listener.OnError(func(ErrorEvent) {
+listener.OnErrorFunc(func(ErrorEvent) {
 	// 失败调用
 })
-listener.OnNotPermitted(func(NotPermittedEvent) {
+listener.OnNotPermittedFunc(func(NotPermittedEvent) {
 	// 断路调用
 })
-listener.OnStateTransition(func(StateTransitionEvent) {
+listener.OnStateTransitionFunc(func(StateTransitionEvent) {
 	// 断路器状态转换
 })
-listener.OnFailureRateExceeded(func(FailureRateExceededEvent) {
+listener.OnFailureRateExceededFunc(func(FailureRateExceededEvent) {
 	// 失败调用率到达阈值
 })
-listener.OnSlowCallRateExceeded(func(SlowCallRateExceededEvent) {
+listener.OnSlowCallRateExceededFunc(func(SlowCallRateExceededEvent) {
 	// 慢调用率到达阈值
 })
 
@@ -233,13 +233,13 @@ metrics.NumberOfFailedCallsWithRetryAttempt() // 重试失败调用计数
 
 // 事件监听
 listener := entry.EventListener()
-listener.OnSuccess(func(SuccessEvent) {
+listener.OnSuccessFunc(func(SuccessEvent) {
 	// 重试成功调用
 })
-listener.OnRetry(func(RetryEvent) {
+listener.OnRetryFunc(func(RetryEvent) {
 	// 即将重试调用
 })
-listener.OnError(func(ErrorEvent) {
+listener.OnErrorFunc(func(ErrorEvent) {
 	// 失败调用
 })
 
@@ -348,10 +348,10 @@ metrics.NumberOfCacheMisses() // 缓存未命中计数
 
 // 事件监听
 listener := entry.EventListener()
-listener.OnCacheHit(func(HitEvent) {
+listener.OnCacheHitFunc(func(HitEvent) {
 	// 缓存命中
 })
-listener.OnCacheMiss(func(MissEvent) {
+listener.OnCacheMissFunc(func(MissEvent) {
 	// 缓存未命中
 })
 
