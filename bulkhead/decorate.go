@@ -1,6 +1,6 @@
 package bulkhead
 
-import "github.com/CharLemAznable/ge"
+import "github.com/CharLemAznable/gogo/lang"
 
 func DecorateRunnable(bulkhead Bulkhead, fn func() error) func() error {
 	return func() error {
@@ -15,7 +15,7 @@ func DecorateRunnable(bulkhead Bulkhead, fn func() error) func() error {
 func DecorateSupplier[T any](bulkhead Bulkhead, fn func() (T, error)) func() (T, error) {
 	return func() (T, error) {
 		if err := bulkhead.Acquire(); err != nil {
-			return ge.Zero[T](), err
+			return lang.Zero[T](), err
 		}
 		defer bulkhead.Release()
 		return fn()
@@ -35,7 +35,7 @@ func DecorateConsumer[T any](bulkhead Bulkhead, fn func(T) error) func(T) error 
 func DecorateFunction[T any, R any](bulkhead Bulkhead, fn func(T) (R, error)) func(T) (R, error) {
 	return func(t T) (R, error) {
 		if err := bulkhead.Acquire(); err != nil {
-			return ge.Zero[R](), err
+			return lang.Zero[R](), err
 		}
 		defer bulkhead.Release()
 		return fn(t)

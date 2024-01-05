@@ -1,13 +1,12 @@
 package promhelper_test
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
-	"testing"
-
 	"github.com/CharLemAznable/resilience4go/bulkhead"
 	"github.com/CharLemAznable/resilience4go/promhelper"
+	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"google.golang.org/protobuf/proto"
+	"testing"
 )
 
 func TestBulkheadRegistry(t *testing.T) {

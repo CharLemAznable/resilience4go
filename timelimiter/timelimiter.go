@@ -3,7 +3,7 @@ package timelimiter
 import (
 	"context"
 	"fmt"
-	"github.com/CharLemAznable/ge"
+	"github.com/CharLemAznable/gogo/lang"
 )
 
 type TimeLimiter interface {
@@ -51,7 +51,7 @@ func (limiter *timeLimiter) Execute(fn func() (any, error)) (any, error) {
 	timeout, cancelFunc := context.WithTimeout(limiter.rootContext, limiter.config.timeoutDuration)
 	defer cancelFunc()
 	finished := make(chan *channelValue)
-	panicked := make(ge.Panicked)
+	panicked := make(lang.Panicked)
 	go func() {
 		defer panicked.Recover()
 		ret, err := fn()

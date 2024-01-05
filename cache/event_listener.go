@@ -1,8 +1,8 @@
 package cache
 
 import (
-	"github.com/CharLemAznable/ge"
-	"sync"
+	"github.com/CharLemAznable/gogo/ext"
+	"github.com/CharLemAznable/gogo/fn"
 )
 
 type EventListener interface {
@@ -11,78 +11,67 @@ type EventListener interface {
 	DismissCacheHitFunc(func(HitEvent)) EventListener
 	DismissCacheMissFunc(func(MissEvent)) EventListener
 
-	OnCacheHit(ge.Action[HitEvent]) EventListener
-	OnCacheMiss(ge.Action[MissEvent]) EventListener
-	DismissCacheHit(ge.Action[HitEvent]) EventListener
-	DismissCacheMiss(ge.Action[MissEvent]) EventListener
+	OnCacheHit(fn.Consumer[HitEvent]) EventListener
+	OnCacheMiss(fn.Consumer[MissEvent]) EventListener
+	DismissCacheHit(fn.Consumer[HitEvent]) EventListener
+	DismissCacheMiss(fn.Consumer[MissEvent]) EventListener
 }
 
 func newEventListener() *eventListener {
 	return &eventListener{
-		onCacheHit:  make([]ge.Action[HitEvent], 0),
-		onCacheMiss: make([]ge.Action[MissEvent], 0),
+		onCacheHit:  ext.NewConsumers[HitEvent](),
+		onCacheMiss: ext.NewConsumers[MissEvent](),
 	}
 }
 
 type eventListener struct {
-	sync.RWMutex
-	onCacheHit  []ge.Action[HitEvent]
-	onCacheMiss []ge.Action[MissEvent]
+	onCacheHit  ext.Consumers[HitEvent]
+	onCacheMiss ext.Consumers[MissEvent]
 }
 
 func (listener *eventListener) OnCacheHitFunc(consumer func(HitEvent)) EventListener {
-	return listener.OnCacheHit(ge.ActionFunc[HitEvent](consumer))
+	return listener.OnCacheHit(fn.ConsumerOf(consumer))
 }
 
 func (listener *eventListener) OnCacheMissFunc(consumer func(MissEvent)) EventListener {
-	return listener.OnCacheMiss(ge.ActionFunc[MissEvent](consumer))
+	return listener.OnCacheMiss(fn.ConsumerOf(consumer))
 }
 
 func (listener *eventListener) DismissCacheHitFunc(consumer func(HitEvent)) EventListener {
-	return listener.DismissCacheHit(ge.ActionFunc[HitEvent](consumer))
+	return listener.DismissCacheHit(fn.ConsumerOf(consumer))
 }
 
 func (listener *eventListener) DismissCacheMissFunc(consumer func(MissEvent)) EventListener {
-	return listener.DismissCacheMiss(ge.ActionFunc[MissEvent](consumer))
+	return listener.DismissCacheMiss(fn.ConsumerOf(consumer))
 }
 
-func (listener *eventListener) OnCacheHit(consumer ge.Action[HitEvent]) EventListener {
-	listener.Lock()
-	defer listener.Unlock()
-	listener.onCacheHit = ge.AppendElementUnique(listener.onCacheHit, consumer)
+func (listener *eventListener) OnCacheHit(consumer fn.Consumer[HitEvent]) EventListener {
+	listener.onCacheHit.AppendConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) OnCacheMiss(consumer ge.Action[MissEvent]) EventListener {
-	listener.Lock()
-	defer listener.Unlock()
-	listener.onCacheMiss = ge.AppendElementUnique(listener.onCacheMiss, consumer)
+func (listener *eventListener) OnCacheMiss(consumer fn.Consumer[MissEvent]) EventListener {
+	listener.onCacheMiss.AppendConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) DismissCacheHit(consumer ge.Action[HitEvent]) EventListener {
-	listener.Lock()
-	defer listener.Unlock()
-	listener.onCacheHit = ge.RemoveElementByValue(listener.onCacheHit, consumer)
+func (listener *eventListener) DismissCacheHit(consumer fn.Consumer[HitEvent]) EventListener {
+	listener.onCacheHit.RemoveConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) DismissCacheMiss(consumer ge.Action[MissEvent]) EventListener {
-	listener.Lock()
-	defer listener.Unlock()
-	listener.onCacheMiss = ge.RemoveElementByValue(listener.onCacheMiss, consumer)
+func (listener *eventListener) DismissCacheMiss(consumer fn.Consumer[MissEvent]) EventListener {
+	listener.onCacheMiss.RemoveConsumer(consumer)
 	return listener
 }
 
 func (listener *eventListener) consumeEvent(event Event) {
 	go func() {
-		listener.RLock()
-		defer listener.RUnlock()
 		switch e := event.(type) {
 		case *hitEvent:
-			ge.ForEach(listener.onCacheHit, HitEvent(e))
+			listener.onCacheHit.Accept(HitEvent(e))
 		case *missEvent:
-			ge.ForEach(listener.onCacheMiss, MissEvent(e))
+			listener.onCacheMiss.Accept(MissEvent(e))
 		}
 	}()
 }

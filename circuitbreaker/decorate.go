@@ -1,6 +1,6 @@
 package circuitbreaker
 
-import "github.com/CharLemAznable/ge"
+import "github.com/CharLemAznable/gogo/lang"
 
 func DecorateRunnable(breaker CircuitBreaker, fn func() error) func() error {
 	return func() error {
@@ -16,7 +16,7 @@ func DecorateSupplier[T any](breaker CircuitBreaker, fn func() (T, error)) func(
 		ret, err := breaker.Execute(func() (any, error) {
 			return fn()
 		})
-		return ge.CastQuietly[T](ret), err
+		return lang.CastQuietly[T](ret), err
 	}
 }
 
@@ -34,6 +34,6 @@ func DecorateFunction[T any, R any](breaker CircuitBreaker, fn func(T) (R, error
 		ret, err := breaker.Execute(func() (any, error) {
 			return fn(t)
 		})
-		return ge.CastQuietly[R](ret), err
+		return lang.CastQuietly[R](ret), err
 	}
 }

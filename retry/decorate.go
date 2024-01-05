@@ -1,6 +1,6 @@
 package retry
 
-import "github.com/CharLemAznable/ge"
+import "github.com/CharLemAznable/gogo/lang"
 
 func DecorateRunnable(retry Retry, fn func() error) func() error {
 	return func() error {
@@ -16,7 +16,7 @@ func DecorateSupplier[T any](retry Retry, fn func() (T, error)) func() (T, error
 		ret, err := retry.Execute(func() (any, error) {
 			return fn()
 		})
-		return ge.CastQuietly[T](ret), err
+		return lang.CastQuietly[T](ret), err
 	}
 }
 
@@ -34,6 +34,6 @@ func DecorateFunction[T any, R any](retry Retry, fn func(T) (R, error)) func(T) 
 		ret, err := retry.Execute(func() (any, error) {
 			return fn(t)
 		})
-		return ge.CastQuietly[R](ret), err
+		return lang.CastQuietly[R](ret), err
 	}
 }

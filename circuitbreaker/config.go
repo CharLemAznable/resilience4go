@@ -2,7 +2,7 @@ package circuitbreaker
 
 import (
 	"fmt"
-	"github.com/CharLemAznable/ge"
+	"github.com/CharLemAznable/gogo/lang"
 	"time"
 )
 
@@ -71,7 +71,7 @@ func WithSlidingWindow(slidingWindowType SlidingWindowType, slidingWindowSize in
 		config.slidingWindowType = slidingWindowType
 		config.slidingWindowSize = slidingWindowSize
 		if CountBased == slidingWindowType {
-			config.minimumNumberOfCalls = ge.Min(minimumNumberOfCalls, slidingWindowSize)
+			config.minimumNumberOfCalls = lang.Min(minimumNumberOfCalls, slidingWindowSize)
 		} else {
 			config.minimumNumberOfCalls = minimumNumberOfCalls
 		}

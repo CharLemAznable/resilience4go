@@ -1,6 +1,6 @@
 package ratelimiter
 
-import "github.com/CharLemAznable/ge"
+import "github.com/CharLemAznable/gogo/lang"
 
 func DecorateRunnable(limiter RateLimiter, fn func() error) func() error {
 	return func() error {
@@ -14,7 +14,7 @@ func DecorateRunnable(limiter RateLimiter, fn func() error) func() error {
 func DecorateSupplier[T any](limiter RateLimiter, fn func() (T, error)) func() (T, error) {
 	return func() (T, error) {
 		if err := limiter.AcquirePermission(); err != nil {
-			return ge.Zero[T](), err
+			return lang.Zero[T](), err
 		}
 		return fn()
 	}
@@ -32,7 +32,7 @@ func DecorateConsumer[T any](limiter RateLimiter, fn func(T) error) func(T) erro
 func DecorateFunction[T any, R any](limiter RateLimiter, fn func(T) (R, error)) func(T) (R, error) {
 	return func(t T) (R, error) {
 		if err := limiter.AcquirePermission(); err != nil {
-			return ge.Zero[R](), err
+			return lang.Zero[R](), err
 		}
 		return fn(t)
 	}

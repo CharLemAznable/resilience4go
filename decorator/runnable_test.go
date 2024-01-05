@@ -2,14 +2,13 @@ package decorator_test
 
 import (
 	"errors"
-	"github.com/CharLemAznable/resilience4go/decorator"
-	"testing"
-
 	"github.com/CharLemAznable/resilience4go/bulkhead"
 	"github.com/CharLemAznable/resilience4go/circuitbreaker"
+	"github.com/CharLemAznable/resilience4go/decorator"
 	"github.com/CharLemAznable/resilience4go/ratelimiter"
 	"github.com/CharLemAznable/resilience4go/retry"
 	"github.com/CharLemAznable/resilience4go/timelimiter"
+	"testing"
 )
 
 func TestDecorateRunnable(t *testing.T) {

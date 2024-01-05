@@ -2,7 +2,7 @@ package retry
 
 import (
 	"fmt"
-	"github.com/CharLemAznable/ge"
+	"github.com/CharLemAznable/gogo/lang"
 	"time"
 )
 
@@ -69,7 +69,7 @@ func (r *retry) Execute(fn func() (any, error)) (any, error) {
 	r.publishEvent(newErrorEvent(r.name,
 		numOfAttempts, context.ret, context.err))
 	if r.config.failAfterMaxAttempts {
-		context.err = ge.DefaultErrorFn(context.err, func() error {
+		context.err = lang.DefaultErrorFn(context.err, func() error {
 			return &MaxRetriesExceeded{name: r.name, maxAttempts: r.config.maxAttempts}
 		})
 	}
@@ -83,7 +83,7 @@ func (r *retry) Execute(fn func() (any, error)) (any, error) {
 
 func (r *retry) executeOnce(fn func() (any, error)) *channelValue {
 	finished := make(chan *channelValue)
-	panicked := make(ge.Panicked)
+	panicked := make(lang.Panicked)
 	go func() {
 		defer panicked.Recover()
 		ret, err := fn()
@@ -93,7 +93,7 @@ func (r *retry) executeOnce(fn func() (any, error)) *channelValue {
 	case result := <-finished:
 		return result
 	case err := <-panicked.Caught():
-		return &channelValue{nil, ge.WrapPanic(err), err}
+		return &channelValue{nil, lang.WrapPanic(err), err}
 	}
 }
 

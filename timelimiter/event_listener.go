@@ -1,8 +1,8 @@
 package timelimiter
 
 import (
-	"github.com/CharLemAznable/ge"
-	"sync"
+	"github.com/CharLemAznable/gogo/ext"
+	"github.com/CharLemAznable/gogo/fn"
 )
 
 type EventListener interface {
@@ -13,106 +13,91 @@ type EventListener interface {
 	DismissTimeoutFunc(func(TimeoutEvent)) EventListener
 	DismissPanicFunc(func(PanicEvent)) EventListener
 
-	OnSuccess(ge.Action[SuccessEvent]) EventListener
-	OnTimeout(ge.Action[TimeoutEvent]) EventListener
-	OnPanic(ge.Action[PanicEvent]) EventListener
-	DismissSuccess(ge.Action[SuccessEvent]) EventListener
-	DismissTimeout(ge.Action[TimeoutEvent]) EventListener
-	DismissPanic(ge.Action[PanicEvent]) EventListener
+	OnSuccess(fn.Consumer[SuccessEvent]) EventListener
+	OnTimeout(fn.Consumer[TimeoutEvent]) EventListener
+	OnPanic(fn.Consumer[PanicEvent]) EventListener
+	DismissSuccess(fn.Consumer[SuccessEvent]) EventListener
+	DismissTimeout(fn.Consumer[TimeoutEvent]) EventListener
+	DismissPanic(fn.Consumer[PanicEvent]) EventListener
 }
 
 func newEventListener() *eventListener {
 	return &eventListener{
-		onSuccess: make([]ge.Action[SuccessEvent], 0),
-		onTimeout: make([]ge.Action[TimeoutEvent], 0),
-		onPanic:   make([]ge.Action[PanicEvent], 0),
+		onSuccess: ext.NewConsumers[SuccessEvent](),
+		onTimeout: ext.NewConsumers[TimeoutEvent](),
+		onPanic:   ext.NewConsumers[PanicEvent](),
 	}
 }
 
 type eventListener struct {
-	sync.RWMutex
-	onSuccess []ge.Action[SuccessEvent]
-	onTimeout []ge.Action[TimeoutEvent]
-	onPanic   []ge.Action[PanicEvent]
+	onSuccess ext.Consumers[SuccessEvent]
+	onTimeout ext.Consumers[TimeoutEvent]
+	onPanic   ext.Consumers[PanicEvent]
 }
 
 func (listener *eventListener) OnSuccessFunc(consumer func(SuccessEvent)) EventListener {
-	return listener.OnSuccess(ge.ActionFunc[SuccessEvent](consumer))
+	return listener.OnSuccess(fn.ConsumerOf(consumer))
 }
 
 func (listener *eventListener) OnTimeoutFunc(consumer func(TimeoutEvent)) EventListener {
-	return listener.OnTimeout(ge.ActionFunc[TimeoutEvent](consumer))
+	return listener.OnTimeout(fn.ConsumerOf(consumer))
 }
 
 func (listener *eventListener) OnPanicFunc(consumer func(PanicEvent)) EventListener {
-	return listener.OnPanic(ge.ActionFunc[PanicEvent](consumer))
+	return listener.OnPanic(fn.ConsumerOf(consumer))
 }
 
 func (listener *eventListener) DismissSuccessFunc(consumer func(SuccessEvent)) EventListener {
-	return listener.DismissSuccess(ge.ActionFunc[SuccessEvent](consumer))
+	return listener.DismissSuccess(fn.ConsumerOf(consumer))
 }
 
 func (listener *eventListener) DismissTimeoutFunc(consumer func(TimeoutEvent)) EventListener {
-	return listener.DismissTimeout(ge.ActionFunc[TimeoutEvent](consumer))
+	return listener.DismissTimeout(fn.ConsumerOf(consumer))
 }
 
 func (listener *eventListener) DismissPanicFunc(consumer func(PanicEvent)) EventListener {
-	return listener.DismissPanic(ge.ActionFunc[PanicEvent](consumer))
+	return listener.DismissPanic(fn.ConsumerOf(consumer))
 }
 
-func (listener *eventListener) OnSuccess(action ge.Action[SuccessEvent]) EventListener {
-	listener.Lock()
-	defer listener.Unlock()
-	listener.onSuccess = ge.AppendElementUnique(listener.onSuccess, action)
+func (listener *eventListener) OnSuccess(consumer fn.Consumer[SuccessEvent]) EventListener {
+	listener.onSuccess.AppendConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) OnTimeout(action ge.Action[TimeoutEvent]) EventListener {
-	listener.Lock()
-	defer listener.Unlock()
-	listener.onTimeout = ge.AppendElementUnique(listener.onTimeout, action)
+func (listener *eventListener) OnTimeout(consumer fn.Consumer[TimeoutEvent]) EventListener {
+	listener.onTimeout.AppendConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) OnPanic(action ge.Action[PanicEvent]) EventListener {
-	listener.Lock()
-	defer listener.Unlock()
-	listener.onPanic = ge.AppendElementUnique(listener.onPanic, action)
+func (listener *eventListener) OnPanic(consumer fn.Consumer[PanicEvent]) EventListener {
+	listener.onPanic.AppendConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) DismissSuccess(action ge.Action[SuccessEvent]) EventListener {
-	listener.Lock()
-	defer listener.Unlock()
-	listener.onSuccess = ge.RemoveElementByValue(listener.onSuccess, action)
+func (listener *eventListener) DismissSuccess(consumer fn.Consumer[SuccessEvent]) EventListener {
+	listener.onSuccess.RemoveConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) DismissTimeout(action ge.Action[TimeoutEvent]) EventListener {
-	listener.Lock()
-	defer listener.Unlock()
-	listener.onTimeout = ge.RemoveElementByValue(listener.onTimeout, action)
+func (listener *eventListener) DismissTimeout(consumer fn.Consumer[TimeoutEvent]) EventListener {
+	listener.onTimeout.RemoveConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) DismissPanic(action ge.Action[PanicEvent]) EventListener {
-	listener.Lock()
-	defer listener.Unlock()
-	listener.onPanic = ge.RemoveElementByValue(listener.onPanic, action)
+func (listener *eventListener) DismissPanic(consumer fn.Consumer[PanicEvent]) EventListener {
+	listener.onPanic.RemoveConsumer(consumer)
 	return listener
 }
 
 func (listener *eventListener) consumeEvent(event Event) {
 	go func() {
-		listener.RLock()
-		defer listener.RUnlock()
 		switch e := event.(type) {
 		case *successEvent:
-			ge.ForEach(listener.onSuccess, SuccessEvent(e))
+			listener.onSuccess.Accept(SuccessEvent(e))
 		case *timeoutEvent:
-			ge.ForEach(listener.onTimeout, TimeoutEvent(e))
+			listener.onTimeout.Accept(TimeoutEvent(e))
 		case *panicEvent:
-			ge.ForEach(listener.onPanic, PanicEvent(e))
+			listener.onPanic.Accept(PanicEvent(e))
 		}
 	}()
 }
