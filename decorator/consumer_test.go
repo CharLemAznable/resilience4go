@@ -2,6 +2,7 @@ package decorator_test
 
 import (
 	"errors"
+	. "github.com/CharLemAznable/gogo/fn"
 	"github.com/CharLemAznable/resilience4go/bulkhead"
 	"github.com/CharLemAznable/resilience4go/circuitbreaker"
 	"github.com/CharLemAznable/resilience4go/decorator"
@@ -13,9 +14,9 @@ import (
 
 func TestDecorateConsumer(t *testing.T) {
 	decorateConsumer := decorator.
-		OfConsumer(func(str string) error {
+		OfConsumer(ConsumerCast(func(str string) error {
 			return errors.New("error")
-		}).
+		})).
 		WithBulkhead(bulkhead.NewBulkhead("test")).
 		WhenFull(func(_ string) error {
 			return nil
@@ -46,16 +47,11 @@ func TestDecorateConsumer(t *testing.T) {
 	if decorateConsumer == nil {
 		t.Error("Expected non-nil decoratedConsumer")
 	}
-	err := decorateConsumer("test")
-	if err != nil {
-		t.Errorf("Expected error is nil, but got '%v'", err)
-	}
-
 	decoratedConsumer := decorateConsumer.Decorate()
 	if decoratedConsumer == nil {
 		t.Error("Expected non-nil decoratedConsumer")
 	}
-	err = decoratedConsumer("test")
+	err := decoratedConsumer.CheckedAccept("test")
 	if err != nil {
 		t.Errorf("Expected error is nil, but got '%v'", err)
 	}

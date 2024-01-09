@@ -2,7 +2,7 @@ package retry
 
 import (
 	"github.com/CharLemAznable/gogo/ext"
-	"github.com/CharLemAznable/gogo/fn"
+	. "github.com/CharLemAznable/gogo/fn"
 )
 
 type EventListener interface {
@@ -13,12 +13,12 @@ type EventListener interface {
 	DismissRetryFunc(func(RetryEvent)) EventListener
 	DismissErrorFunc(func(ErrorEvent)) EventListener
 
-	OnSuccess(fn.Consumer[SuccessEvent]) EventListener
-	OnRetry(fn.Consumer[RetryEvent]) EventListener
-	OnError(fn.Consumer[ErrorEvent]) EventListener
-	DismissSuccess(fn.Consumer[SuccessEvent]) EventListener
-	DismissRetry(fn.Consumer[RetryEvent]) EventListener
-	DismissError(fn.Consumer[ErrorEvent]) EventListener
+	OnSuccess(Consumer[SuccessEvent]) EventListener
+	OnRetry(Consumer[RetryEvent]) EventListener
+	OnError(Consumer[ErrorEvent]) EventListener
+	DismissSuccess(Consumer[SuccessEvent]) EventListener
+	DismissRetry(Consumer[RetryEvent]) EventListener
+	DismissError(Consumer[ErrorEvent]) EventListener
 }
 
 func newEventListener() *eventListener {
@@ -36,55 +36,55 @@ type eventListener struct {
 }
 
 func (listener *eventListener) OnSuccessFunc(consumer func(SuccessEvent)) EventListener {
-	return listener.OnSuccess(fn.ConsumerOf(consumer))
+	return listener.OnSuccess(ConsumerOf(consumer))
 }
 
 func (listener *eventListener) OnRetryFunc(consumer func(RetryEvent)) EventListener {
-	return listener.OnRetry(fn.ConsumerOf(consumer))
+	return listener.OnRetry(ConsumerOf(consumer))
 }
 
 func (listener *eventListener) OnErrorFunc(consumer func(ErrorEvent)) EventListener {
-	return listener.OnError(fn.ConsumerOf(consumer))
+	return listener.OnError(ConsumerOf(consumer))
 }
 
 func (listener *eventListener) DismissSuccessFunc(consumer func(SuccessEvent)) EventListener {
-	return listener.DismissSuccess(fn.ConsumerOf(consumer))
+	return listener.DismissSuccess(ConsumerOf(consumer))
 }
 
 func (listener *eventListener) DismissRetryFunc(consumer func(RetryEvent)) EventListener {
-	return listener.DismissRetry(fn.ConsumerOf(consumer))
+	return listener.DismissRetry(ConsumerOf(consumer))
 }
 
 func (listener *eventListener) DismissErrorFunc(consumer func(ErrorEvent)) EventListener {
-	return listener.DismissError(fn.ConsumerOf(consumer))
+	return listener.DismissError(ConsumerOf(consumer))
 }
 
-func (listener *eventListener) OnSuccess(consumer fn.Consumer[SuccessEvent]) EventListener {
+func (listener *eventListener) OnSuccess(consumer Consumer[SuccessEvent]) EventListener {
 	listener.onSuccess.AppendConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) OnRetry(consumer fn.Consumer[RetryEvent]) EventListener {
+func (listener *eventListener) OnRetry(consumer Consumer[RetryEvent]) EventListener {
 	listener.onRetry.AppendConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) OnError(consumer fn.Consumer[ErrorEvent]) EventListener {
+func (listener *eventListener) OnError(consumer Consumer[ErrorEvent]) EventListener {
 	listener.onError.AppendConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) DismissSuccess(consumer fn.Consumer[SuccessEvent]) EventListener {
+func (listener *eventListener) DismissSuccess(consumer Consumer[SuccessEvent]) EventListener {
 	listener.onSuccess.RemoveConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) DismissRetry(consumer fn.Consumer[RetryEvent]) EventListener {
+func (listener *eventListener) DismissRetry(consumer Consumer[RetryEvent]) EventListener {
 	listener.onRetry.RemoveConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) DismissError(consumer fn.Consumer[ErrorEvent]) EventListener {
+func (listener *eventListener) DismissError(consumer Consumer[ErrorEvent]) EventListener {
 	listener.onError.RemoveConsumer(consumer)
 	return listener
 }

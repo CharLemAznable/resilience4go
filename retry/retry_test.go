@@ -55,7 +55,7 @@ func TestSuccess(t *testing.T) {
 		}
 		return errors.New("error")
 	}
-	decoratedFn := retry.DecorateRunnable(successRetry, fn)
+	decoratedFn := retry.DecorateCheckedRun(successRetry, fn)
 
 	err := decoratedFn()
 	if err != nil {
@@ -129,7 +129,7 @@ func TestError(t *testing.T) {
 		}
 		return errors.New("error")
 	}
-	decoratedFn := retry.DecorateRunnable(successRetry, fn)
+	decoratedFn := retry.DecorateCheckedRun(successRetry, fn)
 
 	err := decoratedFn()
 	if err == nil {

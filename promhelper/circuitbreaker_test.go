@@ -212,11 +212,10 @@ func TestCircuitBreakerRegistry(t *testing.T) {
 		float64(time.Second), float64(time.Second*5), float64(time.Second*10))
 	_ = registerFn(registerer)
 
-	_ = circuitbreaker.DecorateRunnable(entry, func() error {
+	circuitbreaker.DecorateRun(entry, func() {
 		time.Sleep(time.Second * 2)
-		return nil
 	})()
-	_ = circuitbreaker.DecorateRunnable(entry, func() error {
+	_ = circuitbreaker.DecorateCheckedRun(entry, func() error {
 		time.Sleep(time.Second * 6)
 		return errors.New("error")
 	})()

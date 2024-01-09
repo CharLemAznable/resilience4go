@@ -2,7 +2,7 @@ package bulkhead
 
 import (
 	"github.com/CharLemAznable/gogo/ext"
-	"github.com/CharLemAznable/gogo/fn"
+	. "github.com/CharLemAznable/gogo/fn"
 )
 
 type EventListener interface {
@@ -13,12 +13,12 @@ type EventListener interface {
 	DismissRejectedFunc(func(RejectedEvent)) EventListener
 	DismissFinishedFunc(func(FinishedEvent)) EventListener
 
-	OnPermitted(fn.Consumer[PermittedEvent]) EventListener
-	OnRejected(fn.Consumer[RejectedEvent]) EventListener
-	OnFinished(fn.Consumer[FinishedEvent]) EventListener
-	DismissPermitted(fn.Consumer[PermittedEvent]) EventListener
-	DismissRejected(fn.Consumer[RejectedEvent]) EventListener
-	DismissFinished(fn.Consumer[FinishedEvent]) EventListener
+	OnPermitted(Consumer[PermittedEvent]) EventListener
+	OnRejected(Consumer[RejectedEvent]) EventListener
+	OnFinished(Consumer[FinishedEvent]) EventListener
+	DismissPermitted(Consumer[PermittedEvent]) EventListener
+	DismissRejected(Consumer[RejectedEvent]) EventListener
+	DismissFinished(Consumer[FinishedEvent]) EventListener
 }
 
 func newEventListener() *eventListener {
@@ -36,55 +36,55 @@ type eventListener struct {
 }
 
 func (listener *eventListener) OnPermittedFunc(consumer func(PermittedEvent)) EventListener {
-	return listener.OnPermitted(fn.ConsumerOf(consumer))
+	return listener.OnPermitted(ConsumerOf(consumer))
 }
 
 func (listener *eventListener) OnRejectedFunc(consumer func(RejectedEvent)) EventListener {
-	return listener.OnRejected(fn.ConsumerOf(consumer))
+	return listener.OnRejected(ConsumerOf(consumer))
 }
 
 func (listener *eventListener) OnFinishedFunc(consumer func(FinishedEvent)) EventListener {
-	return listener.OnFinished(fn.ConsumerOf(consumer))
+	return listener.OnFinished(ConsumerOf(consumer))
 }
 
 func (listener *eventListener) DismissPermittedFunc(consumer func(PermittedEvent)) EventListener {
-	return listener.DismissPermitted(fn.ConsumerOf(consumer))
+	return listener.DismissPermitted(ConsumerOf(consumer))
 }
 
 func (listener *eventListener) DismissRejectedFunc(consumer func(RejectedEvent)) EventListener {
-	return listener.DismissRejected(fn.ConsumerOf(consumer))
+	return listener.DismissRejected(ConsumerOf(consumer))
 }
 
 func (listener *eventListener) DismissFinishedFunc(consumer func(FinishedEvent)) EventListener {
-	return listener.DismissFinished(fn.ConsumerOf(consumer))
+	return listener.DismissFinished(ConsumerOf(consumer))
 }
 
-func (listener *eventListener) OnPermitted(consumer fn.Consumer[PermittedEvent]) EventListener {
+func (listener *eventListener) OnPermitted(consumer Consumer[PermittedEvent]) EventListener {
 	listener.onPermitted.AppendConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) OnRejected(consumer fn.Consumer[RejectedEvent]) EventListener {
+func (listener *eventListener) OnRejected(consumer Consumer[RejectedEvent]) EventListener {
 	listener.onRejected.AppendConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) OnFinished(consumer fn.Consumer[FinishedEvent]) EventListener {
+func (listener *eventListener) OnFinished(consumer Consumer[FinishedEvent]) EventListener {
 	listener.onFinished.AppendConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) DismissPermitted(consumer fn.Consumer[PermittedEvent]) EventListener {
+func (listener *eventListener) DismissPermitted(consumer Consumer[PermittedEvent]) EventListener {
 	listener.onPermitted.RemoveConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) DismissRejected(consumer fn.Consumer[RejectedEvent]) EventListener {
+func (listener *eventListener) DismissRejected(consumer Consumer[RejectedEvent]) EventListener {
 	listener.onRejected.RemoveConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) DismissFinished(consumer fn.Consumer[FinishedEvent]) EventListener {
+func (listener *eventListener) DismissFinished(consumer Consumer[FinishedEvent]) EventListener {
 	listener.onFinished.RemoveConsumer(consumer)
 	return listener
 }

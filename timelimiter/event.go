@@ -9,6 +9,7 @@ type EventType string
 
 const (
 	SUCCESS EventType = "SUCCESS"
+	ERROR   EventType = "ERROR"
 	TIMEOUT EventType = "TIMEOUT"
 	PANIC   EventType = "PANIC"
 )
@@ -24,6 +25,11 @@ type SuccessEvent interface {
 	Event
 }
 
+type ErrorEvent interface {
+	Event
+	Error() error
+}
+
 type TimeoutEvent interface {
 	Event
 }
@@ -35,6 +41,10 @@ type PanicEvent interface {
 
 func newSuccessEvent(timeLimiterName string) Event {
 	return &successEvent{event{timeLimiterName: timeLimiterName, creationTime: time.Now()}}
+}
+
+func newErrorEvent(timeLimiterName string, err error) Event {
+	return &errorEvent{event{timeLimiterName: timeLimiterName, creationTime: time.Now()}, err}
 }
 
 func newTimeoutEvent(timeLimiterName string) Event {
@@ -70,6 +80,25 @@ func (e *successEvent) String() string {
 	return fmt.Sprintf(
 		"%v: TimeLimiter '%s' recorded a successful call.",
 		e.creationTime, e.timeLimiterName)
+}
+
+type errorEvent struct {
+	event
+	err error
+}
+
+func (e *errorEvent) EventType() EventType {
+	return ERROR
+}
+
+func (e *errorEvent) Error() error {
+	return e.err
+}
+
+func (e *errorEvent) String() string {
+	return fmt.Sprintf(
+		"%v: TimeLimiter '%s' recorded a error call with error: %v.",
+		e.creationTime, e.timeLimiterName, e.err)
 }
 
 type timeoutEvent struct {

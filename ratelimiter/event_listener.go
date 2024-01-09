@@ -2,7 +2,7 @@ package ratelimiter
 
 import (
 	"github.com/CharLemAznable/gogo/ext"
-	"github.com/CharLemAznable/gogo/fn"
+	. "github.com/CharLemAznable/gogo/fn"
 )
 
 type EventListener interface {
@@ -11,10 +11,10 @@ type EventListener interface {
 	DismissSuccessFunc(func(SuccessEvent)) EventListener
 	DismissFailureFunc(func(FailureEvent)) EventListener
 
-	OnSuccess(fn.Consumer[SuccessEvent]) EventListener
-	OnFailure(fn.Consumer[FailureEvent]) EventListener
-	DismissSuccess(fn.Consumer[SuccessEvent]) EventListener
-	DismissFailure(fn.Consumer[FailureEvent]) EventListener
+	OnSuccess(Consumer[SuccessEvent]) EventListener
+	OnFailure(Consumer[FailureEvent]) EventListener
+	DismissSuccess(Consumer[SuccessEvent]) EventListener
+	DismissFailure(Consumer[FailureEvent]) EventListener
 }
 
 func newEventListener() *eventListener {
@@ -30,37 +30,37 @@ type eventListener struct {
 }
 
 func (listener *eventListener) OnSuccessFunc(consumer func(SuccessEvent)) EventListener {
-	return listener.OnSuccess(fn.ConsumerOf(consumer))
+	return listener.OnSuccess(ConsumerOf(consumer))
 }
 
 func (listener *eventListener) OnFailureFunc(consumer func(FailureEvent)) EventListener {
-	return listener.OnFailure(fn.ConsumerOf(consumer))
+	return listener.OnFailure(ConsumerOf(consumer))
 }
 
 func (listener *eventListener) DismissSuccessFunc(consumer func(SuccessEvent)) EventListener {
-	return listener.DismissSuccess(fn.ConsumerOf(consumer))
+	return listener.DismissSuccess(ConsumerOf(consumer))
 }
 
 func (listener *eventListener) DismissFailureFunc(consumer func(FailureEvent)) EventListener {
-	return listener.DismissFailure(fn.ConsumerOf(consumer))
+	return listener.DismissFailure(ConsumerOf(consumer))
 }
 
-func (listener *eventListener) OnSuccess(consumer fn.Consumer[SuccessEvent]) EventListener {
+func (listener *eventListener) OnSuccess(consumer Consumer[SuccessEvent]) EventListener {
 	listener.onSuccess.AppendConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) OnFailure(consumer fn.Consumer[FailureEvent]) EventListener {
+func (listener *eventListener) OnFailure(consumer Consumer[FailureEvent]) EventListener {
 	listener.onFailure.AppendConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) DismissSuccess(consumer fn.Consumer[SuccessEvent]) EventListener {
+func (listener *eventListener) DismissSuccess(consumer Consumer[SuccessEvent]) EventListener {
 	listener.onSuccess.RemoveConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) DismissFailure(consumer fn.Consumer[FailureEvent]) EventListener {
+func (listener *eventListener) DismissFailure(consumer Consumer[FailureEvent]) EventListener {
 	listener.onFailure.RemoveConsumer(consumer)
 	return listener
 }

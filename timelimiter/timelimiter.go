@@ -59,7 +59,11 @@ func (limiter *timeLimiter) Execute(fn func() (any, error)) (any, error) {
 	}()
 	select {
 	case result := <-finished:
-		limiter.onSuccess()
+		if result.err != nil {
+			limiter.onError(result.err)
+		} else {
+			limiter.onSuccess()
+		}
 		return result.ret, result.err
 	case <-timeout.Done():
 		limiter.onTimeout()
@@ -73,6 +77,11 @@ func (limiter *timeLimiter) Execute(fn func() (any, error)) (any, error) {
 func (limiter *timeLimiter) onSuccess() {
 	limiter.metrics.successIncrement()
 	limiter.eventListener.consumeEvent(newSuccessEvent(limiter.name))
+}
+
+func (limiter *timeLimiter) onError(err error) {
+	limiter.metrics.errorIncrement()
+	limiter.eventListener.consumeEvent(newErrorEvent(limiter.name, err))
 }
 
 func (limiter *timeLimiter) onTimeout() {

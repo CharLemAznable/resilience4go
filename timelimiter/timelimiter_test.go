@@ -25,6 +25,15 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, event)
 		}
 	}
+	onError := func(event timelimiter.ErrorEvent) {
+		if event.EventType() != timelimiter.ERROR {
+			t.Errorf("Expected event type ERROR, but got '%s'", event.EventType())
+		}
+		expectedMsg := fmt.Sprintf("%v: TimeLimiter '%s' recorded a error call with error: %v.", event.CreationTime(), event.TimeLimiterName(), event.Error())
+		if event.String() != expectedMsg {
+			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, event)
+		}
+	}
 	onTimeout := func(event timelimiter.TimeoutEvent) {
 		if event.EventType() != timelimiter.TIMEOUT {
 			t.Errorf("Expected event type TIMEOUT, but got '%s'", event.EventType())
@@ -43,14 +52,14 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 			t.Errorf("Expected event message '%s', but got '%s'", expectedMsg, event)
 		}
 	}
-	eventListener.OnSuccessFunc(onSuccess).OnTimeoutFunc(onTimeout).OnPanicFunc(onPanic)
+	eventListener.OnSuccessFunc(onSuccess).OnErrorFunc(onError).OnTimeoutFunc(onTimeout).OnPanicFunc(onPanic)
 
 	// 创建一个可运行的函数
-	fn := func() error {
+	fn0 := func() {
 		panic("panic error")
 	}
 	// 调用DecorateRunnable函数
-	decoratedFn := timelimiter.DecorateRunnable(tl, fn)
+	decoratedFn0 := timelimiter.DecorateRun(tl, fn0)
 
 	func() {
 		defer func() {
@@ -60,16 +69,16 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 				}
 			}
 		}()
-		_ = decoratedFn()
+		decoratedFn0()
 	}()
 
 	// 创建一个可运行的函数
-	fn = func() error {
+	fn := func() error {
 		time.Sleep(time.Second * 2)
 		return nil
 	}
 	// 调用DecorateRunnable函数
-	decoratedFn = timelimiter.DecorateRunnable(tl, fn)
+	decoratedFn := timelimiter.DecorateCheckedRun(tl, fn)
 
 	err := decoratedFn()
 	if err.Error() != "TimeLimiter 'test' recorded a timeout exception." {
@@ -82,11 +91,24 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 		return errors.New("error")
 	}
 	// 调用DecorateRunnable函数
-	decoratedFn = timelimiter.DecorateRunnable(tl, fn)
+	decoratedFn = timelimiter.DecorateCheckedRun(tl, fn)
 
 	err = decoratedFn()
 	if err.Error() != "error" {
 		t.Errorf("Expected error 'error', but got '%s'", err.Error())
+	}
+
+	// 创建一个可运行的函数
+	fn = func() error {
+		time.Sleep(time.Millisecond * 500)
+		return nil
+	}
+	// 调用DecorateRunnable函数
+	decoratedFn = timelimiter.DecorateCheckedRun(tl, fn)
+
+	err = decoratedFn()
+	if err != nil {
+		t.Errorf("Expected error is nil, but got '%s'", err.Error())
 	}
 
 	time.Sleep(time.Second * 1)
@@ -94,11 +116,14 @@ func TestTimeLimiterPublishEvents(t *testing.T) {
 	if metrics.SuccessCount() != 1 {
 		t.Errorf("Expected 1 success call, but got '%d'", metrics.SuccessCount())
 	}
+	if metrics.ErrorCount() != 1 {
+		t.Errorf("Expected 1 error call, but got '%d'", metrics.ErrorCount())
+	}
 	if metrics.TimeoutCount() != 1 {
 		t.Errorf("Expected 1 timeout call, but got '%d'", metrics.TimeoutCount())
 	}
 	if metrics.PanicCount() != 1 {
 		t.Errorf("Expected 1 panic call, but got '%d'", metrics.PanicCount())
 	}
-	eventListener.DismissSuccessFunc(onSuccess).DismissTimeoutFunc(onTimeout).DismissPanicFunc(onPanic)
+	eventListener.DismissSuccessFunc(onSuccess).DismissErrorFunc(onError).DismissTimeoutFunc(onTimeout).DismissPanicFunc(onPanic)
 }

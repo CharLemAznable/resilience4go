@@ -42,7 +42,7 @@ func TestDecorateFunction(t *testing.T) {
 		}
 		return &testValue{key.key + randString(4)}, err
 	}
-	decoratedFn := cache.DecorateFunction(ch, fn)
+	decoratedFn := cache.DecorateCheckedApply(ch, fn)
 
 	var wg sync.WaitGroup
 	var ret1, ret2 *testValue

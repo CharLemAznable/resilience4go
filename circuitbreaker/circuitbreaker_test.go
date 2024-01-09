@@ -92,7 +92,7 @@ func TestCircuitBreaker(t *testing.T) {
 		return "", errors.New(str)
 	}
 	// 调用DecorateRunnable函数
-	decoratedFn := circuitbreaker.DecorateSupplier(breaker, fn)
+	decoratedFn := circuitbreaker.DecorateCheckedGet(breaker, fn)
 
 	var wg sync.WaitGroup
 	// 启动多个协程
@@ -276,7 +276,7 @@ func TestCircuitBreakerSlow(t *testing.T) {
 		return str, nil
 	}
 	// 调用DecorateRunnable函数
-	decoratedFn := circuitbreaker.DecorateFunction(breaker, fn)
+	decoratedFn := circuitbreaker.DecorateCheckedApply(breaker, fn)
 
 	var wg sync.WaitGroup
 	// 启动多个协程
@@ -395,7 +395,7 @@ func TestCircuitBreakerDisabled(t *testing.T) {
 		panic("error")
 	}
 	// 调用DecorateRunnable函数
-	decoratedFn := circuitbreaker.DecorateRunnable(breaker, fn)
+	decoratedFn := circuitbreaker.DecorateCheckedRun(breaker, fn)
 
 	var wg sync.WaitGroup
 	var count atomic.Int64
@@ -423,7 +423,7 @@ func TestCircuitBreakerDisabled(t *testing.T) {
 		t.Errorf("Expected count 100, but got %d", count.Load())
 	}
 
-	err := circuitbreaker.DecorateRunnable(breaker, func() error {
+	err := circuitbreaker.DecorateCheckedRun(breaker, func() error {
 		return nil
 	})()
 	if err != nil {
@@ -440,7 +440,7 @@ func TestCircuitBreakerForcedOpen(t *testing.T) {
 		return nil
 	}
 	// 调用DecorateRunnable函数
-	decoratedFn := circuitbreaker.DecorateConsumer(breaker, fn)
+	decoratedFn := circuitbreaker.DecorateCheckedAccept(breaker, fn)
 
 	var wg sync.WaitGroup
 	var count atomic.Int64

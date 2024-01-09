@@ -66,7 +66,7 @@ func TestBulkheadPublishEvents(t *testing.T) {
 	}
 
 	// 调用DecorateRunnable函数
-	decoratedFn := bulkhead.DecorateRunnable(bh, fn)
+	decoratedFn := bulkhead.DecorateCheckedRun(bh, fn)
 
 	go func() {
 		_ = decoratedFn()

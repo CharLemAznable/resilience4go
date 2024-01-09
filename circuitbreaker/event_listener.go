@@ -2,7 +2,7 @@ package circuitbreaker
 
 import (
 	"github.com/CharLemAznable/gogo/ext"
-	"github.com/CharLemAznable/gogo/fn"
+	. "github.com/CharLemAznable/gogo/fn"
 )
 
 type EventListener interface {
@@ -19,18 +19,18 @@ type EventListener interface {
 	DismissFailureRateExceededFunc(func(FailureRateExceededEvent)) EventListener
 	DismissSlowCallRateExceededFunc(func(SlowCallRateExceededEvent)) EventListener
 
-	OnSuccess(fn.Consumer[SuccessEvent]) EventListener
-	OnError(fn.Consumer[ErrorEvent]) EventListener
-	OnNotPermitted(fn.Consumer[NotPermittedEvent]) EventListener
-	OnStateTransition(fn.Consumer[StateTransitionEvent]) EventListener
-	OnFailureRateExceeded(fn.Consumer[FailureRateExceededEvent]) EventListener
-	OnSlowCallRateExceeded(fn.Consumer[SlowCallRateExceededEvent]) EventListener
-	DismissSuccess(fn.Consumer[SuccessEvent]) EventListener
-	DismissError(fn.Consumer[ErrorEvent]) EventListener
-	DismissNotPermitted(fn.Consumer[NotPermittedEvent]) EventListener
-	DismissStateTransition(fn.Consumer[StateTransitionEvent]) EventListener
-	DismissFailureRateExceeded(fn.Consumer[FailureRateExceededEvent]) EventListener
-	DismissSlowCallRateExceeded(fn.Consumer[SlowCallRateExceededEvent]) EventListener
+	OnSuccess(Consumer[SuccessEvent]) EventListener
+	OnError(Consumer[ErrorEvent]) EventListener
+	OnNotPermitted(Consumer[NotPermittedEvent]) EventListener
+	OnStateTransition(Consumer[StateTransitionEvent]) EventListener
+	OnFailureRateExceeded(Consumer[FailureRateExceededEvent]) EventListener
+	OnSlowCallRateExceeded(Consumer[SlowCallRateExceededEvent]) EventListener
+	DismissSuccess(Consumer[SuccessEvent]) EventListener
+	DismissError(Consumer[ErrorEvent]) EventListener
+	DismissNotPermitted(Consumer[NotPermittedEvent]) EventListener
+	DismissStateTransition(Consumer[StateTransitionEvent]) EventListener
+	DismissFailureRateExceeded(Consumer[FailureRateExceededEvent]) EventListener
+	DismissSlowCallRateExceeded(Consumer[SlowCallRateExceededEvent]) EventListener
 }
 
 func newEventListener() *eventListener {
@@ -54,109 +54,109 @@ type eventListener struct {
 }
 
 func (listener *eventListener) OnSuccessFunc(consumer func(SuccessEvent)) EventListener {
-	return listener.OnSuccess(fn.ConsumerOf(consumer))
+	return listener.OnSuccess(ConsumerOf(consumer))
 }
 
 func (listener *eventListener) OnErrorFunc(consumer func(ErrorEvent)) EventListener {
-	return listener.OnError(fn.ConsumerOf(consumer))
+	return listener.OnError(ConsumerOf(consumer))
 }
 
 func (listener *eventListener) OnNotPermittedFunc(consumer func(NotPermittedEvent)) EventListener {
-	return listener.OnNotPermitted(fn.ConsumerOf(consumer))
+	return listener.OnNotPermitted(ConsumerOf(consumer))
 }
 
 func (listener *eventListener) OnStateTransitionFunc(consumer func(StateTransitionEvent)) EventListener {
-	return listener.OnStateTransition(fn.ConsumerOf(consumer))
+	return listener.OnStateTransition(ConsumerOf(consumer))
 }
 
 func (listener *eventListener) OnFailureRateExceededFunc(consumer func(FailureRateExceededEvent)) EventListener {
-	return listener.OnFailureRateExceeded(fn.ConsumerOf(consumer))
+	return listener.OnFailureRateExceeded(ConsumerOf(consumer))
 }
 
 func (listener *eventListener) OnSlowCallRateExceededFunc(consumer func(SlowCallRateExceededEvent)) EventListener {
-	return listener.OnSlowCallRateExceeded(fn.ConsumerOf(consumer))
+	return listener.OnSlowCallRateExceeded(ConsumerOf(consumer))
 }
 
 func (listener *eventListener) DismissSuccessFunc(consumer func(SuccessEvent)) EventListener {
-	return listener.DismissSuccess(fn.ConsumerOf(consumer))
+	return listener.DismissSuccess(ConsumerOf(consumer))
 }
 
 func (listener *eventListener) DismissErrorFunc(consumer func(ErrorEvent)) EventListener {
-	return listener.DismissError(fn.ConsumerOf(consumer))
+	return listener.DismissError(ConsumerOf(consumer))
 }
 
 func (listener *eventListener) DismissNotPermittedFunc(consumer func(NotPermittedEvent)) EventListener {
-	return listener.DismissNotPermitted(fn.ConsumerOf(consumer))
+	return listener.DismissNotPermitted(ConsumerOf(consumer))
 }
 
 func (listener *eventListener) DismissStateTransitionFunc(consumer func(StateTransitionEvent)) EventListener {
-	return listener.DismissStateTransition(fn.ConsumerOf(consumer))
+	return listener.DismissStateTransition(ConsumerOf(consumer))
 }
 
 func (listener *eventListener) DismissFailureRateExceededFunc(consumer func(FailureRateExceededEvent)) EventListener {
-	return listener.DismissFailureRateExceeded(fn.ConsumerOf(consumer))
+	return listener.DismissFailureRateExceeded(ConsumerOf(consumer))
 }
 
 func (listener *eventListener) DismissSlowCallRateExceededFunc(consumer func(SlowCallRateExceededEvent)) EventListener {
-	return listener.DismissSlowCallRateExceeded(fn.ConsumerOf(consumer))
+	return listener.DismissSlowCallRateExceeded(ConsumerOf(consumer))
 }
 
-func (listener *eventListener) OnSuccess(consumer fn.Consumer[SuccessEvent]) EventListener {
+func (listener *eventListener) OnSuccess(consumer Consumer[SuccessEvent]) EventListener {
 	listener.onSuccess.AppendConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) OnError(consumer fn.Consumer[ErrorEvent]) EventListener {
+func (listener *eventListener) OnError(consumer Consumer[ErrorEvent]) EventListener {
 	listener.onError.AppendConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) OnNotPermitted(consumer fn.Consumer[NotPermittedEvent]) EventListener {
+func (listener *eventListener) OnNotPermitted(consumer Consumer[NotPermittedEvent]) EventListener {
 	listener.onNotPermitted.AppendConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) OnStateTransition(consumer fn.Consumer[StateTransitionEvent]) EventListener {
+func (listener *eventListener) OnStateTransition(consumer Consumer[StateTransitionEvent]) EventListener {
 	listener.onStateTransition.AppendConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) OnFailureRateExceeded(consumer fn.Consumer[FailureRateExceededEvent]) EventListener {
+func (listener *eventListener) OnFailureRateExceeded(consumer Consumer[FailureRateExceededEvent]) EventListener {
 	listener.onFailureRateExceeded.AppendConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) OnSlowCallRateExceeded(consumer fn.Consumer[SlowCallRateExceededEvent]) EventListener {
+func (listener *eventListener) OnSlowCallRateExceeded(consumer Consumer[SlowCallRateExceededEvent]) EventListener {
 	listener.onSlowCallRateExceeded.AppendConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) DismissSuccess(consumer fn.Consumer[SuccessEvent]) EventListener {
+func (listener *eventListener) DismissSuccess(consumer Consumer[SuccessEvent]) EventListener {
 	listener.onSuccess.RemoveConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) DismissError(consumer fn.Consumer[ErrorEvent]) EventListener {
+func (listener *eventListener) DismissError(consumer Consumer[ErrorEvent]) EventListener {
 	listener.onError.RemoveConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) DismissNotPermitted(consumer fn.Consumer[NotPermittedEvent]) EventListener {
+func (listener *eventListener) DismissNotPermitted(consumer Consumer[NotPermittedEvent]) EventListener {
 	listener.onNotPermitted.RemoveConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) DismissStateTransition(consumer fn.Consumer[StateTransitionEvent]) EventListener {
+func (listener *eventListener) DismissStateTransition(consumer Consumer[StateTransitionEvent]) EventListener {
 	listener.onStateTransition.RemoveConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) DismissFailureRateExceeded(consumer fn.Consumer[FailureRateExceededEvent]) EventListener {
+func (listener *eventListener) DismissFailureRateExceeded(consumer Consumer[FailureRateExceededEvent]) EventListener {
 	listener.onFailureRateExceeded.RemoveConsumer(consumer)
 	return listener
 }
 
-func (listener *eventListener) DismissSlowCallRateExceeded(consumer fn.Consumer[SlowCallRateExceededEvent]) EventListener {
+func (listener *eventListener) DismissSlowCallRateExceeded(consumer Consumer[SlowCallRateExceededEvent]) EventListener {
 	listener.onSlowCallRateExceeded.RemoveConsumer(consumer)
 	return listener
 }

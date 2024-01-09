@@ -2,6 +2,7 @@ package decorator_test
 
 import (
 	"errors"
+	. "github.com/CharLemAznable/gogo/fn"
 	"github.com/CharLemAznable/resilience4go/bulkhead"
 	"github.com/CharLemAznable/resilience4go/circuitbreaker"
 	"github.com/CharLemAznable/resilience4go/decorator"
@@ -13,9 +14,9 @@ import (
 
 func TestDecorateRunnable(t *testing.T) {
 	decorateRunnable := decorator.
-		OfRunnable(func() error {
+		OfRunnable(RunnableCast(func() error {
 			return errors.New("error")
-		}).
+		})).
 		WithBulkhead(bulkhead.NewBulkhead("test")).
 		WhenFull(func() error {
 			return nil
@@ -46,16 +47,11 @@ func TestDecorateRunnable(t *testing.T) {
 	if decorateRunnable == nil {
 		t.Error("Expected non-nil decoratedRunnable")
 	}
-	err := decorateRunnable()
-	if err != nil {
-		t.Errorf("Expected error is nil, but got '%v'", err)
-	}
-
 	decoratedRunnable := decorateRunnable.Decorate()
 	if decoratedRunnable == nil {
 		t.Error("Expected non-nil decoratedRunnable")
 	}
-	err = decoratedRunnable()
+	err := decoratedRunnable.CheckedRun()
 	if err != nil {
 		t.Errorf("Expected error is nil, but got '%v'", err)
 	}

@@ -2,6 +2,7 @@ package decorator_test
 
 import (
 	"errors"
+	. "github.com/CharLemAznable/gogo/fn"
 	"github.com/CharLemAznable/resilience4go/bulkhead"
 	"github.com/CharLemAznable/resilience4go/circuitbreaker"
 	"github.com/CharLemAznable/resilience4go/decorator"
@@ -13,9 +14,9 @@ import (
 
 func TestDecorateSupplier(t *testing.T) {
 	decorateSupplier := decorator.
-		OfSupplier(func() (string, error) {
+		OfSupplier(SupplierCast(func() (string, error) {
 			return "", errors.New("error")
-		}).
+		})).
 		WithBulkhead(bulkhead.NewBulkhead("test")).
 		WhenFull(func() (string, error) {
 			return "", nil
@@ -46,19 +47,11 @@ func TestDecorateSupplier(t *testing.T) {
 	if decorateSupplier == nil {
 		t.Error("Expected non-nil decoratedSupplier")
 	}
-	ret, err := decorateSupplier()
-	if ret != "fallback" {
-		t.Errorf("Expected ret is 'fallback', but got '%v'", ret)
-	}
-	if err != nil {
-		t.Errorf("Expected error is nil, but got '%v'", err)
-	}
-
 	decoratedSupplier := decorateSupplier.Decorate()
 	if decoratedSupplier == nil {
 		t.Error("Expected non-nil decoratedSupplier")
 	}
-	ret, err = decoratedSupplier()
+	ret, err := decoratedSupplier.CheckedGet()
 	if ret != "fallback" {
 		t.Errorf("Expected ret is 'fallback', but got '%v'", ret)
 	}

@@ -20,7 +20,7 @@ func TestDecorateRunnable(t *testing.T) {
 		ratelimiter.WithLimitForPeriod(2))
 
 	// 调用DecorateRunnable函数
-	decoratedFn := ratelimiter.DecorateRunnable(rl, fn)
+	decoratedFn := ratelimiter.DecorateCheckedRun(rl, fn)
 
 	errChan := make(chan error, 1)
 
@@ -58,7 +58,7 @@ func TestDecorateSupplier(t *testing.T) {
 		ratelimiter.WithLimitForPeriod(2))
 
 	// 调用DecorateRunnable函数
-	decoratedFn := ratelimiter.DecorateSupplier(rl, fn)
+	decoratedFn := ratelimiter.DecorateCheckedGet(rl, fn)
 
 	errChan := make(chan error, 1)
 
@@ -96,7 +96,7 @@ func TestDecorateConsumer(t *testing.T) {
 		ratelimiter.WithLimitForPeriod(2))
 
 	// 调用DecorateRunnable函数
-	decoratedFn := ratelimiter.DecorateConsumer(rl, fn)
+	decoratedFn := ratelimiter.DecorateCheckedAccept(rl, fn)
 
 	errChan := make(chan error, 1)
 
@@ -134,7 +134,7 @@ func TestDecorateFunction(t *testing.T) {
 		ratelimiter.WithLimitForPeriod(2))
 
 	// 调用DecorateRunnable函数
-	decoratedFn := ratelimiter.DecorateFunction(rl, fn)
+	decoratedFn := ratelimiter.DecorateCheckedApply(rl, fn)
 
 	errChan := make(chan error, 1)
 
@@ -156,4 +156,12 @@ func TestDecorateFunction(t *testing.T) {
 			t.Errorf("Expected error message 'RateLimiter 'test' does not permit further calls', but got '%s'", fullErr.Error())
 		}
 	}
+}
+
+func TestDecorateCover(t *testing.T) {
+	rl := ratelimiter.NewRateLimiter("test")
+	ratelimiter.DecorateRun(rl, func() {})
+	ratelimiter.DecorateGet(rl, func() interface{} { return nil })
+	ratelimiter.DecorateAccept(rl, func(interface{}) {})
+	ratelimiter.DecorateApply(rl, func(_ interface{}) interface{} { return nil })
 }

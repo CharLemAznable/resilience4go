@@ -18,7 +18,7 @@ func TestTimeLimiterRegistry(t *testing.T) {
 		testCases: []*metricTestCase{
 			{
 				name: "TestSuccessCount",
-				desc: `Desc{fqName: "resilience4go_timelimiter_calls", help: "The number of successful/timeout/panicked calls", constLabels: {kind="successful",name="test"}, variableLabels: {}}`,
+				desc: `Desc{fqName: "resilience4go_timelimiter_calls", help: "The number of successful/error/timeout/panicked calls", constLabels: {kind="successful",name="test"}, variableLabels: {}}`,
 				metric: &dto.Metric{
 					Label: []*dto.LabelPair{
 						{Name: proto.String("kind"), Value: proto.String("successful")},
@@ -30,8 +30,21 @@ func TestTimeLimiterRegistry(t *testing.T) {
 				},
 			},
 			{
+				name: "TestErrorCount",
+				desc: `Desc{fqName: "resilience4go_timelimiter_calls", help: "The number of successful/error/timeout/panicked calls", constLabels: {kind="error",name="test"}, variableLabels: {}}`,
+				metric: &dto.Metric{
+					Label: []*dto.LabelPair{
+						{Name: proto.String("kind"), Value: proto.String("error")},
+						{Name: proto.String("name"), Value: proto.String(entry.Name())},
+					},
+					Counter: &dto.Counter{
+						Value: proto.Float64(1),
+					},
+				},
+			},
+			{
 				name: "TestTimeoutCount",
-				desc: `Desc{fqName: "resilience4go_timelimiter_calls", help: "The number of successful/timeout/panicked calls", constLabels: {kind="timeout",name="test"}, variableLabels: {}}`,
+				desc: `Desc{fqName: "resilience4go_timelimiter_calls", help: "The number of successful/error/timeout/panicked calls", constLabels: {kind="timeout",name="test"}, variableLabels: {}}`,
 				metric: &dto.Metric{
 					Label: []*dto.LabelPair{
 						{Name: proto.String("kind"), Value: proto.String("timeout")},
@@ -44,7 +57,7 @@ func TestTimeLimiterRegistry(t *testing.T) {
 			},
 			{
 				name: "TestFailureCount",
-				desc: `Desc{fqName: "resilience4go_timelimiter_calls", help: "The number of successful/timeout/panicked calls", constLabels: {kind="panicked",name="test"}, variableLabels: {}}`,
+				desc: `Desc{fqName: "resilience4go_timelimiter_calls", help: "The number of successful/error/timeout/panicked calls", constLabels: {kind="panicked",name="test"}, variableLabels: {}}`,
 				metric: &dto.Metric{
 					Label: []*dto.LabelPair{
 						{Name: proto.String("kind"), Value: proto.String("panicked")},
@@ -57,7 +70,7 @@ func TestTimeLimiterRegistry(t *testing.T) {
 			},
 		},
 	}
-	fn := timelimiter.DecorateRunnable(entry, func() error {
+	fn := timelimiter.DecorateCheckedRun(entry, func() error {
 		panic("panic error")
 	})
 	func() {
@@ -68,14 +81,19 @@ func TestTimeLimiterRegistry(t *testing.T) {
 		}()
 		_ = fn()
 	}()
-	fn = timelimiter.DecorateRunnable(entry, func() error {
+	fn = timelimiter.DecorateCheckedRun(entry, func() error {
 		time.Sleep(time.Second * 2)
 		return nil
 	})
 	_ = fn()
-	fn = timelimiter.DecorateRunnable(entry, func() error {
+	fn = timelimiter.DecorateCheckedRun(entry, func() error {
 		time.Sleep(time.Millisecond * 500)
 		return errors.New("error")
+	})
+	_ = fn()
+	fn = timelimiter.DecorateCheckedRun(entry, func() error {
+		time.Sleep(time.Millisecond * 500)
+		return nil
 	})
 	_ = fn()
 	registerFn, unregisterFn := promhelper.TimeLimiterRegistry(entry)

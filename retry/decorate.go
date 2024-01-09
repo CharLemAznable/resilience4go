@@ -1,39 +1,74 @@
 package retry
 
-import "github.com/CharLemAznable/gogo/lang"
+import (
+	. "github.com/CharLemAznable/gogo/fn"
+	"github.com/CharLemAznable/gogo/lang"
+)
 
-func DecorateRunnable(retry Retry, fn func() error) func() error {
-	return func() error {
+func DecorateRunnable(retry Retry, runnable Runnable) Runnable {
+	return RunnableCast(func() error {
 		_, err := retry.Execute(func() (any, error) {
-			return nil, fn()
+			return nil, runnable.CheckedRun()
 		})
 		return err
-	}
+	})
 }
 
-func DecorateSupplier[T any](retry Retry, fn func() (T, error)) func() (T, error) {
-	return func() (T, error) {
+func DecorateRun(retry Retry, fn func()) func() {
+	return DecorateRunnable(retry, RunnableOf(fn)).Run
+}
+
+func DecorateCheckedRun(retry Retry, fn func() error) func() error {
+	return DecorateRunnable(retry, RunnableCast(fn)).CheckedRun
+}
+
+func DecorateSupplier[T any](retry Retry, supplier Supplier[T]) Supplier[T] {
+	return SupplierCast(func() (T, error) {
 		ret, err := retry.Execute(func() (any, error) {
-			return fn()
+			return supplier.CheckedGet()
 		})
 		return lang.CastQuietly[T](ret), err
-	}
+	})
 }
 
-func DecorateConsumer[T any](retry Retry, fn func(T) error) func(T) error {
-	return func(t T) error {
+func DecorateGet[T any](retry Retry, fn func() T) func() T {
+	return DecorateSupplier(retry, SupplierOf(fn)).Get
+}
+
+func DecorateCheckedGet[T any](retry Retry, fn func() (T, error)) func() (T, error) {
+	return DecorateSupplier(retry, SupplierCast(fn)).CheckedGet
+}
+
+func DecorateConsumer[T any](retry Retry, consumer Consumer[T]) Consumer[T] {
+	return ConsumerCast(func(t T) error {
 		_, err := retry.Execute(func() (any, error) {
-			return nil, fn(t)
+			return nil, consumer.CheckedAccept(t)
 		})
 		return err
-	}
+	})
 }
 
-func DecorateFunction[T any, R any](retry Retry, fn func(T) (R, error)) func(T) (R, error) {
-	return func(t T) (R, error) {
+func DecorateAccept[T any](retry Retry, fn func(T)) func(T) {
+	return DecorateConsumer(retry, ConsumerOf(fn)).Accept
+}
+
+func DecorateCheckedAccept[T any](retry Retry, fn func(T) error) func(T) error {
+	return DecorateConsumer(retry, ConsumerCast(fn)).CheckedAccept
+}
+
+func DecorateFunction[T any, R any](retry Retry, function Function[T, R]) Function[T, R] {
+	return FunctionCast(func(t T) (R, error) {
 		ret, err := retry.Execute(func() (any, error) {
-			return fn(t)
+			return function.CheckedApply(t)
 		})
 		return lang.CastQuietly[R](ret), err
-	}
+	})
+}
+
+func DecorateApply[T any, R any](retry Retry, fn func(T) R) func(T) R {
+	return DecorateFunction(retry, FunctionOf(fn)).Apply
+}
+
+func DecorateCheckedApply[T any, R any](retry Retry, fn func(T) (R, error)) func(T) (R, error) {
+	return DecorateFunction(retry, FunctionCast(fn)).CheckedApply
 }

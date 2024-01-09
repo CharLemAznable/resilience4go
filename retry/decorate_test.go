@@ -15,7 +15,7 @@ func TestDecorateRunnable(t *testing.T) {
 	fn := func() error {
 		panic("panic")
 	}
-	decoratedFn := retry.DecorateRunnable(rt, fn)
+	decoratedFn := retry.DecorateCheckedRun(rt, fn)
 
 	func() {
 		defer func() {
@@ -38,7 +38,7 @@ func TestDecorateSupplier(t *testing.T) {
 	fn := func() (int, error) {
 		return 0, nil
 	}
-	decoratedFn := retry.DecorateSupplier(rt, fn)
+	decoratedFn := retry.DecorateCheckedGet(rt, fn)
 
 	i, err := decoratedFn()
 	if i != 0 {
@@ -58,7 +58,7 @@ func TestDecorateConsumer(t *testing.T) {
 	fn := func(val any) error {
 		return errors.New("error")
 	}
-	decoratedFn := retry.DecorateConsumer(rt, fn)
+	decoratedFn := retry.DecorateCheckedAccept(rt, fn)
 
 	err := decoratedFn("test")
 	if err == nil {
@@ -78,7 +78,7 @@ func TestDecorateFunction(t *testing.T) {
 	fn := func(str string) (string, error) {
 		return str, nil
 	}
-	decoratedFn := retry.DecorateFunction(rt, fn)
+	decoratedFn := retry.DecorateCheckedApply(rt, fn)
 
 	ret, err := decoratedFn("notOK")
 	if ret != "notOK" {
@@ -92,4 +92,12 @@ func TestDecorateFunction(t *testing.T) {
 			t.Errorf("Expected error '%s', but got '%v'", expectedErr, err)
 		}
 	}
+}
+
+func TestDecorateCover(t *testing.T) {
+	rt := retry.NewRetry("test")
+	retry.DecorateRun(rt, func() {})
+	retry.DecorateGet(rt, func() interface{} { return nil })
+	retry.DecorateAccept(rt, func(interface{}) {})
+	retry.DecorateApply(rt, func(_ interface{}) interface{} { return nil })
 }

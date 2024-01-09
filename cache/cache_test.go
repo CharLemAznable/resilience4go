@@ -48,22 +48,21 @@ func TestCache(t *testing.T) {
 	}
 	eventListener.OnCacheHitFunc(onCacheHit).OnCacheMissFunc(onCacheMiss)
 
-	// fail with no error, max retries exceeded
-	fn := func(key string) (string, error) {
-		return key + randString(4), nil
+	fn := func(key string) string {
+		return key + randString(4)
 	}
-	decoratedFn := cache.DecorateFunction(ch, fn)
+	decoratedFn := cache.DecorateApply(ch, fn)
 
 	var wg sync.WaitGroup
 	var ret1, ret2 string
 	wg.Add(1)
 	go func() {
-		ret1, _ = decoratedFn("notOK")
+		ret1 = decoratedFn("notOK")
 		wg.Done()
 	}()
 	wg.Add(1)
 	go func() {
-		ret2, _ = decoratedFn("notOK")
+		ret2 = decoratedFn("notOK")
 		wg.Done()
 	}()
 	wg.Wait()
@@ -73,7 +72,7 @@ func TestCache(t *testing.T) {
 	}
 
 	time.Sleep(time.Second * 2)
-	ret3, _ := decoratedFn("notOK")
+	ret3 := decoratedFn("notOK")
 	if ret1 == ret3 {
 		t.Errorf("Expected return new value, but got '%s'", ret3)
 	}

@@ -55,14 +55,10 @@ listener.OnFinishedFunc(func(FinishedEvent) {
 })
 
 // 包装执行
-bulkhead.DecorateRunnable(entry, func() error {
-})
-bulkhead.DecorateSupplier(entry, func() (any, error) {
-})
-bulkhead.DecorateConsumer(entry, func(any) error {
-})
-bulkhead.DecorateFunction(entry, func(any) (any, error) {
-})
+bulkhead.DecorateCheckedRun(entry, func() error {})
+bulkhead.DecorateCheckedGet(entry, func() (any, error) {})
+bulkhead.DecorateCheckedAccept(entry, func(any) error {})
+bulkhead.DecorateCheckedApply(entry, func(any) (any, error) {})
 ```
 
 #### 时长限制(TimeLimiter)
@@ -79,14 +75,18 @@ entry := timelimiter.NewTimeLimiter(string,
 
 // 可监测指标
 metrics := entry.Metrics()
-metrics.SuccessCount() // 执行完成计数
+metrics.SuccessCount() // 执行成功计数
+metrics.ErrorCount() // 执行失败计数
 metrics.TimeoutCount() // 执行超时计数
 metrics.PanicCount() // 执行发生panic计数
 
 // 事件监听
 listener := entry.EventListener()
 listener.OnSuccessFunc(func(SuccessEvent) {
-	// 执行完成
+	// 执行成功
+})
+listener.OnErrorFunc(func(ErrorEvent) {
+	// 执行失败
 })
 listener.OnTimeoutFunc(func(TimeoutEvent) {
 	// 执行超时
@@ -96,14 +96,10 @@ listener.OnPanicFunc(func(PanicEvent) {
 })
 
 // 包装执行
-timelimiter.DecorateRunnable(entry, func() error {
-})
-timelimiter.DecorateSupplier(entry, func() (any, error) {
-})
-timelimiter.DecorateConsumer(entry, func(any) error {
-})
-timelimiter.DecorateFunction(entry, func(any) (any, error) {
-})
+timelimiter.DecorateCheckedRun(entry, func() error {})
+timelimiter.DecorateCheckedGet(entry, func() (any, error) {})
+timelimiter.DecorateCheckedAccept(entry, func(any) error {})
+timelimiter.DecorateCheckedApply(entry, func(any) (any, error) {})
 ```
 
 #### 速率限制(RateLimiter)
@@ -135,14 +131,10 @@ listener.OnFailureFunc(func(FailureEvent) {
 })
 
 // 包装执行
-ratelimiter.DecorateRunnable(entry, func() error {
-})
-ratelimiter.DecorateSupplier(entry, func() (any, error) {
-})
-ratelimiter.DecorateConsumer(entry, func(any) error {
-})
-ratelimiter.DecorateFunction(entry, func(any) (any, error) {
-})
+ratelimiter.DecorateCheckedRun(entry, func() error {})
+ratelimiter.DecorateCheckedGet(entry, func() (any, error) {})
+ratelimiter.DecorateCheckedAccept(entry, func(any) error {})
+ratelimiter.DecorateCheckedApply(entry, func(any) (any, error) {})
 ```
 
 #### 断路器(CircuitBreaker)
@@ -199,14 +191,10 @@ listener.OnSlowCallRateExceededFunc(func(SlowCallRateExceededEvent) {
 })
 
 // 包装执行
-circuitbreaker.DecorateRunnable(entry, func() error {
-})
-circuitbreaker.DecorateSupplier(entry, func() (any, error) {
-})
-circuitbreaker.DecorateConsumer(entry, func(any) error {
-})
-circuitbreaker.DecorateFunction(entry, func(any) (any, error) {
-})
+circuitbreaker.DecorateCheckedRun(entry, func() error {})
+circuitbreaker.DecorateCheckedGet(entry, func() (any, error) {})
+circuitbreaker.DecorateCheckedAccept(entry, func(any) error {})
+circuitbreaker.DecorateCheckedApply(entry, func(any) (any, error) {})
 ```
 
 #### 重试(Retry)
@@ -244,14 +232,10 @@ listener.OnErrorFunc(func(ErrorEvent) {
 })
 
 // 包装执行
-retry.DecorateRunnable(entry, func() error {
-})
-retry.DecorateSupplier(entry, func() (any, error) {
-})
-retry.DecorateConsumer(entry, func(any) error {
-})
-retry.DecorateFunction(entry, func(any) (any, error) {
-})
+retry.DecorateCheckedRun(entry, func() error {})
+retry.DecorateCheckedGet(entry, func() (any, error) {})
+retry.DecorateCheckedAccept(entry, func(any) error {})
+retry.DecorateCheckedApply(entry, func(any) (any, error) {})
 ```
 
 #### 故障恢复(Fallback)
@@ -264,62 +248,62 @@ import "github.com/CharLemAznable/resilience4go/fallback"
 
 // 包装执行
 fallback.DecorateRunnable(
-	func() error {},
+	runnable Runnable,
 	func(ctx fallback.Context[any, any, E]) error {}, // 恢复操作
 	func(ctx fallback.Context[any, any, error]) (bool, fallback.Context[any, any, E]) {}) // 根据调用上下文判断是否需要恢复
 fallback.DecorateSupplier(
-	func() (R, error) {},
+	supplier Supplier[R],
 	func(ctx fallback.Context[any, R, E]) (R, error) {}, // 恢复操作
 	func(ctx fallback.Context[any, R, error]) (bool, fallback.Context[any, R, E]) {}) // 根据调用上下文判断是否需要恢复
 fallback.DecorateConsumer(
-	func(T) error {},
+	consumer Consumer[T],
 	func(ctx fallback.Context[T, any, E]) error {}, // 恢复操作
 	func(ctx fallback.Context[T, any, error]) (bool, fallback.Context[T, any, E]) {}) // 根据调用上下文判断是否需要恢复
 fallback.DecorateFunction(
-	func(T) (R, error) {},
+	function Function[T, R],
 	func(ctx fallback.Context[T, R, E]) (R, error) {}, // 恢复操作
 	func(ctx fallback.Context[T, R, error]) (bool, fallback.Context[T, R, E]) {}) // 根据调用上下文判断是否需要恢复
 
 // 包装执行, 恢复操作函数接受失败上下文参数, 可限定error类型
 fallback.DecorateRunnableWithFailure(
-	func() error {},
+	runnable Runnable,
 	func(E) error {}) // 恢复操作
 fallback.DecorateSupplierWithFailure(
-	func() (R, error) {},
+	supplier Supplier[R],
 	func(R, E) (R, error) {}) // 恢复操作
 fallback.DecorateConsumerWithFailure(
-	func(T) error {},
+	consumer Consumer[T],
 	func(T, E) error {}) // 恢复操作
 fallback.DecorateFunctionWithFailure(
-	func(T) (R, error) {},
+	function Function[T, R],
 	func(T, R, E) (R, error) {}) // 恢复操作
 
 // 包装执行, 当发生限定类型的error时执行恢复操作函数
 fallback.DecorateRunnableByType[E](
-	func() error {},
+	runnable Runnable,
 	func() error {}) // 恢复操作
 fallback.DecorateSupplierByType[R, E](
-	func() (R, error) {},
+	supplier Supplier[R],
 	func() (R, error) {}) // 恢复操作
 fallback.DecorateConsumerByType[T, E](
-	func(T) error {},
+	consumer Consumer[T],
 	func(T) error {}) // 恢复操作
 fallback.DecorateFunctionByType[T, R, E](
-	func(T) (R, error) {},
+	function Function[T, R],
 	func(T) (R, error) {}) // 恢复操作
 
 // 包装执行, 当发生error时执行恢复操作函数
 fallback.DecorateRunnableDefault(
-	func() error {},
+	runnable Runnable,
 	func() error {}) // 恢复操作
 fallback.DecorateSupplierDefault(
-	func() (R, error) {},
+	supplier Supplier[R],
 	func() (R, error) {}) // 恢复操作
 fallback.DecorateConsumerDefault(
-	func(T) error {},
+	consumer Consumer[T],
 	func(T) error {}) // 恢复操作
 fallback.DecorateFunctionDefault(
-	func(T) (R, error) {},
+	function Function[T, R],
 	func(T) (R, error) {}) // 恢复操作
 ```
 
@@ -356,8 +340,7 @@ listener.OnCacheMissFunc(func(MissEvent) {
 })
 
 // 包装执行
-cache.DecorateFunction[K, V](entry, func(K) (V, error) {
-})
+cache.DecorateCheckedApply[K, V](entry, func(K) (V, error) {})
 ```
 
 #### 对如下四种类型的函数进行包装
@@ -365,9 +348,9 @@ cache.DecorateFunction[K, V](entry, func(K) (V, error) {
 ```
 import "github.com/CharLemAznable/resilience4go/decorator"
 
-// Runnable: func() error
+// Runnable: func() / func() error
 runnableFn := decorator.
-	OfRunnable(func() error {}).
+	OfRunnable(Runnable).
 	WithBulkhead(bulkhead.Bulkhead).
 	WhenFull(func() error).
 	WithTimeLimiter(timelimiter.TimeLimiter).
@@ -381,9 +364,9 @@ runnableFn := decorator.
 	WithFallback(func() error, func(error, any) bool).
 	Decorate()
 
-// Supplier: func() (any, error)
+// Supplier: func() any / func() (any, error)
 supplierFn := decorator.
-	OfSupplier(func() (any, error) {}).
+	OfSupplier(Supplier).
 	WithBulkhead(bulkhead.Bulkhead).
 	WhenFull(func() (any, error)).
 	WithTimeLimiter(timelimiter.TimeLimiter).
@@ -397,9 +380,9 @@ supplierFn := decorator.
 	WithFallback(func() (any, error), func(any, error, any) bool).
 	Decorate()
 
-// Consumer: func(any) error
+// Consumer: func(any) / func(any) error
 consumerFn := decorator.
-	OfConsumer(func(any) error {}).
+	OfConsumer(Consumer).
 	WithBulkhead(bulkhead.Bulkhead).
 	WhenFull(func(any) error).
 	WithTimeLimiter(timelimiter.TimeLimiter).
@@ -413,9 +396,9 @@ consumerFn := decorator.
 	WithFallback(func(any) error, func(any, error, any) bool).
 	Decorate()
 
-// Function: func(any) (any, error)
+// Function: func(any) any / func(any) (any, error)
 functionFn := decorator.
-	OfFunction(func() error {}).
+	OfFunction(Function).
 	WithBulkhead(bulkhead.Bulkhead).
 	WhenFull(func(any) (any, error)).
 	WithTimeLimiter(timelimiter.TimeLimiter).
@@ -461,6 +444,9 @@ gauge:
 counter:
   name:  resilience4go_timelimiter_calls
   label: {name: timelimiter-name}, {kind: successful}
+counter:
+  name:  resilience4go_timelimiter_calls
+  label: {name: timelimiter-name}, {kind: error}
 counter:
   name:  resilience4go_timelimiter_calls
   label: {name: timelimiter-name}, {kind: timeout}

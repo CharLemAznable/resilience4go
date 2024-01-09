@@ -19,7 +19,7 @@ func TestDecorateRunnable(t *testing.T) {
 		timelimiter.WithTimeoutDuration(time.Second*1))
 
 	// 调用DecorateRunnable函数
-	decoratedFn := timelimiter.DecorateRunnable(tl, fn)
+	decoratedFn := timelimiter.DecorateCheckedRun(tl, fn)
 
 	func() {
 		defer func() {
@@ -45,7 +45,7 @@ func TestDecorateSupplier(t *testing.T) {
 		timelimiter.WithTimeoutDuration(time.Second*1))
 
 	// 调用DecorateRunnable函数
-	decoratedFn := timelimiter.DecorateSupplier(tl, fn)
+	decoratedFn := timelimiter.DecorateCheckedGet(tl, fn)
 
 	ret, err := decoratedFn()
 
@@ -69,7 +69,7 @@ func TestDecorateConsumer(t *testing.T) {
 		timelimiter.WithTimeoutDuration(time.Second*1))
 
 	// 调用DecorateRunnable函数
-	decoratedFn := timelimiter.DecorateConsumer(tl, fn)
+	decoratedFn := timelimiter.DecorateCheckedAccept(tl, fn)
 
 	err := decoratedFn("error")
 	timeout, ok := err.(*timelimiter.TimeoutError)
@@ -94,7 +94,7 @@ func TestDecorateFunction(t *testing.T) {
 		timelimiter.WithTimeoutDuration(time.Second*1))
 
 	// 调用DecorateRunnable函数
-	decoratedFn := timelimiter.DecorateFunction(tl, fn)
+	decoratedFn := timelimiter.DecorateCheckedApply(tl, fn)
 
 	ret, err := decoratedFn("error")
 
@@ -109,4 +109,11 @@ func TestDecorateFunction(t *testing.T) {
 			t.Errorf("Expected error message 'TimeLimiter 'test' recorded a timeout exception.', but got '%s'", timeout.Error())
 		}
 	}
+}
+
+func TestDecorateCover(t *testing.T) {
+	tl := timelimiter.NewTimeLimiter("test")
+	timelimiter.DecorateGet(tl, func() interface{} { return nil })
+	timelimiter.DecorateAccept(tl, func(interface{}) {})
+	timelimiter.DecorateApply(tl, func(_ interface{}) interface{} { return nil })
 }

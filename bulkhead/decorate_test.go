@@ -20,7 +20,7 @@ func TestDecorateRunnable(t *testing.T) {
 		bulkhead.WithMaxWaitDuration(time.Second*1))
 
 	// 调用DecorateRunnable函数
-	decoratedFn := bulkhead.DecorateRunnable(bh, fn)
+	decoratedFn := bulkhead.DecorateCheckedRun(bh, fn)
 
 	err1 := make(chan error, 1)
 	err2 := make(chan error, 1)
@@ -60,7 +60,7 @@ func TestDecorateSupplier(t *testing.T) {
 		bulkhead.WithMaxWaitDuration(time.Second*1))
 
 	// 调用DecorateRunnable函数
-	decoratedFn := bulkhead.DecorateSupplier(bh, fn)
+	decoratedFn := bulkhead.DecorateCheckedGet(bh, fn)
 
 	res1 := make(chan string, 1)
 	err1 := make(chan error, 1)
@@ -112,7 +112,7 @@ func TestDecorateConsumer(t *testing.T) {
 		bulkhead.WithMaxWaitDuration(time.Second*1))
 
 	// 调用DecorateRunnable函数
-	decoratedFn := bulkhead.DecorateConsumer(bh, fn)
+	decoratedFn := bulkhead.DecorateCheckedAccept(bh, fn)
 
 	err1 := make(chan error, 1)
 	err2 := make(chan error, 1)
@@ -152,7 +152,7 @@ func TestDecorateFunction(t *testing.T) {
 		bulkhead.WithMaxWaitDuration(time.Second*1))
 
 	// 调用DecorateRunnable函数
-	decoratedFn := bulkhead.DecorateFunction(bh, fn)
+	decoratedFn := bulkhead.DecorateCheckedApply(bh, fn)
 
 	res1 := make(chan string, 1)
 	err1 := make(chan error, 1)
@@ -189,4 +189,12 @@ func TestDecorateFunction(t *testing.T) {
 			t.Errorf("Expected error message 'Bulkhead 'test' is full and does not permit further calls', but got '%s'", fullErr.Error())
 		}
 	}
+}
+
+func TestDecorateCover(t *testing.T) {
+	bh := bulkhead.NewBulkhead("test")
+	bulkhead.DecorateRun(bh, func() {})
+	bulkhead.DecorateGet(bh, func() interface{} { return nil })
+	bulkhead.DecorateAccept(bh, func(interface{}) {})
+	bulkhead.DecorateApply(bh, func(_ interface{}) interface{} { return nil })
 }

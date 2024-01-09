@@ -55,7 +55,7 @@ func TestRateLimiterPublishEvents(t *testing.T) {
 		return nil
 	}
 	// 调用DecorateRunnable函数
-	decoratedFn := ratelimiter.DecorateRunnable(rl, fn)
+	decoratedFn := ratelimiter.DecorateCheckedRun(rl, fn)
 
 	for i := 0; i < 5; i++ {
 		go func() {
